@@ -1,0 +1,81 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[project]
+name = "mammos-analysis"
+version = "0.1.0-dev.202505221528"
+description = "Analysis functionality package."
+readme = "README.md"
+authors = [
+  { name = "Andrea Petrocchi" },
+  { name = "Swapneel Amit Pathak" },
+  { name = "Martin Lang" },
+  { name = "Samuel Holt" },
+  { name = "Hans Fangohr" },
+]
+license = { file = "LICENSE" }
+
+classifiers = [
+  'Programming Language :: Python',
+  'Programming Language :: Python :: 3',
+  'Intended Audience :: Science/Research',
+  'License :: OSI Approved :: BSD License',
+  'Operating System :: POSIX',
+  'Operating System :: Microsoft :: Windows',
+  'Topic :: Scientific/Engineering :: Physics',
+]
+
+requires-python = ">=3.11"
+
+dependencies = [
+  "mammos_entity >=0.2.1",
+  "mammos_units",
+  "numpy",
+  "pydantic",
+]
+
+[project.optional-dependencies]
+format = [
+  "ruff==0.8",
+]
+
+# pixi
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+mammos-analysis = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+format = { features = ["format"], solve-group = "default" }
+
+[tool.pixi.feature.format.tasks]
+lint = "ruff check"
+format = "ruff format"
+clean = "ruff clean && py3clean ."
+
+# ruff
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+indent-width = 4
+respect-gitignore = true
+exclude = []
+
+[tool.ruff.lint]
+# Ruff default rules, pydocstyle, and pycodestyle warnings
+select = ["D", "E4", "E7", "E9", "F", "W"]
+ignore = []
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.format]
+quote-style = "double"
+
