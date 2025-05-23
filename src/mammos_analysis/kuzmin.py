@@ -1,5 +1,7 @@
 """Postprocessing functions."""
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from functools import partial
 import mammos_entity
@@ -15,7 +17,17 @@ import warnings
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class KuzminResult:
-    """Result of Kuz'min magnetic properties estimation."""
+    """Result of Kuz'min magnetic properties estimation.
+
+    Args:
+        Ms: Temperature dependent Spontaneous Magnetisation (in A/m). Temperature is
+            expressed in K.
+        A: Temperature dependent Exchange Stiffness Constant (in J/m). Temperature is
+            expressed in K.
+        K1: Temperature dependent Uniaxial magnetocrystaling anisotropy (in A/m).
+            Temperature is expressed in K.
+
+    """
 
     Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
     A: Callable[[numbers.Real | u.Quantity], me.Entity]
@@ -26,7 +38,7 @@ def kuzmin_properties(
     Ms: mammos_entity.Entity,
     T: mammos_entity.Entity,
     K1_0: mammos_entity.Entity,
-) -> tuple(Callable[[u.Quantity], me.Entity]):
+) -> KuzminResult:
     """Evaluate micromagnetic intrinsic properties.
 
     If temperature T is given, evaluate them at that temperature.
