@@ -13,6 +13,7 @@ from mammos_analysis.hysteresis import (
     _check_monotonicity,
     extract_B_curve,
     extract_maximum_energy_product,
+    extrinsic_properties,
 )
 
 
@@ -306,3 +307,37 @@ def test_extract_maximum_energy_product_non_monotonic():
     # Test with non-monotonic data
     with pytest.raises(ValueError):
         extract_maximum_energy_product(h_values, b_values)
+
+
+def test_extrinsic_properties():
+    """Test the extraction of extrinsic properties from hysteresis data."""
+    # Create a simple linear hysteresis loop
+    h_values = np.linspace(-100, 100, 101)
+    m_values = 0.5 * h_values + 10
+
+    H = me.H(h_values * u.A / u.m)
+    M = me.Ms(m_values * u.A / u.m)
+
+    # Extract the extrinsic properties
+    ep = extrinsic_properties(H, M, demagnetisation_coefficient=1 / 3)
+
+    # Check if the extracted properties are correct
+    assert isinstance(ep.Hc, me.Entity)
+    assert isinstance(ep.Mr, me.Entity)
+    assert isinstance(ep.BHmax, me.Entity)
+
+    ep = extrinsic_properties(H.quantity, M.quantity, demagnetisation_coefficient=1 / 3)
+    assert isinstance(ep.Hc, me.Entity)
+    assert isinstance(ep.Mr, me.Entity)
+    assert isinstance(ep.BHmax, me.Entity)
+
+    ep = extrinsic_properties(H.value, M.value, demagnetisation_coefficient=1 / 3)
+    assert isinstance(ep.Hc, np.ndarray)
+    assert isinstance(ep.Mr, np.ndarray)
+    assert isinstance(ep.BHmax, np.ndarray)
+
+    ep = extrinsic_properties(H, M, demagnetisation_coefficient=None)
+    assert isinstance(ep.Hc, me.Entity)
+    assert isinstance(ep.Mr, me.Entity)
+    assert isinstance(ep.BHmax, me.Entity)
+    assert np.isnan(ep.BHmax.value)

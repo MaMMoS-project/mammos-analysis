@@ -262,8 +262,8 @@ def extract_maximum_energy_product(
 
 
 def extrinsic_properties(
-    H: mammos_entity.Entity,
-    M: mammos_entity.Entity,
+    H: mammos_entity.Entity | u.Quantity | np.ndarray,
+    M: mammos_entity.Entity | u.Quantity | np.ndarray,
     demagnetisation_coefficient: float | None = None,
 ) -> ExtrinsicProperties:
     """Evaluate extrinsic properties.
@@ -282,54 +282,15 @@ def extrinsic_properties(
     Returns:
         ExtrinsicProperties: _description_
     """
-    h = H
-    m = M
+    Hc = extract_coercive_field(H, M)
+    Mr = extract_remanent_magnetization(H, M)
 
-    sign_changes_m = np.where(np.diff(np.sign(m)))[0]
-    sign_changes_h = np.where(np.diff(np.sign(h)))[0]
-
-    if len(sign_changes_m) == 0:
-        raise ValueError("Failed to calculate Hc.")
-
-    if len(sign_changes_h) == 0:
-        raise ValueError("Failed to calculate Mr.")
-
-    if len(sign_changes_m) > 2:
-        raise ValueError(
-            "Multiple zero crossings in magnetization. "
-            "Please check the data for multiple sweeps."
-        )
-    if len(sign_changes_h) > 2:
-        raise ValueError(
-            "Multiple zero crossings in field. "
-            "Please check the data for multiple sweeps."
-        )
-
-    # Coercive field
-    index_before = sign_changes_m[0]
-    index_after = sign_changes_m[0] + 1
-    Hc = abs(
-        np.interp(
-            0,
-            [m[index_before], m[index_after]],
-            [h[index_before], h[index_after]],
-        )
-    )
-
-    # Remanent magnetization
-    index_before = sign_changes_h[0]
-    index_after = sign_changes_h[0] + 1
-    Mr = abs(
-        np.interp(
-            0,
-            [h[index_before], h[index_after]],
-            [m[index_before], m[index_after]],
-        )
-    )
     if demagnetisation_coefficient is None:
         BHmax = me.BHmax(np.nan)
     else:
-        raise NotImplementedError("BHmax evaluation is not yet implemented.")
+        _, BHmax = extract_maximum_energy_product(
+            H, extract_B_curve(H, M, demagnetisation_coefficient)
+        )
     return ExtrinsicProperties(
         me.Hc(Hc),
         me.Mr(Mr),
