@@ -22,7 +22,7 @@ class KuzminResult:
     K1: Callable[[numbers.Real | u.Quantity], me.Entity]
 
 
-def kuzmin(
+def kuzmin_properties(
     Ms: mammos_entity.Entity,
     T: mammos_entity.Entity,
     K1_0: mammos_entity.Entity,
