@@ -1,4 +1,10 @@
 """Hysteresis analysis and postprocessing functions."""
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import mammos_units
+    import mammos_entity
 
 import numbers
 import numpy as np
@@ -7,9 +13,7 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from scipy.optimize import minimize
 
-import mammos_entity
 import mammos_entity as me
-import mammos_units
 import mammos_units as u
 
 
@@ -154,7 +158,7 @@ def _check_unit(
     x: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
     unit: mammos_units.Unit,
     equivalencies: u.Equivalency | None = None,
-):
+) -> mammos_units.Quantity:
     """Check unit of a certain object.
 
     If the object `x` is a mammos_entity.Entity, the ontology label will be lost.
