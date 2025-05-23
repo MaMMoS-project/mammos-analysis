@@ -11,6 +11,7 @@ from mammos_analysis.hysteresis import (
     extract_coercive_field,
     extract_remanent_magnetization,
     _check_monotonicity,
+    extract_B_curve,
 )
 
 
@@ -174,3 +175,22 @@ def test_partial_Mr_errors():
 
     with pytest.raises(ValueError):
         extract_remanent_magnetization(H, M)
+
+
+def test_B_curve():
+    """Test the extraction of the B curve from hysteresis data."""
+    # Create a simple linear hysteresis loop
+    h_values = np.linspace(-100, 100, 101)
+    m_values = 0.5 * h_values + 10
+
+    H = me.H(h_values * u.A / u.m)
+    M = me.Ms(m_values * u.A / u.m)
+
+    # Extract the B curve
+    B_curve = extract_B_curve(H, M, demagnetisation_coefficient=1 / 3)
+
+    # Check if the B curve is an Entity
+    assert isinstance(B_curve, me.Entity)
+
+    # Check if the B curve has the expected shape
+    assert B_curve.shape == (101,)

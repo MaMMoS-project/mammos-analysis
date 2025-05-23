@@ -166,6 +166,38 @@ def extract_remanent_magnetization(
         return np.array(mr_val)
 
 
+def extract_B_curve(
+    H: me.Entity | u.Quantity | np.ndarray,
+    M: me.Entity | u.Quantity | np.ndarray,
+    demagnetisation_coefficient: float,
+) -> me.Entity:
+    """Extract BH curve from hysteresis loop.
+
+    Args:
+        H: External magnetic field. Can be Entity, Quantity, or numpy array.
+        M: Spontaneous magnetisation. Can be Entity, Quantity, or numpy array.
+        demagnetisation_coefficient: Demagnetisation coefficient necessary
+            to evaluate BHmax. If set to None, BHmax will also be None.
+
+    Returns:
+        B: Magnetic flux density as an Entity.
+
+    Raises:
+        ValueError: If the field does not cross the zero axis or calculation fails.
+    """
+    # Convert raw numpy arrays to quantities if needed
+    if isinstance(H, np.ndarray) and not isinstance(H, (me.Entity, u.Quantity)):
+        H = H * u.A / u.m
+    if isinstance(M, np.ndarray) and not isinstance(M, (me.Entity, u.Quantity)):
+        M = M * u.A / u.m
+
+    # Calculate internal field and flux density
+    H_internal = H - demagnetisation_coefficient * M
+    B_internal = (H_internal + M) * u.constants.mu0
+
+    return me.Entity("MagneticFluxDensity", value=B_internal)
+
+
 def extrinsic_properties(
     H: mammos_entity.Entity,
     M: mammos_entity.Entity,
