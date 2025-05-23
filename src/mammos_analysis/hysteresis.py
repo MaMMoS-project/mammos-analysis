@@ -142,7 +142,7 @@ def linearised_segment(H: mammos_entity.Entity, M: mammos_entity.Entity):
             raise ValueError("Failed Linearization")
     except Exception as e:
         print(f"[ERROR]: Something did not work: {e}.")
-        ValueError("Failed Linearization")
+        raise ValueError("Failed Linearization")
 
     try:
         margin = np.abs(df["M"] - line(df["H"], m_opt, b)) < mar
