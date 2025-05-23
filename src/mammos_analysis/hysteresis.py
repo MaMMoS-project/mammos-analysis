@@ -12,8 +12,6 @@ import mammos_entity as me
 import mammos_units
 import mammos_units as u
 
-u.set_enabled_equivalencies(u.magnetic_flux_field())
-
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class ExtrinsicProperties:
@@ -23,6 +21,7 @@ class ExtrinsicProperties:
         Hc: Coercive field.
         Mr: Remanent magnetization.
         BHmax: Energy product.
+
     """
 
     Hc: me.Entity
@@ -51,8 +50,8 @@ def extrinsic_properties(
     Returns:
         ExtrinsicProperties: _description_
     """
-    h = _check_unit(H, u.A / u.m).value
-    m = _check_unit(M, u.A / u.m).value
+    h = _check_unit(H, u.A / u.m, equivalencies=u.magnetic_flux_field()).value
+    m = _check_unit(M, u.A / u.m, equivalencies=u.magnetic_flux_field()).value
 
     sign_changes_m = np.where(np.diff(np.sign(m)))[0]
     sign_changes_h = np.where(np.diff(np.sign(h)))[0]
@@ -91,8 +90,8 @@ def extrinsic_properties(
 
 def linearised_segment(H: mammos_entity.Entity, M: mammos_entity.Entity):
     """Evaluate linearised segment."""
-    H = _check_unit(H, u.T)
-    M = _check_unit(M, u.T)
+    H = _check_unit(H, u.T, equivalencies=u.magnetic_flux_field())
+    M = _check_unit(M, u.T, equivalencies=u.magnetic_flux_field())
     df = pd.DataFrame({"H": H, "M": M})
 
     h = 0.5  # threshold_training
@@ -154,6 +153,7 @@ def linearised_segment(H: mammos_entity.Entity, M: mammos_entity.Entity):
 def _check_unit(
     x: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
     unit: mammos_units.Unit,
+    equivalencies: u.Equivalency | None = None,
 ):
     """Check unit of a certain object.
 
@@ -162,11 +162,12 @@ def _check_unit(
     Args:
         x: Object whose unit is to be checked.
         unit: Desired unit
+        equivalencies: Astropy equivalencies to be used.
 
     Returns:
         Object with the right unit.
 
     """
     if not isinstance(x, u.Quantity) or x.unit != unit:
-        x = x.to(unit)
+        x = x.to(unit, equivalencies=equivalencies)
     return x
