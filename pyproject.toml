@@ -40,6 +40,14 @@ format = [
   "ruff==0.8",
 ]
 
+[project.urls]
+Homepage = "https://MaMMoS-project.github.io"
+Documentation = "https://mammos-project.github.io/mammos"
+Repository = "https://github.com/MaMMoS-project/mammos-analysis"
+Issues = "https://github.com/MaMMoS-project/mammos-analysis/issues"
+Changelog = "https://mammos-project.github.io/mammos/changelog"
+
+
 # pixi
 [tool.pixi.project]
 channels = ["conda-forge"]
