@@ -185,6 +185,11 @@ def extract_B_curve(
     Raises:
         ValueError: If the field does not cross the zero axis or calculation fails.
     """
+    if isinstance(demagnetisation_coefficient, (int, float)):
+        if demagnetisation_coefficient < 0 or demagnetisation_coefficient > 1:
+            raise ValueError("Demagnetisation coefficient must be between 0 and 1.")
+    else:
+        raise ValueError("Demagnetisation coefficient must be a float or int.")
     # Convert raw numpy arrays to quantities if needed
     if isinstance(H, np.ndarray) and not isinstance(H, (me.Entity, u.Quantity)):
         H = H * u.A / u.m

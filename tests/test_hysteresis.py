@@ -194,3 +194,21 @@ def test_B_curve():
 
     # Check if the B curve has the expected shape
     assert B_curve.shape == (101,)
+
+
+def test_B_curve_errors():
+    """Test the extraction of the B curve from hysteresis data."""
+    # Create a simple linear hysteresis loop
+    h_values = np.linspace(-100, 100, 101)
+    m_values = 0.5 * h_values + 10
+
+    H = me.H(h_values * u.A / u.m)
+    M = me.Ms(m_values * u.A / u.m)
+
+    # Test with invalid demagnetisation coefficient
+    with pytest.raises(ValueError):
+        extract_B_curve(H, M, demagnetisation_coefficient=None)
+    with pytest.raises(ValueError):
+        extract_B_curve(H, M, demagnetisation_coefficient=1.5)
+    with pytest.raises(ValueError):
+        extract_B_curve(H, M, demagnetisation_coefficient=-1)
