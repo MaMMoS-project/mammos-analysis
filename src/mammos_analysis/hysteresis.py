@@ -72,7 +72,7 @@ def extract_coercive_field(
     is_quantity = isinstance(H, u.Quantity)
 
     # Extract values for computation
-    h_val = H.to(u.A / u.m).value if (is_entity or is_quantity) else H
+    h_val = H.value if (is_entity or is_quantity) else H
     m_val = M.value if (isinstance(M, (me.Entity, u.Quantity))) else M
 
     # Check monotonicity on the values
@@ -101,9 +101,69 @@ def extract_coercive_field(
     if is_entity:
         return me.Hc(hc_val)
     elif is_quantity:
-        return hc_val * u.A / u.m
+        return hc_val * H.unit
     else:
         return np.array(hc_val)
+
+
+def extract_remanent_magnetization(
+    H: me.Entity | u.Quantity | np.ndarray, M: me.Entity | u.Quantity | np.ndarray
+) -> me.Entity | u.Quantity | np.ndarray:
+    """Extract remanent magnetization from hysteresis loop.
+
+    Args:
+        H: External magnetic field. Can be Entity, Quantity, or numpy array.
+        M: Spontaneous magnetisation. Can be Entity, Quantity, or numpy array.
+
+    Returns:
+        Remanent magnetization in the same type as the input M.
+
+    Raises:
+        ValueError: If the field does not cross the zero axis or calculation fails.
+    """
+    # Determine input types
+    is_entity = isinstance(M, me.Entity)
+    is_quantity = isinstance(M, u.Quantity)
+
+    # Extract values for computation
+    h_val = H.value if (isinstance(H, (me.Entity, u.Quantity))) else H
+    m_val = M.value if (is_entity or is_quantity) else M
+
+    # Check monotonicity on the values
+    _check_monotonicity(h_val)
+
+    # Check if field crosses zero axis
+    if not ((h_val.min() <= 0) and (h_val.max() >= 0)):
+        raise ValueError(
+            "Field does not cross zero axis. Cannot calculate remanent magnetization."
+        )
+
+    # Interpolation only works on increasing data
+    idx = np.argsort(h_val)
+    h_sorted = h_val[idx]
+    m_sorted = m_val[idx]
+
+    mr_val = abs(
+        np.interp(
+            0.0,
+            h_sorted,
+            m_sorted,
+            left=np.nan,
+            right=np.nan,
+        )
+    )
+
+    # Check if remanent magnetization is valid
+    if np.isnan(mr_val):
+        raise ValueError("Failed to calculate remanent magnetization.")
+
+    # Return in the same type as input
+    if is_entity:
+        return me.Mr(mr_val)
+    elif is_quantity:
+        return mr_val * M.unit
+    else:
+        return np.array(mr_val)
 
 
 def extrinsic_properties(

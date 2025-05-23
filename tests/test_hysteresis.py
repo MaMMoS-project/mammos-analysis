@@ -7,7 +7,11 @@ import pytest
 
 import mammos_entity as me
 import mammos_units as u
-from mammos_analysis.hysteresis import extract_coercive_field, _check_monotonicity
+from mammos_analysis.hysteresis import (
+    extract_coercive_field,
+    extract_remanent_magnetization,
+    _check_monotonicity,
+)
 
 
 def linear_hysteresis_data(m, b):
@@ -126,3 +130,47 @@ def test_partial_Hc_errors():
 
     with pytest.raises(ValueError):
         extract_coercive_field(H, M)
+
+
+@pytest.mark.parametrize(
+    "m, b",
+    [
+        (0.5, 10),  # +ve slope, +ve y-intercept
+        (0.5, -10),  # +ve slope, -ve y-intercept
+        (-0.5, 10),  # -ve slope, +ve y-intercept
+        (-0.5, -10),  # -ve slope, -ve y-intercept
+        (0.5, 0),  # +ve slope, 0 y-intercept
+        (-0.5, 0),  # -ve slope, 0 y-intercept
+    ],
+)
+def test_linear_Mr_properties(m, b):
+    """Test the remanent magnetization extraction from linear hysteresis data."""
+    H, M, expected = linear_hysteresis_data(m, b)
+
+    # Test Entity
+    Mr = extract_remanent_magnetization(H, M)
+    assert isinstance(Mr, me.Entity)
+    assert u.isclose(Mr, expected["Mr"] * u.A / u.m)
+
+    # Test Quantity
+    Mr = extract_remanent_magnetization(H.quantity, M.quantity)
+    assert isinstance(Mr, u.Quantity)
+    assert u.isclose(Mr, expected["Mr"] * u.A / u.m)
+
+    # Test Numpy Array
+    Mr = extract_remanent_magnetization(H.value, M.value)
+    assert isinstance(Mr, np.ndarray)
+    assert np.isclose(Mr, expected["Mr"])
+
+
+def test_partial_Mr_errors():
+    """Test remanent magnetization extraction errors where field doesn't cross axis."""
+    # Create a partial hysteresis loop where field doesn't cross zero
+    h_values = np.linspace(1, 100, 21)  # All positive field values
+    m_values = np.linspace(80, 100, 21)  # Magnetization crosses zero but field doesn't
+
+    H = me.H(h_values * u.A / u.m)
+    M = me.Ms(m_values * u.A / u.m)
+
+    with pytest.raises(ValueError):
+        extract_remanent_magnetization(H, M)
