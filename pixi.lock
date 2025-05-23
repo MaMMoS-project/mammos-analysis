@@ -500,7 +500,7 @@ packages:
 - pypi: .
   name: mammos-analysis
   version: 0.1.0.dev202505221528
-  sha256: 9acda3b4a45c527ecd2178d822b78a9915e854ffd0f9aae206fa296ba29570c5
+  sha256: 040ce755bf92494781092fbe7cbc99f610dc84ad590a24b3026d6f73859f2051
   requires_dist:
   - mammos-entity>=0.2.1
   - mammos-units

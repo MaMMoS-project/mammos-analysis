@@ -15,7 +15,7 @@ authors = [
   { name = "Hans Fangohr" },
 ]
 license = "MIT"
-license_files = ["LICENSE"]
+license-files = ["LICENSE"]
 
 classifiers = [
   'Programming Language :: Python',
