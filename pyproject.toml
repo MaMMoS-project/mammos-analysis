@@ -14,7 +14,8 @@ authors = [
   { name = "Samuel Holt" },
   { name = "Hans Fangohr" },
 ]
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 
 classifiers = [
   'Programming Language :: Python',
@@ -39,6 +40,14 @@ dependencies = [
 format = [
   "ruff==0.8",
 ]
+
+[project.urls]
+Homepage = "https://MaMMoS-project.github.io"
+Documentation = "https://mammos-project.github.io/mammos"
+Repository = "https://github.com/MaMMoS-project/mammos-analysis"
+Issues = "https://github.com/MaMMoS-project/mammos-analysis/issues"
+Changelog = "https://mammos-project.github.io/mammos/changelog"
+
 
 # pixi
 [tool.pixi.project]
