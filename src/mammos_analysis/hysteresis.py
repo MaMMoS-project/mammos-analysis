@@ -1,12 +1,11 @@
 """Hysteresis analysis and postprocessing functions."""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import mammos_units
     import mammos_entity
 
-import numbers
 import numpy as np
 import pandas as pd
 from pydantic import ConfigDict
@@ -31,10 +30,10 @@ class ExtrinsicProperties:
     Hc: me.Entity
     Mr: me.Entity
     BHmax: me.Entity
-    
+
+
 def _check_monotonicity(arr: np.ndarray) -> None:
-    """
-    Check if the array is monotonically increasing or decreasing.
+    """Check if the array is monotonically increasing or decreasing.
 
     Args:
         arr: Input 1D numpy array.
@@ -45,46 +44,67 @@ def _check_monotonicity(arr: np.ndarray) -> None:
     # Check for NaN values
     if np.isnan(arr).any():
         raise ValueError("Array contains NaN values.")
-    
+
     # Arrays with 0 or 1 elements are considered monotonic
     if arr.size <= 1:
         return
-        
+
     # Check if array is monotonically increasing or decreasing
     if not (np.all(np.diff(arr) >= 0) or np.all(np.diff(arr) <= 0)):
         raise ValueError("Array is not monotonic.")
 
 
-
 def extract_coercive_field(
-    H: mammos_entity.Entity,
-    M: mammos_entity.Entity
-) -> me.Entity:
+    H: me.Entity | u.Quantity | np.ndarray, M: me.Entity | u.Quantity | np.ndarray
+) -> me.Entity | u.Quantity | np.ndarray:
     """Extract coercive field from hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Spontaneous magnetisation.
+        H: External magnetic field. Can be Entity, Quantity, or numpy array.
+        M: Spontaneous magnetisation. Can be Entity, Quantity, or numpy array.
 
     Returns:
-        Coercive field.
+        Coercive field in the same type as the input H.
 
     """
-    h = _check_unit(H, u.A / u.m, equivalencies=u.magnetic_flux_field()).value
-    m = _check_unit(M, u.A / u.m, equivalencies=u.magnetic_flux_field()).value
-    
-    # Interpolation only works on increasing data
-    idx = np.argsort(m)
-    h_sorted = h[idx]
-    m_sorted = m[idx]
+    # Determine input types
+    is_entity = isinstance(H, me.Entity)
+    is_quantity = isinstance(H, u.Quantity)
 
-    # Coercive field
-    Hc = abs(np.interp(
-        0.0,
-        m_sorted,
-        h_sorted,
-    ))
-    return me.Hc(Hc)
+    # Extract values for computation
+    h_val = H.to(u.A / u.m).value if (is_entity or is_quantity) else H
+    m_val = M.value if (isinstance(M, (me.Entity, u.Quantity))) else M
+
+    # Check monotonicity on the values
+    _check_monotonicity(h_val)
+
+    # Interpolation only works on increasing data
+    idx = np.argsort(m_val)
+    h_sorted = h_val[idx]
+    m_sorted = m_val[idx]
+
+    hc_val = abs(
+        np.interp(
+            0.0,
+            m_sorted,
+            h_sorted,
+            left=np.nan,
+            right=np.nan,
+        )
+    )
+
+    # Check if coercive field is valid
+    if np.isnan(hc_val):
+        raise ValueError("Failed to calculate coercive field.")
+
+    # Return in the same type as input
+    if is_entity:
+        return me.Hc(hc_val)
+    elif is_quantity:
+        return hc_val * u.A / u.m
+    else:
+        return np.array(hc_val)
+
 
 def extrinsic_properties(
     H: mammos_entity.Entity,
@@ -107,8 +127,8 @@ def extrinsic_properties(
     Returns:
         ExtrinsicProperties: _description_
     """
-    h = _check_unit(H, u.A / u.m, equivalencies=u.magnetic_flux_field()).value
-    m = _check_unit(M, u.A / u.m, equivalencies=u.magnetic_flux_field()).value
+    h = H
+    m = M
 
     sign_changes_m = np.where(np.diff(np.sign(m)))[0]
     sign_changes_h = np.where(np.diff(np.sign(h)))[0]
@@ -118,7 +138,7 @@ def extrinsic_properties(
 
     if len(sign_changes_h) == 0:
         raise ValueError("Failed to calculate Mr.")
-    
+
     if len(sign_changes_m) > 2:
         raise ValueError(
             "Multiple zero crossings in magnetization. "
@@ -129,24 +149,28 @@ def extrinsic_properties(
             "Multiple zero crossings in field. "
             "Please check the data for multiple sweeps."
         )
-        
+
     # Coercive field
     index_before = sign_changes_m[0]
     index_after = sign_changes_m[0] + 1
-    Hc = abs(np.interp(
-        0,
-        [m[index_before], m[index_after]],
-        [h[index_before], h[index_after]],
-    ))
+    Hc = abs(
+        np.interp(
+            0,
+            [m[index_before], m[index_after]],
+            [h[index_before], h[index_after]],
+        )
+    )
 
     # Remanent magnetization
     index_before = sign_changes_h[0]
     index_after = sign_changes_h[0] + 1
-    Mr = abs(np.interp(
-        0,
-        [h[index_before], h[index_after]],
-        [m[index_before], m[index_after]],
-    ))
+    Mr = abs(
+        np.interp(
+            0,
+            [h[index_before], h[index_after]],
+            [m[index_before], m[index_after]],
+        )
+    )
     if demagnetisation_coefficient is None:
         BHmax = me.BHmax(np.nan)
     else:
@@ -160,8 +184,6 @@ def extrinsic_properties(
 
 def linearised_segment(H: mammos_entity.Entity, M: mammos_entity.Entity):
     """Evaluate linearised segment."""
-    H = _check_unit(H, u.T, equivalencies=u.magnetic_flux_field())
-    M = _check_unit(M, u.T, equivalencies=u.magnetic_flux_field())
     df = pd.DataFrame({"H": H, "M": M})
 
     h = 0.5  # threshold_training
@@ -218,26 +240,3 @@ def linearised_segment(H: mammos_entity.Entity, M: mammos_entity.Entity):
         print(f"[ERROR]: Failed x_max_lin extraction: {e}.")
 
     return x_max_lin * u.A / u.m
-
-
-def _check_unit(
-    x: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
-    unit: mammos_units.Unit,
-    equivalencies: u.Equivalency | None = None,
-) -> mammos_units.Quantity:
-    """Check unit of a certain object.
-
-    If the object `x` is a mammos_entity.Entity, the ontology label will be lost.
-
-    Args:
-        x: Object whose unit is to be checked.
-        unit: Desired unit
-        equivalencies: Astropy equivalencies to be used.
-
-    Returns:
-        Object with the right unit.
-
-    """
-    if not isinstance(x, u.Quantity) or x.unit != unit:
-        x = x.to(unit, equivalencies=equivalencies)
-    return x
