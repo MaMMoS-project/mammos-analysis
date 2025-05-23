@@ -12,6 +12,7 @@ from mammos_analysis.hysteresis import (
     extract_remanent_magnetization,
     _check_monotonicity,
     extract_B_curve,
+    extract_maximum_energy_product,
 )
 
 
@@ -50,23 +51,37 @@ def test_check_monotonicity():
     # Test with a monotonic increasing array
     arr = np.array([1, 2, 3, 4, 5])
     _check_monotonicity(arr)
+    _check_monotonicity(arr, direction="increasing")
+    with pytest.raises(ValueError, match="Array is not monotonically decreasing."):
+        _check_monotonicity(arr, direction="decreasing")
 
     # Test with a monotonic decreasing array
     arr = np.array([5, 4, 3, 2, 1])
     _check_monotonicity(arr)
+    _check_monotonicity(arr, direction="decreasing")
+    with pytest.raises(ValueError, match="Array is not monotonically increasing."):
+        _check_monotonicity(arr, direction="increasing")
 
     # Test with a non-monotonic array
     arr = np.array([1, 2, 3, 2, 5])
     with pytest.raises(ValueError, match="Array is not monotonic."):
         _check_monotonicity(arr)
+    with pytest.raises(ValueError, match="Array is not monotonically increasing."):
+        _check_monotonicity(arr, direction="increasing")
+    with pytest.raises(ValueError, match="Array is not monotonically decreasing."):
+        _check_monotonicity(arr, direction="decreasing")
 
     # Test with constant array (should pass as monotonic)
     arr = np.array([3, 3, 3, 3])
     _check_monotonicity(arr)
+    _check_monotonicity(arr, direction="increasing")
+    _check_monotonicity(arr, direction="decreasing")
 
     # Test with single element array (should pass as monotonic)
     arr = np.array([42])
     _check_monotonicity(arr)
+    _check_monotonicity(arr, direction="increasing")
+    _check_monotonicity(arr, direction="decreasing")
 
     # Test with array containing NaN (should raise ValueError)
     arr = np.array([1, 2, np.nan, 4])
@@ -212,3 +227,82 @@ def test_B_curve_errors():
         extract_B_curve(H, M, demagnetisation_coefficient=1.5)
     with pytest.raises(ValueError):
         extract_B_curve(H, M, demagnetisation_coefficient=-1)
+
+
+@pytest.mark.parametrize(
+    "m, c",
+    [
+        (2.0, 5.0),  # positive slope, positive intercept
+        (1.5, -2.0),  # positive slope, negative intercept
+    ],
+)
+def test_extract_maximum_energy_product_linear(m, c):
+    """Tests the maximum energy product for a linear B(H) = m*H + c.
+
+    This uses the analytic derivation:
+        BH = H * (m*H + c) = mH^2 + cH
+        d(BH)/dH = 2mH + c = 0  ->  H_opt = -c/(2m)
+        BH_max = |m H_opt^2 + c H_opt| = |(-c^2)/(4m)| = c^2/(4|m|)
+
+    Args:
+        m (float): slope of the linear B(H) relationship.
+        c (float): intercept of the linear B(H) relationship.
+
+    Raises:
+        AssertionError: if the computed BHmax deviates from the analytic result.
+    """
+    H_opt = -c / (2 * m)
+    H = np.linspace(H_opt - 1.0, H_opt + 1.0, 500) * u.A / u.m
+    dh = H[1] - H[0]
+    B = (m * H.value + c) * u.T
+
+    # Analytic expected maximum energy product
+    expected_val = (c**2 / (4 * abs(m))) * (u.A / u.m * u.T)
+
+    h_opt_calc, bh = extract_maximum_energy_product(H, B)
+
+    assert isinstance(bh, me.Entity)
+
+    assert u.isclose(h_opt_calc, H_opt * u.A / u.m, atol=dh)
+    assert u.isclose(bh, expected_val)
+
+
+@pytest.mark.parametrize(
+    "m, c",
+    [
+        (-1.5, 2.0),  # negative slope, positive intercept
+        (-2.0, -5.0),  # negative slope, negative intercept
+    ],
+)
+def test_extract_maximum_energy_product_linear_error(m, c):
+    """Tests the maximum energy product for a linear B(H) = m*H + c.
+
+    This uses the analytic derivation:
+        BH = H * (m*H + c) = mH^2 + cH
+        d(BH)/dH = 2mH + c = 0  ->  H_opt = -c/(2m)
+        BH_max = |m H_opt^2 + c H_opt| = |(-c^2)/(4m)| = c^2/(4|m|)
+
+    Args:
+        m (float): slope of the linear B(H) relationship.
+        c (float): intercept of the linear B(H) relationship.
+
+    Raises:
+        AssertionError: if the computed BHmax deviates from the analytic result.
+    """
+    H_opt = -c / (2 * m)
+    H = np.linspace(H_opt - 1.0, H_opt + 1.0, 500) * u.A / u.m
+    B = (m * H.value + c) * u.T
+
+    with pytest.raises(ValueError):
+        extract_maximum_energy_product(H, B)
+
+
+def test_extract_maximum_energy_product_non_monotonic():
+    """Test the maximum energy product extraction from non-monotonic data."""
+    # Create a non-monotonic B(H) curve
+    h_values = np.linspace(-100, 100, 101)
+    b_values = np.concatenate((np.linspace(0, 50, 51), np.linspace(50, 0, 51)))
+
+    # Test with non-monotonic data
+    with pytest.raises(ValueError):
+        extract_maximum_energy_product(h_values, b_values)

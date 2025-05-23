@@ -32,11 +32,13 @@ class ExtrinsicProperties:
     BHmax: me.Entity
 
 
-def _check_monotonicity(arr: np.ndarray) -> None:
+def _check_monotonicity(arr: np.ndarray, direction=None) -> None:
     """Check if the array is monotonically increasing or decreasing.
 
     Args:
         arr: Input 1D numpy array.
+        direction: Direction to check for monotonicity.
+            Can be "increasing", "decreasing", or None (for any monotonicity).
 
     Raises:
         ValueError: If the array is not monotonic or contains NaN values.
@@ -50,8 +52,15 @@ def _check_monotonicity(arr: np.ndarray) -> None:
         return
 
     # Check if array is monotonically increasing or decreasing
-    if not (np.all(np.diff(arr) >= 0) or np.all(np.diff(arr) <= 0)):
-        raise ValueError("Array is not monotonic.")
+    if direction == "increasing":
+        if not np.all(np.diff(arr) >= 0):
+            raise ValueError("Array is not monotonically increasing.")
+    elif direction == "decreasing":
+        if not np.all(np.diff(arr) <= 0):
+            raise ValueError("Array is not monotonically decreasing.")
+    else:
+        if not (np.all(np.diff(arr) >= 0) or np.all(np.diff(arr) <= 0)):
+            raise ValueError("Array is not monotonic.")
 
 
 def extract_coercive_field(
@@ -201,6 +210,55 @@ def extract_B_curve(
     B_internal = (H_internal + M) * u.constants.mu0
 
     return me.Entity("MagneticFluxDensity", value=B_internal)
+
+
+def extract_maximum_energy_product(
+    H: me.Entity | u.Quantity | np.ndarray,
+    B: me.Entity | u.Quantity | np.ndarray,
+) -> me.Entity:
+    """Extract maximum energy product from hysteresis loop.
+
+    Args:
+        H: External magnetic field. Can be Entity, Quantity, or numpy array.
+        B: Magnetic flux density. Can be Entity, Quantity, or numpy array.
+
+    Returns:
+        BHmax: Maximum energy product as an Entity.
+
+    """
+    # Convert raw numpy arrays to quantities if needed
+    if isinstance(H, np.ndarray) and not isinstance(H, (me.Entity, u.Quantity)):
+        H = H * u.A / u.m
+    else:
+        H = H.to(u.A / u.m)
+    if isinstance(B, np.ndarray) and not isinstance(B, (me.Entity, u.Quantity)):
+        B = B * u.T
+    else:
+        B = B.to(u.T)
+
+    _check_monotonicity(H.value)
+    _check_monotonicity(B.value)
+
+    # check if H is increasing or decreasing
+    if np.all(np.diff(H.value) >= 0):
+        # H is increasing
+        H = H.value
+        B = B.value
+    else:
+        # H is decreasing
+        H = H.value[::-1]
+        B = B.value[::-1]
+
+    # if B is decreasing whilst H is increasing error
+    if np.all(np.diff(B) <= 0):
+        raise ValueError("B is decreasing while H is increasing, not sure what to do.")
+
+    # Calculate maximum energy product and the applied field it occurs at
+    BH = H * B
+    BHmax = abs(np.min(BH))
+    H_opt = H[np.argmin(BH)]
+
+    return me.H(H_opt), me.BHmax(BHmax)
 
 
 def extrinsic_properties(
