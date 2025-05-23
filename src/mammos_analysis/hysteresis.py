@@ -31,7 +31,60 @@ class ExtrinsicProperties:
     Hc: me.Entity
     Mr: me.Entity
     BHmax: me.Entity
+    
+def _check_monotonicity(arr: np.ndarray) -> None:
+    """
+    Check if the array is monotonically increasing or decreasing.
 
+    Args:
+        arr: Input 1D numpy array.
+
+    Raises:
+        ValueError: If the array is not monotonic or contains NaN values.
+    """
+    # Check for NaN values
+    if np.isnan(arr).any():
+        raise ValueError("Array contains NaN values.")
+    
+    # Arrays with 0 or 1 elements are considered monotonic
+    if arr.size <= 1:
+        return
+        
+    # Check if array is monotonically increasing or decreasing
+    if not (np.all(np.diff(arr) >= 0) or np.all(np.diff(arr) <= 0)):
+        raise ValueError("Array is not monotonic.")
+
+
+
+def extract_coercive_field(
+    H: mammos_entity.Entity,
+    M: mammos_entity.Entity
+) -> me.Entity:
+    """Extract coercive field from hysteresis loop.
+
+    Args:
+        H: External magnetic field.
+        M: Spontaneous magnetisation.
+
+    Returns:
+        Coercive field.
+
+    """
+    h = _check_unit(H, u.A / u.m, equivalencies=u.magnetic_flux_field()).value
+    m = _check_unit(M, u.A / u.m, equivalencies=u.magnetic_flux_field()).value
+    
+    # Interpolation only works on increasing data
+    idx = np.argsort(m)
+    h_sorted = h[idx]
+    m_sorted = m[idx]
+
+    # Coercive field
+    Hc = abs(np.interp(
+        0.0,
+        m_sorted,
+        h_sorted,
+    ))
+    return me.Hc(Hc)
 
 def extrinsic_properties(
     H: mammos_entity.Entity,
@@ -65,22 +118,35 @@ def extrinsic_properties(
 
     if len(sign_changes_h) == 0:
         raise ValueError("Failed to calculate Mr.")
-
+    
+    if len(sign_changes_m) > 2:
+        raise ValueError(
+            "Multiple zero crossings in magnetization. "
+            "Please check the data for multiple sweeps."
+        )
+    if len(sign_changes_h) > 2:
+        raise ValueError(
+            "Multiple zero crossings in field. "
+            "Please check the data for multiple sweeps."
+        )
+        
+    # Coercive field
     index_before = sign_changes_m[0]
     index_after = sign_changes_m[0] + 1
-    Hc = -1 * np.interp(
+    Hc = abs(np.interp(
         0,
         [m[index_before], m[index_after]],
         [h[index_before], h[index_after]],
-    )
+    ))
 
+    # Remanent magnetization
     index_before = sign_changes_h[0]
     index_after = sign_changes_h[0] + 1
-    Mr = np.interp(
+    Mr = abs(np.interp(
         0,
         [h[index_before], h[index_after]],
         [m[index_before], m[index_after]],
-    )
+    ))
     if demagnetisation_coefficient is None:
         BHmax = me.BHmax(np.nan)
     else:
