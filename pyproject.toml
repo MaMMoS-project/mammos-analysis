@@ -34,12 +34,9 @@ dependencies = [
   "mammos_units",
   "numpy",
   "pydantic",
+  "scipy",
 ]
 
-[project.optional-dependencies]
-format = [
-  "ruff==0.8",
-]
 
 [project.urls]
 Homepage = "https://MaMMoS-project.github.io"
@@ -59,12 +56,23 @@ mammos-analysis = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
-format = { features = ["format"], solve-group = "default" }
+dev = { features = [ "dev" ], solve-group = "default" }
 
-[tool.pixi.feature.format.tasks]
-lint = "ruff check"
-format = "ruff format"
-clean = "ruff clean && py3clean ."
+[tool.pixi.feature.dev.pypi-dependencies]
+jupyter = ">=1.1.1,<2"
+hatch = ">=1.14.1,<2"
+pytest = "*"
+pre-commit = "*"
+ipython = ">=9.2.0,<10"
+
+[tool.pixi.feature.dev.tasks]
+example = "jupyter-lab docs/example.ipynb"
+build = "hatch build"
+tests = "pytest -vv"
+install-precommits = "pre-commit install"
+run-precommits = { cmd = [ "pre-commit", "run", "--all-files" ], depends-on = [ "install-precommits" ] }
+tag-version = "git tag -s -a $(hatch version)"
+
 
 # ruff
 [tool.ruff]
@@ -83,7 +91,7 @@ ignore = []
 max-doc-length = 88
 
 [tool.ruff.lint.pydocstyle]
-convention = "pep257"
+convention = "google"
 
 [tool.ruff.format]
 quote-style = "double"
