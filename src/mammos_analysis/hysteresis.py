@@ -31,17 +31,22 @@ class ExtrinsicProperties:
 
 
 def extrinsic_properties(
-    H: mammos_entity.Entity, M: mammos_entity.Entity
+    H: mammos_entity.Entity,
+    M: mammos_entity.Entity,
+    demagnetisation_coefficient: float | None = None,
 ) -> ExtrinsicProperties:
     """Evaluate extrinsic properties.
 
     Args:
         H: External magnetic field.
         M: Spontaneous magnetisation.
+        demagnetisation_coefficient: Demagnetisation coefficient necessary
+            to evaluate BHmax. If set to None, BHmax will also be None.
 
     Raises:
         ValueError: Failed to calculate Hc.
         ValueError: Failed to calculate Mr.
+        NotImplementedError: BHmax evaluation is not yet implemented.
 
     Returns:
         ExtrinsicProperties: _description_
@@ -73,10 +78,14 @@ def extrinsic_properties(
         [h[index_before], h[index_after]],
         [m[index_before], m[index_after]],
     )
+    if demagnetisation_coefficient is None:
+        BHmax = me.BHmax(np.nan)
+    else:
+        raise NotImplementedError("BHmax evaluation is not yet implemented.")
     return ExtrinsicProperties(
         me.Hc(Hc),
         me.Mr(Mr),
-        me.BHmax(),
+        BHmax,
     )
 
 
