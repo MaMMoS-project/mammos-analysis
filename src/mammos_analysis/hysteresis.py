@@ -194,6 +194,9 @@ def extract_remanent_magnetization(
     # Check monotonicity on the values
     _check_monotonicity(h_val)
 
+    if np.isnan(m_val).any():
+        raise ValueError("Magnetization contains NaN values.")
+
     # Check if field crosses zero axis
     if not ((h_val.min() <= 0) and (h_val.max() >= 0)):
         raise ValueError(
