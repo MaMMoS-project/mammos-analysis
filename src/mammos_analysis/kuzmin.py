@@ -1,4 +1,4 @@
-"""Postprocessing functions."""
+"""Postprocessing functions for micromagnetic property estimation."""
 
 from __future__ import annotations
 
@@ -19,19 +19,19 @@ import warnings
 class KuzminResult:
     """Result of Kuz'min magnetic properties estimation.
 
-    Args:
-        Ms: Temperature dependent Spontaneous Magnetisation (in A/m). Temperature is
-            expressed in K.
-        A: Temperature dependent Exchange Stiffness Constant (in J/m). Temperature is
-            expressed in K.
-        K1: Temperature dependent Uniaxial magnetocrystaling anisotropy (in A/m).
-            Temperature is expressed in K.
-
+    Attributes:
+        Ms: Callable returning temperature-dependent spontaneous magnetization.
+        A: Callable returning temperature-dependent exchange stiffness.
+        K1: Callable returning temperature-dependent uniaxial anisotropy.
+        Tc: Curie temperature.
+        s: Kuzmin parameter.
     """
 
     Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
     A: Callable[[numbers.Real | u.Quantity], me.Entity]
     K1: Callable[[numbers.Real | u.Quantity], me.Entity]
+    Tc: me.Entity
+    s: u.Quantity
 
 
 def kuzmin_properties(
@@ -39,27 +39,28 @@ def kuzmin_properties(
     T: mammos_entity.Entity,
     K1_0: mammos_entity.Entity,
 ) -> KuzminResult:
-    """Evaluate micromagnetic intrinsic properties.
+    """Evaluate intrinsic micromagnetic properties using Kuz'min model.
 
-    If temperature T is given, evaluate them at that temperature.
-    Otherwise, the three outputs `Ms`, `A`, and `K1` are going to be
-    functions of temperature.
+    If temperature data T is provided, the intrinsic properties are
+    evaluated at those temperatures.
+    Otherwise, Ms, A, and K1 are callables of temperature.
 
     Args:
-        Ms: Spontaneous magnetisation data points.
-        T: Temperature data points.
-        K1_0: Magnetocrystalline anisotropy at temperature 0K.
+        Ms: Spontaneous magnetization data points as a me.Entity.
+        T: Temperature data points as a me.Entity.
+        K1_0: Magnetocrystalline anisotropy at 0 K as a me.Entity.
 
     Returns:
-        Intrinsic micromagnetic properties as functions of temperature.
+        KuzminResult with temperature-dependent or evaluated values, Curie temperature,
+        and exponent.
 
     Raises:
-        ValueError: Wrong unit.
-
+        ValueError: If K1_0 has incorrect unit.
     """
     if not isinstance(K1_0, u.Quantity) or K1_0.unit != u.J / u.m**3:
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
+    # TODO: fix logic - assumption is that Ms is given at T=0K
     Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
     M_kuzmin = partial(kuzmin_formula, Ms_0.value)
 
@@ -89,32 +90,45 @@ def kuzmin_properties(
         _Ms_function_of_temperature(Ms_0.value, T_c.value, s),
         _A_function_of_temperature(A_0, Ms_0.value, T_c.value, s),
         _K1_function_of_temperature(K1_0, Ms_0.value, T_c.value, s),
+        me.Entity("ThermodynamicTemperature", value=T_c, unit="K"),
+        s * u.dimensionless_unscaled,
     )
 
 
 def kuzmin_formula(Ms_0, T_c, s, T):
-    """General Kuz'min formula.
+    """Compute spontaneous magnetization at temperature T using Kuz'min formula.
 
-    TODO: citation
+    TODO: add citation
 
     Args:
-        Ms_0: Spontaneous magnetisation at zero Kelvin temperature.
+        Ms_0: Spontaneous magnetization at 0 K.
         T_c: Curie temperature.
-        s: Factor appearing in Kuz'min formula, to be optimised based on data.
-        T: Temperature at which the magnetisation is evaluated.
+        s: Kuzmin exponent parameter.
+        T: Temperature(s) for evaluation.
 
     Returns:
-        Spontaneous magnetisation at temperature T.
-
+        Spontaneous magnetization at temperature T as an array.
     """
-    return np.where(
-        T < T_c,
-        Ms_0 * ((1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5) ** (1.0 / 3)),
-        0.0,
-    )
+    base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
+    out = np.zeros_like(T)
+    # only compute base**(1/3) where T < T_c; elsewhere leave as zero
+    np.power(base, 1 / 3, out=out, where=(T < T_c))
+    return Ms_0 * out
 
 
 class _A_function_of_temperature:
+    """Callable for temperature-dependent exchange stiffness A(T).
+
+    Attributes:
+        A_0: Exchange stiffness at 0 K.
+        Ms_0: Spontaneous magnetization at 0 K.
+        T_c: Curie temperature.
+        s: Kuzmin exponent parameter.
+
+    Call:
+        Returns A(T) as a me.Entity for given temperature T.
+    """
+
     def __init__(self, A_0, Ms_0, T_c, s):
         self.A_0 = A_0
         self.Ms_0 = Ms_0
@@ -133,6 +147,18 @@ class _A_function_of_temperature:
 
 
 class _K1_function_of_temperature:
+    """Callable for temperature-dependent uniaxial anisotropy K1(T).
+
+    Attributes:
+        K1_0: Anisotropy constant at 0 K.
+        Ms_0: Spontaneous magnetization at 0 K.
+        T_c: Curie temperature.
+        s: Kuzmin exponent parameter.
+
+    Call:
+        Returns K1(T) as a me.Entity for given temperature T.
+    """
+
     def __init__(self, K1_0, Ms_0, T_c, s):
         self.K1_0 = K1_0
         self.Ms_0 = Ms_0
@@ -152,6 +178,17 @@ class _K1_function_of_temperature:
 
 
 class _Ms_function_of_temperature:
+    """Callable for temperature-dependent spontaneous magnetization Ms(T).
+
+    Attributes:
+        Ms_0: Spontaneous magnetization at 0 K.
+        T_c: Curie temperature.
+        s: Kuzmin exponent parameter.
+
+    Call:
+        Returns Ms(T) as a me.Entity for given temperature T.
+    """
+
     def __init__(self, Ms_0, T_c, s):
         self.Ms_0 = Ms_0
         self.T_c = T_c
