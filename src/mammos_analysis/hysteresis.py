@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
+import numbers
 
 if TYPE_CHECKING:
     import mammos_entity
@@ -84,9 +85,42 @@ def _check_monotonicity(arr: np.ndarray, direction=None) -> None:
             raise ValueError("Array is not monotonic.")
 
 
+def _unit_processing(
+    i: me.Entity | u.Quantity | np.ndarray,
+    unit: u.Unit,
+) -> np.ndarray:
+    """Process input data and convert to consistent units for calculations.
+
+    Handles various input types by extracting numerical values with consistent units:
+    - For Entity/Quantity objects: Converts to the target unit and extracts value
+    - For arrays/numbers: Assumes they're already in correct units
+
+    Args:
+        i: Input data to process
+        unit: Target unit for conversion
+
+    Returns:
+        Numerical array in the specified unit
+
+    Raises:
+        ValueError: If input has incompatible units
+        TypeError: If input is not an Entity, Quantity, numpy array, or number
+    """
+    if isinstance(i, (me.Entity, u.Quantity)) and not unit.is_equivalent(i.unit):
+        raise ValueError(f"Input unit {i.unit} is not equivalent to {unit}.")
+    if isinstance(i, (me.Entity, u.Quantity)):
+        return i.to(unit).value
+    elif isinstance(i, (np.ndarray, numbers.Number)):
+        return i
+    else:
+        raise TypeError(
+            f"Input must be an Entity, Quantity, or numpy array, not {type(i)}."
+        )
+
+
 def extract_coercive_field(
     H: me.Entity | u.Quantity | np.ndarray, M: me.Entity | u.Quantity | np.ndarray
-) -> me.Entity | u.Quantity | np.ndarray:
+) -> me.Entity:
     """Extract coercive field from hysteresis loop.
 
     Args:
@@ -97,13 +131,9 @@ def extract_coercive_field(
         Coercive field in the same type as the input H.
 
     """
-    # Determine input types
-    is_entity = isinstance(H, me.Entity)
-    is_quantity = isinstance(H, u.Quantity)
-
     # Extract values for computation
-    h_val = H.value if (is_entity or is_quantity) else H
-    m_val = M.value if (isinstance(M, (me.Entity, u.Quantity))) else M
+    h_val = _unit_processing(H, u.A / u.m)
+    m_val = _unit_processing(M, u.A / u.m)
 
     # Check monotonicity on the values
     _check_monotonicity(h_val)
@@ -127,18 +157,12 @@ def extract_coercive_field(
     if np.isnan(hc_val):
         raise ValueError("Failed to calculate coercive field.")
 
-    # Return in the same type as input
-    if is_entity:
-        return me.Hc(hc_val)
-    elif is_quantity:
-        return hc_val * H.unit
-    else:
-        return np.array(hc_val)
+    return me.Hc(hc_val)
 
 
 def extract_remanent_magnetization(
     H: me.Entity | u.Quantity | np.ndarray, M: me.Entity | u.Quantity | np.ndarray
-) -> me.Entity | u.Quantity | np.ndarray:
+) -> me.Entity:
     """Extract remanent magnetization from hysteresis loop.
 
     Args:
@@ -152,12 +176,8 @@ def extract_remanent_magnetization(
         ValueError: If the field does not cross the zero axis or calculation fails.
     """
     # Determine input types
-    is_entity = isinstance(M, me.Entity)
-    is_quantity = isinstance(M, u.Quantity)
-
-    # Extract values for computation
-    h_val = H.value if (isinstance(H, (me.Entity, u.Quantity))) else H
-    m_val = M.value if (is_entity or is_quantity) else M
+    h_val = _unit_processing(H, u.A / u.m)
+    m_val = _unit_processing(M, u.A / u.m)
 
     # Check monotonicity on the values
     _check_monotonicity(h_val)
@@ -188,12 +208,7 @@ def extract_remanent_magnetization(
         raise ValueError("Failed to calculate remanent magnetization.")
 
     # Return in the same type as input
-    if is_entity:
-        return me.Mr(mr_val)
-    elif is_quantity:
-        return mr_val * M.unit
-    else:
-        return np.array(mr_val)
+    return me.Mr(mr_val)
 
 
 def extract_B_curve(
@@ -220,11 +235,9 @@ def extract_B_curve(
             raise ValueError("Demagnetisation coefficient must be between 0 and 1.")
     else:
         raise ValueError("Demagnetisation coefficient must be a float or int.")
-    # Convert raw numpy arrays to quantities if needed
-    if isinstance(H, np.ndarray) and not isinstance(H, (me.Entity, u.Quantity)):
-        H = H * u.A / u.m
-    if isinstance(M, np.ndarray) and not isinstance(M, (me.Entity, u.Quantity)):
-        M = M * u.A / u.m
+
+    H = _unit_processing(H, u.A / u.m) * u.A / u.m
+    M = _unit_processing(M, u.A / u.m) * u.A / u.m
 
     # Calculate internal field and flux density
     H_internal = H - demagnetisation_coefficient * M
@@ -247,15 +260,8 @@ def extract_maximum_energy_product(
         MaximumEnergyProductProperties
 
     """
-    # Convert raw numpy arrays to quantities if needed
-    if isinstance(H, np.ndarray) and not isinstance(H, (me.Entity, u.Quantity)):
-        H = H * u.A / u.m
-    else:
-        H = H.to(u.A / u.m)
-    if isinstance(B, np.ndarray) and not isinstance(B, (me.Entity, u.Quantity)):
-        B = B * u.T
-    else:
-        B = B.to(u.T)
+    H = _unit_processing(H, u.A / u.m) * u.A / u.m
+    B = _unit_processing(B, u.T) * u.T
 
     _check_monotonicity(H.value)
     _check_monotonicity(B.value)

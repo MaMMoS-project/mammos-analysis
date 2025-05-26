@@ -15,6 +15,7 @@ from mammos_analysis.hysteresis import (
     extract_maximum_energy_product,
     extrinsic_properties,
     MaximumEnergyProductProperties,
+    _unit_processing,
 )
 
 
@@ -90,6 +91,10 @@ def test_check_monotonicity():
     with pytest.raises(ValueError):
         _check_monotonicity(arr)
 
+    arr = np.array([1, 2, float("nan"), 4])
+    with pytest.raises(ValueError):
+        _check_monotonicity(arr)
+
 
 @pytest.mark.parametrize(
     "m, b",
@@ -113,13 +118,13 @@ def test_linear_Hc_properties(m, b):
 
     # Test Quantity
     Hc = extract_coercive_field(H.quantity, M.quantity)
-    assert isinstance(Hc, u.Quantity)
+    assert isinstance(Hc, me.Entity)
     assert u.isclose(Hc, expected["Hc"] * u.A / u.m)
 
     # Test Numpy Array
     Hc = extract_coercive_field(H.value, M.value)
-    assert isinstance(Hc, np.ndarray)
-    assert np.isclose(Hc, expected["Hc"])
+    assert isinstance(Hc, me.Entity)
+    assert u.isclose(Hc, expected["Hc"] * u.A / u.m)
 
 
 @pytest.mark.parametrize(
@@ -172,13 +177,13 @@ def test_linear_Mr_properties(m, b):
 
     # Test Quantity
     Mr = extract_remanent_magnetization(H.quantity, M.quantity)
-    assert isinstance(Mr, u.Quantity)
+    assert isinstance(Mr, me.Entity)
     assert u.isclose(Mr, expected["Mr"] * u.A / u.m)
 
     # Test Numpy Array
     Mr = extract_remanent_magnetization(H.value, M.value)
-    assert isinstance(Mr, np.ndarray)
-    assert np.isclose(Mr, expected["Mr"])
+    assert isinstance(Mr, me.Entity)
+    assert u.isclose(Mr, expected["Mr"] * u.A / u.m)
 
 
 def test_partial_Mr_errors():
@@ -279,7 +284,9 @@ def test_extract_maximum_energy_product_linear(m, c):
         result.Bd, expected_val_Bd, atol=(m * dh.value) * u.T
     )  # B tolerance related to H discretization
     assert u.isclose(
-        result.BHmax, expected_val_BHmax, atol=0.1 * (u.A / u.m * u.T)
+        result.BHmax,
+        expected_val_BHmax,
+        atol=(2 * m * H_opt + c) * dh.value * (u.A / u.m * u.T),
     )  # BHmax tolerance related to discretization
 
 
@@ -347,12 +354,51 @@ def test_extrinsic_properties():
     assert isinstance(ep.BHmax, me.Entity)
 
     ep = extrinsic_properties(H.value, M.value, demagnetisation_coefficient=1 / 3)
-    assert isinstance(ep.Hc, np.ndarray)
-    assert isinstance(ep.Mr, np.ndarray)
-    assert isinstance(ep.BHmax, np.ndarray)
+    assert isinstance(ep.Hc, me.Entity)
+    assert isinstance(ep.Mr, me.Entity)
+    assert isinstance(ep.BHmax, me.Entity)
 
     ep = extrinsic_properties(H, M, demagnetisation_coefficient=None)
     assert isinstance(ep.Hc, me.Entity)
     assert isinstance(ep.Mr, me.Entity)
     assert isinstance(ep.BHmax, me.Entity)
     assert np.isnan(ep.BHmax.value)
+
+
+def test_unit_processing():
+    """Test the unit processing."""
+    # Test correct unit processing with Entity
+    assert np.isclose(_unit_processing(me.H(1 * u.A / u.m), u.A / u.m), 1)
+    assert np.isclose(_unit_processing(me.H(1 * u.kA / u.m), u.A / u.m), 1000)
+
+    # Test correct unit processing with Quantity
+    assert np.isclose(_unit_processing(1 * u.A / u.m, u.A / u.m), 1)
+    assert np.isclose(_unit_processing(1 * u.kA / u.m, u.A / u.m), 1000)
+
+    # Test correct unit processing with Numpy Array
+    assert np.isclose(_unit_processing(1, u.A / u.m), 1)
+    assert np.isclose(_unit_processing(1000, u.A / u.m), 1000)
+
+    # Test with arrays of each type
+    assert np.allclose(
+        _unit_processing(me.H(np.array([1, 2, 3]) * u.A / u.m), u.A / u.m), [1, 2, 3]
+    )
+    assert np.allclose(
+        _unit_processing(me.H(np.array([1, 2, 3]) * u.kA / u.m), u.A / u.m),
+        [1000, 2000, 3000],
+    )
+    assert np.allclose(
+        _unit_processing(np.array([1, 2, 3]) * u.A / u.m, u.A / u.m), [1, 2, 3]
+    )
+    assert np.allclose(
+        _unit_processing(np.array([1, 2, 3]) * u.kA / u.m, u.A / u.m),
+        [1000, 2000, 3000],
+    )
+
+    # Test with invalid inputs
+    with pytest.raises(TypeError):
+        _unit_processing("invalid", u.A / u.m)
+    with pytest.raises(ValueError):
+        _unit_processing(1 * u.T, u.A / u.m)
+    with pytest.raises(ValueError):
+        _unit_processing(np.array([1, 2, 3]) * u.m, u.A / u.m)
