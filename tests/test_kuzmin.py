@@ -66,7 +66,7 @@ def test_Ms_function_of_temperature():
     Tq = 100.0 * u.K
     m_q = ms_func(Tq)
     assert u.allclose(m_q, m)
-    # enitity input
+    # entity input
     T_entity = me.Entity("ThermodynamicTemperature", value=100, unit="K")
     m_entity = ms_func(T_entity)
     assert u.allclose(m_entity, m)
