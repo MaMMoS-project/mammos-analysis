@@ -2,17 +2,27 @@
 
 from __future__ import annotations
 
+import numbers
+import warnings
 from collections.abc import Callable
 from functools import partial
+from typing import TYPE_CHECKING
+
 import mammos_entity
 import mammos_entity as me
 import mammos_units as u
-import numbers
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.figure import figaspect
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from scipy import optimize
-import warnings
+
+if TYPE_CHECKING:
+    import mammos_entity
+    import mammos_units
+    import matplotlib
+    import numpy
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
@@ -32,6 +42,18 @@ class KuzminResult:
     K1: Callable[[numbers.Real | u.Quantity], me.Entity]
     Tc: me.Entity
     s: u.Quantity
+
+    def plot(
+        self,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray,
+    ) -> (matplotlib.figure.Figure, matplotlib.axes.Axes):
+        """Create a plot for Ms, A, and K1 as a function of temperature."""
+        w, h = figaspect(1 / 3)
+        fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(w, h))
+        self.Ms.plot(T, ax[0])
+        self.A.plot(T, ax[1])
+        self.K1.plot(T, ax[2])
+        return fig, ax
 
 
 def kuzmin_properties(
@@ -145,6 +167,20 @@ class _A_function_of_temperature:
             self.A_0 * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 2
         )
 
+    def plot(
+        self,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray,
+        axes: matplotlib.axes.Axes | None = None,
+    ) -> matplotlib.axes.Axes:
+        """Plot A as a function of temperature using Kuzmin formula."""
+        if not axes:
+            _, axes = plt.subplots()
+        axes.plot(T, self(T))
+        axes.set_xlabel("T")
+        axes.set_ylabel("A")
+        axes.grid()
+        return axes
+
 
 class _K1_function_of_temperature:
     """Callable for temperature-dependent uniaxial anisotropy K1(T).
@@ -176,6 +212,20 @@ class _K1_function_of_temperature:
             * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 3
         )
 
+    def plot(
+        self,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray,
+        axes: matplotlib.axes.Axes | None = None,
+    ) -> matplotlib.axes.Axes:
+        """Plot K1 as a function of temperature using Kuzmin formula."""
+        if not axes:
+            _, axes = plt.subplots()
+        axes.plot(T, self(T))
+        axes.set_xlabel("T")
+        axes.set_ylabel("K1")
+        axes.grid()
+        return axes
+
 
 class _Ms_function_of_temperature:
     """Callable for temperature-dependent spontaneous magnetization Ms(T).
@@ -201,3 +251,17 @@ class _Ms_function_of_temperature:
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
         return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T))
+
+    def plot(
+        self,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray,
+        axes: matplotlib.axes.Axes | None = None,
+    ) -> matplotlib.axes.Axes:
+        """Plot Ms as a function of temperature using Kuzmin formula."""
+        if not axes:
+            _, axes = plt.subplots()
+        axes.plot(T, self(T))
+        axes.set_xlabel("T")
+        axes.set_ylabel("Ms")
+        axes.grid()
+        return axes

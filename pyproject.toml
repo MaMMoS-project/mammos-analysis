@@ -35,6 +35,7 @@ dependencies = [
   "numpy",
   "pydantic",
   "scipy",
+  "matplotlib",
 ]
 
 
