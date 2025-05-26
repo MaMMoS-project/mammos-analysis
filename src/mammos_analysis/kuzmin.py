@@ -32,6 +32,8 @@ class KuzminResult:
     Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
     A: Callable[[numbers.Real | u.Quantity], me.Entity]
     K1: Callable[[numbers.Real | u.Quantity], me.Entity]
+    Tc: me.Entity
+    s: float
 
 
 def kuzmin_properties(
@@ -60,6 +62,7 @@ def kuzmin_properties(
     if not isinstance(K1_0, u.Quantity) or K1_0.unit != u.J / u.m**3:
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
+    # TODO: fix logic - assumption is that Ms is given at T=0K
     Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
     M_kuzmin = partial(kuzmin_formula, Ms_0.value)
 
@@ -89,6 +92,8 @@ def kuzmin_properties(
         _Ms_function_of_temperature(Ms_0.value, T_c.value, s),
         _A_function_of_temperature(A_0, Ms_0.value, T_c.value, s),
         _K1_function_of_temperature(K1_0, Ms_0.value, T_c.value, s),
+        me.Entity("ThermodynamicTemperature", value=T_c, unit="K"),
+        s,
     )
 
 
