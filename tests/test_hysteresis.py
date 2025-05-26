@@ -14,6 +14,7 @@ from mammos_analysis.hysteresis import (
     extract_B_curve,
     extract_maximum_energy_product,
     extrinsic_properties,
+    MaximumEnergyProductProperties,
 )
 
 
@@ -252,20 +253,34 @@ def test_extract_maximum_energy_product_linear(m, c):
     Raises:
         AssertionError: if the computed BHmax deviates from the analytic result.
     """
+
+    def linear_B(H):
+        """Linear B(H) function."""
+        return m * H + c
+
     H_opt = -c / (2 * m)
     H = np.linspace(H_opt - 1.0, H_opt + 1.0, 500) * u.A / u.m
     dh = H[1] - H[0]
-    B = (m * H.value + c) * u.T
+    B = linear_B(H.value) * u.T
 
     # Analytic expected maximum energy product
-    expected_val = (c**2 / (4 * abs(m))) * (u.A / u.m * u.T)
+    expected_val_BHmax = (c**2 / (4 * abs(m))) * (u.A / u.m * u.T)
+    expected_val_Bd = linear_B(H_opt) * u.T
 
-    h_opt_calc, bh = extract_maximum_energy_product(H, B)
+    result = extract_maximum_energy_product(H, B)
 
-    assert isinstance(bh, me.Entity)
+    assert isinstance(result, MaximumEnergyProductProperties)
+    assert isinstance(result.Hd, me.Entity)
+    assert isinstance(result.Bd, me.Entity)
+    assert isinstance(result.BHmax, me.Entity)
 
-    assert u.isclose(h_opt_calc, H_opt * u.A / u.m, atol=dh)
-    assert u.isclose(bh, expected_val)
+    assert u.isclose(result.Hd, H_opt * u.A / u.m, atol=dh)
+    assert u.isclose(
+        result.Bd, expected_val_Bd, atol=(m * dh.value) * u.T
+    )  # B tolerance related to H discretization
+    assert u.isclose(
+        result.BHmax, expected_val_BHmax, atol=0.1 * (u.A / u.m * u.T)
+    )  # BHmax tolerance related to discretization
 
 
 @pytest.mark.parametrize(

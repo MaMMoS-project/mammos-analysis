@@ -32,6 +32,27 @@ class ExtrinsicProperties:
     BHmax: me.Entity
 
 
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
+class MaximumEnergyProductProperties:
+    """Properties related to the maximum energy product (BHmax) in a hysteresis loop.
+
+    This class contains the parameters associated with the maximum energy product:
+    - Hd: The magnetic field strength at which the maximum energy product occurs.
+    - Bd: The magnetic flux density corresponding to Hd.
+    - BHmax: The maximum energy product, representing the peak value of the product of
+      magnetic field strength (H) and flux density (B).
+
+    Attributes:
+        Hd: Field strength at BHmax.
+        Bd: Flux density at BHmax.
+        BHmax: Maximum energy product.
+    """
+
+    Hd: me.Entity
+    Bd: me.Entity
+    BHmax: me.Entity
+
+
 def _check_monotonicity(arr: np.ndarray, direction=None) -> None:
     """Check if the array is monotonically increasing or decreasing.
 
@@ -223,7 +244,7 @@ def extract_maximum_energy_product(
         B: Magnetic flux density. Can be Entity, Quantity, or numpy array.
 
     Returns:
-        BHmax: Maximum energy product as an Entity.
+        MaximumEnergyProductProperties
 
     """
     # Convert raw numpy arrays to quantities if needed
@@ -256,9 +277,14 @@ def extract_maximum_energy_product(
     # Calculate maximum energy product and the applied field it occurs at
     BH = H * B
     BHmax = abs(np.min(BH))
-    H_opt = H[np.argmin(BH)]
+    H_d = H[np.argmin(BH)]
 
-    return me.H(H_opt), me.BHmax(BHmax)
+    # Calculate Bd, the flux density at the maximum energy product
+    B_d = B[np.argmin(BH)]
+
+    return MaximumEnergyProductProperties(
+        me.H(H_d), me.Entity("MagneticFluxDensity", value=B_d), me.BHmax(BHmax)
+    )
 
 
 def extrinsic_properties(
@@ -288,9 +314,10 @@ def extrinsic_properties(
     if demagnetisation_coefficient is None:
         BHmax = me.BHmax(np.nan)
     else:
-        _, BHmax = extract_maximum_energy_product(
+        result = extract_maximum_energy_product(
             H, extract_B_curve(H, M, demagnetisation_coefficient)
         )
+        BHmax = result.BHmax
     return ExtrinsicProperties(
         me.Hc(Hc),
         me.Mr(Mr),
