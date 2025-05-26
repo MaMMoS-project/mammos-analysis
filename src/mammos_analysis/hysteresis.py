@@ -87,8 +87,8 @@ def _check_monotonicity(arr: np.ndarray, direction=None) -> None:
 
 
 def _unit_processing(
-    i: me.Entity | u.Quantity | np.ndarray,
-    unit: u.Unit,
+    i: mammos_entity.Entity | mammos_units.Quantity | np.ndarray | numbers.Number,
+    unit: mammos_units.Unit,
     return_quantity: bool = True,
 ) -> np.ndarray:
     """Process input data and convert to consistent units for calculations.
