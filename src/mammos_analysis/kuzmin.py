@@ -107,11 +107,11 @@ def kuzmin_formula(Ms_0, T_c, s, T):
         Spontaneous magnetisation at temperature T.
 
     """
-    return np.where(
-        T < T_c,
-        Ms_0 * ((1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5) ** (1.0 / 3)),
-        0.0,
-    )
+    base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
+    out = np.zeros_like(T)
+    # only compute base**(1/3) where T < T_c; elsewhere leave as zero
+    np.power(base, 1 / 3, out=out, where=(T < T_c))
+    return Ms_0 * out
 
 
 class _A_function_of_temperature:
