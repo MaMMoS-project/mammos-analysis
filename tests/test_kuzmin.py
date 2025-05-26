@@ -135,4 +135,4 @@ def test_kuzmin_properties():
     assert isinstance(result.A, _A_function_of_temperature)
     assert isinstance(result.K1, _K1_function_of_temperature)
     assert isinstance(result.Tc, me.Entity)
-    assert isinstance(result.s, float)
+    assert isinstance(result.s, u.Quantity)

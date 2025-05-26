@@ -33,7 +33,7 @@ class KuzminResult:
     A: Callable[[numbers.Real | u.Quantity], me.Entity]
     K1: Callable[[numbers.Real | u.Quantity], me.Entity]
     Tc: me.Entity
-    s: float
+    s: u.Quantity
 
 
 def kuzmin_properties(
@@ -93,7 +93,7 @@ def kuzmin_properties(
         _A_function_of_temperature(A_0, Ms_0.value, T_c.value, s),
         _K1_function_of_temperature(K1_0, Ms_0.value, T_c.value, s),
         me.Entity("ThermodynamicTemperature", value=T_c, unit="K"),
-        s,
+        s * u.dimensionless_unscaled,
     )
 
 
