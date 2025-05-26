@@ -6,6 +6,7 @@ import numbers
 
 if TYPE_CHECKING:
     import mammos_entity
+    import mammos_units
 
 import numpy as np
 import pandas as pd
@@ -220,8 +221,8 @@ def extract_remanent_magnetization(
 
 
 def extract_B_curve(
-    H: me.Entity | u.Quantity | np.ndarray,
-    M: me.Entity | u.Quantity | np.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
+    M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
     demagnetisation_coefficient: float,
 ) -> me.Entity:
     """Extract BH curve from hysteresis loop.
@@ -255,8 +256,8 @@ def extract_B_curve(
 
 
 def extract_maximum_energy_product(
-    H: me.Entity | u.Quantity | np.ndarray,
-    B: me.Entity | u.Quantity | np.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
+    B: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
 ) -> me.Entity:
     """Extract maximum energy product from hysteresis loop.
 
@@ -302,8 +303,8 @@ def extract_maximum_energy_product(
 
 
 def extrinsic_properties(
-    H: mammos_entity.Entity | u.Quantity | np.ndarray,
-    M: mammos_entity.Entity | u.Quantity | np.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
+    M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
     demagnetisation_coefficient: float | None = None,
 ) -> ExtrinsicProperties:
     """Evaluate extrinsic properties.
