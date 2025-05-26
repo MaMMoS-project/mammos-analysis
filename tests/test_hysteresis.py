@@ -16,6 +16,8 @@ from mammos_analysis.hysteresis import (
     extrinsic_properties,
     MaximumEnergyProductProperties,
     _unit_processing,
+    find_linear_segment,
+    LinearSegmentProperties,
 )
 
 
@@ -467,3 +469,36 @@ def test_unit_processing():
         _unit_processing(1 * u.T, u.A / u.m)
     with pytest.raises(ValueError):
         _unit_processing(np.array([1, 2, 3]) * u.m, u.A / u.m)
+
+
+def test_find_linear_segment_line():
+    """Test finding linear segment in a near linear loop."""
+    # Perfect linear M = 2*H gives slope 2, intercept 0
+    H = np.linspace(0, 20, 101) * u.kA / u.m
+    transition = 10 * u.kA / u.m
+    M = np.where(H.value <= transition.value, 2 * H, 20 * u.kA / u.m)
+    results = find_linear_segment(H, M)
+    assert isinstance(results, LinearSegmentProperties)
+    assert isinstance(results.Mr, me.Entity)
+    assert isinstance(results.Hmax, me.Entity)
+    assert isinstance(results.gradient, u.Quantity)
+
+    assert u.isclose(results.Mr, 0 * u.kA / u.m)
+    assert u.isclose(results.Hmax, 10 * u.kA / u.m)
+    assert u.isclose(results.gradient, 2 * u.dimensionless_unscaled)
+
+    # Too few points (<10) should raise ValueError
+    H = np.linspace(0, 5, 5) * u.A / u.m
+    M = H
+    with pytest.raises(ValueError):
+        find_linear_segment(H, M, min_points=10)
+    H = np.linspace(0, 10, 11) * u.m
+    M = np.linspace(0, 10, 11) * u.A / u.m
+    with pytest.raises(ValueError):
+        find_linear_segment(H, M)
+
+    # Negative slope from M = -H should trigger unreasonable slope error
+    H = np.linspace(0, 10, 11) * u.A / u.m
+    M = -H
+    with pytest.raises(ValueError):
+        find_linear_segment(H, M)

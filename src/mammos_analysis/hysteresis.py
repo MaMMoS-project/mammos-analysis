@@ -1,7 +1,7 @@
 """Hysteresis analysis and postprocessing functions."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import numbers
 
 if TYPE_CHECKING:
@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     import mammos_units
 
 import numpy as np
-import pandas as pd
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from scipy.optimize import minimize
@@ -20,13 +19,12 @@ import mammos_units as u
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class ExtrinsicProperties:
-    """Extrinsic properties extracted from hysteresis loop.
+    """Extrinsic properties extracted from a hysteresis loop.
 
-    Args:
+    Attributes:
         Hc: Coercive field.
         Mr: Remanent magnetization.
-        BHmax: Energy product.
-
+        BHmax: Maximum energy product.
     """
 
     Hc: me.Entity
@@ -36,18 +34,12 @@ class ExtrinsicProperties:
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class MaximumEnergyProductProperties:
-    """Properties related to the maximum energy product (BHmax) in a hysteresis loop.
-
-    This class contains the parameters associated with the maximum energy product:
-    - Hd: The magnetic field strength at which the maximum energy product occurs.
-    - Bd: The magnetic flux density corresponding to Hd.
-    - BHmax: The maximum energy product, representing the peak value of the product of
-      magnetic field strength (H) and flux density (B).
+    """Properties related to the maximum energy product in a hysteresis loop.
 
     Attributes:
-        Hd: Field strength at BHmax.
-        Bd: Flux density at BHmax.
-        BHmax: Maximum energy product.
+        Hd: Field strength at which BHmax occurs.
+        Bd: Flux density at which BHmax occurs.
+        BHmax: Maximum energy product value.
     """
 
     Hd: me.Entity
@@ -55,16 +47,30 @@ class MaximumEnergyProductProperties:
     BHmax: me.Entity
 
 
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
+class LinearSegmentProperties:
+    """Linear segment properties extracted from a hysteresis loop.
+
+    Attributes:
+        Mr: Remanent magnetization at zero field.
+        Hmax: Maximum field strength in the linear segment.
+        gradient: Gradient of the linear segment.
+    """
+
+    Mr: me.Entity
+    Hmax: me.Entity
+    gradient: u.Quantity
+
+
 def _check_monotonicity(arr: np.ndarray, direction=None) -> None:
-    """Check if the array is monotonically increasing or decreasing.
+    """Check if an array is monotonically increasing or decreasing.
 
     Args:
         arr: Input 1D numpy array.
-        direction: Direction to check for monotonicity.
-            Can be "increasing", "decreasing", or None (for any monotonicity).
+        direction: "increasing", "decreasing", or None for either.
 
     Raises:
-        ValueError: If the array is not monotonic or contains NaN values.
+        ValueError: If array contains NaNs or is not monotonic.
     """
     # Check for NaN values
     if np.isnan(arr).any():
@@ -91,24 +97,19 @@ def _unit_processing(
     unit: mammos_units.Unit,
     return_quantity: bool = True,
 ) -> np.ndarray:
-    """Process input data and convert to consistent units for calculations.
-
-    Handles various input types by extracting numerical values with consistent units:
-    - For Entity/Quantity objects: Converts to the target unit and extracts value
-    - For arrays/numbers: Assumes they're already in correct units
+    """Convert input data to a consistent unit for calculations.
 
     Args:
-        i: Input data to process
-        unit: Target unit for conversion
-        return_quantity: If True, returns a Quantity object;
-            otherwise, returns a numerical array
+        i: Input data as an Entity, Quantity, array, or number.
+        unit: Target unit for conversion.
+        return_quantity: If True, return a Quantity object.
 
     Returns:
-        Numerical array in the specified unit
+        Data in the specified unit as a Quantity or numpy array.
 
     Raises:
-        ValueError: If input has incompatible units
-        TypeError: If input is not an Entity, Quantity, numpy array, or number
+        ValueError: If units are incompatible.
+        TypeError: If input type is unsupported.
     """
     if isinstance(i, (me.Entity, u.Quantity)) and not unit.is_equivalent(i.unit):
         raise ValueError(f"Input unit {i.unit} is not equivalent to {unit}.")
@@ -130,15 +131,17 @@ def _unit_processing(
 def extract_coercive_field(
     H: me.Entity | u.Quantity | np.ndarray, M: me.Entity | u.Quantity | np.ndarray
 ) -> me.Entity:
-    """Extract coercive field from hysteresis loop.
+    """Extract the coercive field from a hysteresis loop.
 
     Args:
-        H: External magnetic field. Can be Entity, Quantity, or numpy array.
-        M: Spontaneous magnetisation. Can be Entity, Quantity, or numpy array.
+        H: External magnetic field.
+        M: Spontaneous magnetization.
 
     Returns:
-        Coercive field in the same type as the input H.
+        Coercive field in the same format as H.
 
+    Raises:
+        ValueError: If the coercive field cannot be calculated.
     """
     # Extract values for computation
     h_val = _unit_processing(H, u.A / u.m)
@@ -172,17 +175,17 @@ def extract_coercive_field(
 def extract_remanent_magnetization(
     H: me.Entity | u.Quantity | np.ndarray, M: me.Entity | u.Quantity | np.ndarray
 ) -> me.Entity:
-    """Extract remanent magnetization from hysteresis loop.
+    """Extract the remanent magnetization from a hysteresis loop.
 
     Args:
-        H: External magnetic field. Can be Entity, Quantity, or numpy array.
-        M: Spontaneous magnetisation. Can be Entity, Quantity, or numpy array.
+        H: External magnetic field.
+        M: Spontaneous magnetization.
 
     Returns:
-        Remanent magnetization in the same type as the input M.
+        Remanent magnetization in the same format as M.
 
     Raises:
-        ValueError: If the field does not cross the zero axis or calculation fails.
+        ValueError: If the field does not cross zero or calculation fails.
     """
     # Determine input types
     h_val = _unit_processing(H, u.A / u.m)
@@ -225,19 +228,18 @@ def extract_B_curve(
     M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
     demagnetisation_coefficient: float,
 ) -> me.Entity:
-    """Extract BH curve from hysteresis loop.
+    """Compute the B–H curve from a hysteresis loop.
 
     Args:
-        H: External magnetic field. Can be Entity, Quantity, or numpy array.
-        M: Spontaneous magnetisation. Can be Entity, Quantity, or numpy array.
-        demagnetisation_coefficient: Demagnetisation coefficient necessary
-            to evaluate BHmax. If set to None, BHmax will also be None.
+        H: External magnetic field.
+        M: Spontaneous magnetization.
+        demagnetisation_coefficient: Demagnetisation coefficient (0 to 1).
 
     Returns:
-        B: Magnetic flux density as an Entity.
+        Magnetic flux density as an Entity.
 
     Raises:
-        ValueError: If the field does not cross the zero axis or calculation fails.
+        ValueError: If the coefficient is out of range.
     """
     if isinstance(demagnetisation_coefficient, (int, float)):
         if demagnetisation_coefficient < 0 or demagnetisation_coefficient > 1:
@@ -258,16 +260,18 @@ def extract_B_curve(
 def extract_maximum_energy_product(
     H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
     B: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
-) -> me.Entity:
-    """Extract maximum energy product from hysteresis loop.
+) -> MaximumEnergyProductProperties:
+    """Determine the maximum energy product from a hysteresis loop.
 
     Args:
-        H: External magnetic field. Can be Entity, Quantity, or numpy array.
-        B: Magnetic flux density. Can be Entity, Quantity, or numpy array.
+        H: External magnetic field.
+        B: Magnetic flux density.
 
     Returns:
-        MaximumEnergyProductProperties
+        Properties of the maximum energy product.
 
+    Raises:
+        ValueError: If inputs are not monotonic or B decreases with H.
     """
     H = _unit_processing(H, u.A / u.m)
     B = _unit_processing(B, u.T)
@@ -307,21 +311,18 @@ def extrinsic_properties(
     M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
     demagnetisation_coefficient: float | None = None,
 ) -> ExtrinsicProperties:
-    """Evaluate extrinsic properties.
+    """Compute extrinsic properties of a hysteresis loop.
 
     Args:
         H: External magnetic field.
-        M: Spontaneous magnetisation.
-        demagnetisation_coefficient: Demagnetisation coefficient necessary
-            to evaluate BHmax. If set to None, BHmax will also be None.
-
-    Raises:
-        ValueError: Failed to calculate Hc.
-        ValueError: Failed to calculate Mr.
-        NotImplementedError: BHmax evaluation is not yet implemented.
+        M: Spontaneous magnetization.
+        demagnetisation_coefficient: Demagnetisation coefficient for BHmax.
 
     Returns:
-        ExtrinsicProperties: _description_
+        ExtrinsicProperties containing Hc, Mr, and BHmax.
+
+    Raises:
+        ValueError: If Hc or Mr calculation fails.
     """
     Hc = extract_coercive_field(H, M)
     Mr = extract_remanent_magnetization(H, M)
@@ -340,61 +341,84 @@ def extrinsic_properties(
     )
 
 
-def linearised_segment(H: mammos_entity.Entity, M: mammos_entity.Entity):
-    """Evaluate linearised segment."""
-    df = pd.DataFrame({"H": H, "M": M})
+def find_linear_segment(
+    H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
+    M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
+    threshold: Optional[mammos_entity.Entity | mammos_units.Quantity] = None,
+    margin: Optional[mammos_entity.Entity | mammos_units.Quantity] = None,
+    min_points: int = 10,
+) -> LinearSegmentProperties:
+    """Identify the largest field value over which the loop is linear.
 
-    h = 0.5  # threshold_training
-    mar = 0.05  # margin_to_line
-    m0 = 1.0  # m_guess
-    i0 = 0  # index_adjustment
-    try:
-        upper_index = i0 + np.argmin(np.abs(df["M"] - h))
-        hh_u = df["H"].iloc[upper_index]
-        df_ = df[df["H"] < hh_u]
+    Args:
+        H: Applied magnetic field values.
+        M: Magnetization values.
+        threshold: Upper magnetization threshold.
+        margin: Allowed deviation from the linear fit.
+        min_points: Minimum points required for fitting.
 
-        lower_index = i0 + np.argmin(np.abs(df["M"] >= 0))
-        hh_l = df["H"].iloc[lower_index]
-        df_ = df_[df_["H"] >= hh_l]
-    except Exception as e:
-        print(f"[ERROR]: Exception: {e}")
-        raise ValueError("Failed Extraction")
+    Returns:
+        LinearSegmentProperties with Mr, Hmax, and gradient.
 
-    if df_.shape[0] < 10:
-        print(
-            f"[ERROR]: Less than 10 points in margin [0,{h}] for linear regression (only {df_.shape[0]})"
+    Raises:
+        ValueError: For incompatible inputs or no linear region.
+        RuntimeError: If slope optimization fails.
+    """
+    # Validate inputs
+    H = _unit_processing(H, u.A / u.m)
+    M = _unit_processing(M, u.A / u.m)
+
+    # Default threshold and margin
+    if threshold is not None:
+        threshold = _unit_processing(threshold, u.A / u.m)
+    else:
+        threshold = M.max()
+    if margin is not None:
+        margin = _unit_processing(margin, u.A / u.m)
+    else:
+        margin = 0.01 * M.max()
+
+    # 1) Find bounds in H based on magnetization thresholds
+    idx_upper = np.argmin(np.abs(M - threshold))
+    idx_lower = np.argmin(np.abs(M))
+    H_low = H[idx_lower]
+    H_high = H[idx_upper]
+
+    # 2) Mask the candidate segment
+    mask_segment = (H >= H_low) & (H <= H_high)
+    H_seg = H[mask_segment]
+    M_seg = M[mask_segment]
+
+    if H_seg.size < min_points:
+        raise ValueError(
+            f"Insufficient points ({H_seg.size}) for linear fit (requires >= {min_points})."
         )
-        return 0.0
 
-    def line(x, m, b=0.0):
-        return m * x + b
+    # 3) Fix intercept at H=0
+    intercept_idx = np.argmin(np.abs(H_seg))
+    b_val = M_seg[intercept_idx]
 
-    def penalty_function(m, x, y, b=0.0):
-        return np.sum((y - line(x=x, m=m, b=b)) ** 2)
+    # 4) Objective: sum of squared residuals for slope m only
+    def objective(m_val):
+        return np.sum((M_seg - (m_val * H_seg + b_val)) ** 2)
 
-    try:
-        b = df_["M"].iloc[np.argmin(np.abs(df_["H"]))]
-        res = minimize(
-            penalty_function,
-            m0,
-            args=(df_["H"], df_["M"], b),
-        )
-        m_opt = res.x
-        if not res.success:
-            print(f"Optimization did not converge in general: {res.message}")
-            raise ValueError("Failed Linearization")
-        if m_opt > 1000 or m_opt < 0:
-            print(f"[ERROR]: Slope is unreasonable: {res.x}")
-            raise ValueError("Failed Linearization")
-    except Exception as e:
-        print(f"[ERROR]: Something did not work: {e}.")
-        raise ValueError("Failed Linearization")
+    # 5) Optimize
+    result = minimize(objective, x0=[1.0])
+    if not result.success:
+        raise RuntimeError(f"Linear fit failed: {result.message}")
 
-    try:
-        margin = np.abs(df["M"] - line(df["H"], m_opt, b)) < mar
-        # npo = np.sum(margin)  # number_points_in_margin
-        x_max_lin = np.max(df["H"][margin])
-    except Exception as e:
-        print(f"[ERROR]: Failed x_max_lin extraction: {e}.")
+    m_opt = result.x[0]
+    if m_opt < 0 or m_opt > 1e3:
+        raise ValueError(f"Unreasonable slope: {m_opt}")
 
-    return x_max_lin * u.A / u.m
+    # 6) Compute residuals over full dataset and mask within margin
+    residuals = np.abs(M - (m_opt * H + b_val))
+    mask_within = residuals < margin
+    if not np.any(mask_within):
+        raise ValueError("No points found within the specified margin.")
+
+    # 7) Return maximum H in the linear region with unit
+    H_max_lin = np.max(H[mask_within])
+    return LinearSegmentProperties(
+        me.Mr(b_val), me.H(H_max_lin), m_opt * u.dimensionless_unscaled
+    )
