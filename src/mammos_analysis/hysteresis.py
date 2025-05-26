@@ -305,7 +305,9 @@ def extract_maximum_energy_product(
     B_d = B[np.argmin(BH)]
 
     return MaximumEnergyProductProperties(
-        me.H(H_d), me.Entity("MagneticFluxDensity", value=B_d), me.BHmax(BHmax)
+        Hd=me.H(H_d),
+        Bd=me.Entity("MagneticFluxDensity", value=B_d),
+        BHmax=me.BHmax(BHmax),
     )
 
 
@@ -338,9 +340,9 @@ def extrinsic_properties(
         )
         BHmax = result.BHmax
     return ExtrinsicProperties(
-        me.Hc(Hc),
-        me.Mr(Mr),
-        BHmax,
+        Hc=me.Hc(Hc),
+        Mr=me.Mr(Mr),
+        BHmax=BHmax,
     )
 
 
@@ -423,5 +425,5 @@ def find_linear_segment(
     # 7) Return maximum H in the linear region with unit
     H_max_lin = np.max(H[mask_within])
     return LinearSegmentProperties(
-        me.Mr(b_val), me.H(H_max_lin), m_opt * u.dimensionless_unscaled
+        Mr=me.Mr(b_val), Hmax=me.H(H_max_lin), gradient=m_opt * u.dimensionless_unscaled
     )

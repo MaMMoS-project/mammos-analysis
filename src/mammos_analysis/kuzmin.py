@@ -45,7 +45,7 @@ class KuzminResult:
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
     ) -> (matplotlib.figure.Figure, matplotlib.axes.Axes):
         """Create a plot for Ms, A, and K1 as a function of temperature."""
         w, h = figaspect(1 / 3)
@@ -109,11 +109,11 @@ def kuzmin_properties(
     A_0 = me.A(Ms_0 * D / (4 * u.constants.muB), unit=u.J / u.m)
 
     return KuzminResult(
-        _Ms_function_of_temperature(Ms_0.value, T_c.value, s),
-        _A_function_of_temperature(A_0, Ms_0.value, T_c.value, s),
-        _K1_function_of_temperature(K1_0, Ms_0.value, T_c.value, s),
-        me.Entity("ThermodynamicTemperature", value=T_c, unit="K"),
-        s * u.dimensionless_unscaled,
+        Ms=_Ms_function_of_temperature(Ms_0.value, T_c.value, s, T),
+        A=_A_function_of_temperature(A_0, Ms_0.value, T_c.value, s, T),
+        K1=_K1_function_of_temperature(K1_0, Ms_0.value, T_c.value, s, T),
+        Tc=me.Entity("ThermodynamicTemperature", value=T_c, unit="K"),
+        s=s * u.dimensionless_unscaled,
     )
 
 
@@ -151,11 +151,12 @@ class _A_function_of_temperature:
         Returns A(T) as a me.Entity for given temperature T.
     """
 
-    def __init__(self, A_0, Ms_0, T_c, s):
+    def __init__(self, A_0, Ms_0, T_c, s, T):
         self.A_0 = A_0
         self.Ms_0 = Ms_0
         self.T_c = T_c
         self.s = s
+        self._T = T
 
     def __repr__(self):
         return "A(T)"
@@ -169,17 +170,19 @@ class _A_function_of_temperature:
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray,
-        axes: matplotlib.axes.Axes | None = None,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
+        ax: matplotlib.axes.Axes | None = None,
     ) -> matplotlib.axes.Axes:
         """Plot A as a function of temperature using Kuzmin formula."""
-        if not axes:
-            _, axes = plt.subplots()
-        axes.plot(T, self(T))
-        axes.set_xlabel("T")
-        axes.set_ylabel("A")
-        axes.grid()
-        return axes
+        if not ax:
+            _, ax = plt.subplots()
+        if T is None:
+            T = self._T
+        ax.plot(T, self(T))
+        ax.set_xlabel("T")
+        ax.set_ylabel("A")
+        ax.grid()
+        return ax
 
 
 class _K1_function_of_temperature:
@@ -195,11 +198,12 @@ class _K1_function_of_temperature:
         Returns K1(T) as a me.Entity for given temperature T.
     """
 
-    def __init__(self, K1_0, Ms_0, T_c, s):
+    def __init__(self, K1_0, Ms_0, T_c, s, T):
         self.K1_0 = K1_0
         self.Ms_0 = Ms_0
         self.T_c = T_c
         self.s = s
+        self._T = T
 
     def __repr__(self):
         return "K1(T)"
@@ -214,17 +218,19 @@ class _K1_function_of_temperature:
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray,
-        axes: matplotlib.axes.Axes | None = None,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
+        ax: matplotlib.axes.Axes | None = None,
     ) -> matplotlib.axes.Axes:
         """Plot K1 as a function of temperature using Kuzmin formula."""
-        if not axes:
-            _, axes = plt.subplots()
-        axes.plot(T, self(T))
-        axes.set_xlabel("T")
-        axes.set_ylabel("K1")
-        axes.grid()
-        return axes
+        if not ax:
+            _, ax = plt.subplots()
+        if T is None:
+            T = self._T
+        ax.plot(T, self(T))
+        ax.set_xlabel("T")
+        ax.set_ylabel("K1")
+        ax.grid()
+        return ax
 
 
 class _Ms_function_of_temperature:
@@ -239,10 +245,17 @@ class _Ms_function_of_temperature:
         Returns Ms(T) as a me.Entity for given temperature T.
     """
 
-    def __init__(self, Ms_0, T_c, s):
+    def __init__(
+        self,
+        Ms_0: mammos_entity.Entity,
+        T_c: mammos_entity.Entity,
+        s: mammos_units.Quantity,
+        T: mammos_entity.Entity,
+    ):
         self.Ms_0 = Ms_0
         self.T_c = T_c
         self.s = s
+        self._T = T
 
     def __repr__(self):
         return "Ms(T)"
@@ -254,14 +267,16 @@ class _Ms_function_of_temperature:
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray,
-        axes: matplotlib.axes.Axes | None = None,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
+        ax: matplotlib.axes.Axes | None = None,
     ) -> matplotlib.axes.Axes:
         """Plot Ms as a function of temperature using Kuzmin formula."""
-        if not axes:
-            _, axes = plt.subplots()
-        axes.plot(T, self(T))
-        axes.set_xlabel("T")
-        axes.set_ylabel("Ms")
-        axes.grid()
-        return axes
+        if not ax:
+            _, ax = plt.subplots()
+        if T is None:
+            T = self._T
+        ax.plot(T, self(T))
+        ax.set_xlabel("T")
+        ax.set_ylabel("Ms")
+        ax.grid()
+        return ax

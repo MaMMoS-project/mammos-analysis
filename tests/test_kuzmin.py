@@ -52,10 +52,11 @@ def test_kuzmin_formula_full_range():
 
 def test_Ms_function_of_temperature():
     """Test the Ms function of temperature."""
+    T = me.Entity("ThermodynamicTemperature", value=[0, 100, 200], unit="K")
     Ms0 = 100.0
     Tc = 300.0
     s = 0.5
-    ms_func = _Ms_function_of_temperature(Ms0, Tc, s)
+    ms_func = _Ms_function_of_temperature(Ms0, Tc, s, T)
     # repr
     assert repr(ms_func) == "Ms(T)"
     # numeric input
@@ -74,11 +75,12 @@ def test_Ms_function_of_temperature():
 
 def test_A_function_of_temperature():
     """Test the A function of temperature."""
+    T = me.Entity("ThermodynamicTemperature", value=[0, 100, 200], unit="K")
     A0 = me.A(2.0, unit=u.J / u.m)
     Ms0 = 100.0
     Tc = 300.0
     s = 0.5
-    a_func = _A_function_of_temperature(A0, Ms0, Tc, s)
+    a_func = _A_function_of_temperature(A0, Ms0, Tc, s, T)
     # repr
     assert repr(a_func) == "A(T)"
     # numeric input
@@ -100,11 +102,12 @@ def test_A_function_of_temperature():
 
 def test_K1_function_of_temperature():
     """Test the K1 function of temperature."""
+    T = me.Entity("ThermodynamicTemperature", value=[0, 100, 200], unit="K")
     K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
     Ms_0 = 100.0
     T_c = 300.0
     s = 0.5
-    k1_func = _K1_function_of_temperature(K1_0, Ms_0, T_c, s)
+    k1_func = _K1_function_of_temperature(K1_0, Ms_0, T_c, s, T)
     # repr
     assert repr(k1_func) == "K1(T)"
     # numeric input
