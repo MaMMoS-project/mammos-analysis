@@ -132,7 +132,7 @@ def kuzmin_formula(Ms_0, T_c, s, T):
         Spontaneous magnetization at temperature T as an array.
     """
     base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
-    out = np.zeros_like(T)
+    out = np.zeros_like(T, dtype=np.float64)
     # only compute base**(1/3) where T < T_c; elsewhere leave as zero
     np.power(base, 1 / 3, out=out, where=(T < T_c))
     return Ms_0 * out

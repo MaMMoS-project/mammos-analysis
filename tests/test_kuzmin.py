@@ -50,6 +50,16 @@ def test_kuzmin_formula_full_range():
     assert isinstance(result, np.ndarray)
 
 
+def test_kuzmin_formula_ints():
+    """Test Kuzmin formula with integer inputs."""
+    Ms0 = 100
+    Tc = 300
+    s = 0.5
+    T = np.array([0, 150, 300, 450])
+    result = kuzmin_formula(Ms0, Tc, s, T)
+    assert isinstance(result, np.ndarray)
+
+
 def test_Ms_function_of_temperature():
     """Test the Ms function of temperature."""
     T = me.Entity("ThermodynamicTemperature", value=[0, 100, 200], unit="K")
