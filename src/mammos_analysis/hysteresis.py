@@ -88,6 +88,7 @@ def _check_monotonicity(arr: np.ndarray, direction=None) -> None:
 def _unit_processing(
     i: me.Entity | u.Quantity | np.ndarray,
     unit: u.Unit,
+    return_quantity: bool = True,
 ) -> np.ndarray:
     """Process input data and convert to consistent units for calculations.
 
@@ -98,6 +99,8 @@ def _unit_processing(
     Args:
         i: Input data to process
         unit: Target unit for conversion
+        return_quantity: If True, returns a Quantity object;
+            otherwise, returns a numerical array
 
     Returns:
         Numerical array in the specified unit
@@ -109,13 +112,18 @@ def _unit_processing(
     if isinstance(i, (me.Entity, u.Quantity)) and not unit.is_equivalent(i.unit):
         raise ValueError(f"Input unit {i.unit} is not equivalent to {unit}.")
     if isinstance(i, (me.Entity, u.Quantity)):
-        return i.to(unit).value
+        value = i.to(unit).value
     elif isinstance(i, (np.ndarray, numbers.Number)):
-        return i
+        value = i
     else:
         raise TypeError(
             f"Input must be an Entity, Quantity, or numpy array, not {type(i)}."
         )
+
+    if return_quantity:
+        return u.Quantity(value, unit)
+    else:
+        return value
 
 
 def extract_coercive_field(
@@ -236,8 +244,8 @@ def extract_B_curve(
     else:
         raise ValueError("Demagnetisation coefficient must be a float or int.")
 
-    H = _unit_processing(H, u.A / u.m) * u.A / u.m
-    M = _unit_processing(M, u.A / u.m) * u.A / u.m
+    H = _unit_processing(H, u.A / u.m)
+    M = _unit_processing(M, u.A / u.m)
 
     # Calculate internal field and flux density
     H_internal = H - demagnetisation_coefficient * M
@@ -260,21 +268,21 @@ def extract_maximum_energy_product(
         MaximumEnergyProductProperties
 
     """
-    H = _unit_processing(H, u.A / u.m) * u.A / u.m
-    B = _unit_processing(B, u.T) * u.T
+    H = _unit_processing(H, u.A / u.m)
+    B = _unit_processing(B, u.T)
 
     _check_monotonicity(H.value)
     _check_monotonicity(B.value)
 
     # check if H is increasing or decreasing
-    if np.all(np.diff(H.value) >= 0):
+    if np.all(np.diff(H) >= 0):
         # H is increasing
-        H = H.value
-        B = B.value
+        H = H
+        B = B
     else:
         # H is decreasing
-        H = H.value[::-1]
-        B = B.value[::-1]
+        H = H[::-1]
+        B = B[::-1]
 
     # if B is decreasing whilst H is increasing error
     if np.all(np.diff(B) <= 0):

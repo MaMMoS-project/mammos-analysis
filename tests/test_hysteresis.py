@@ -368,31 +368,96 @@ def test_extrinsic_properties():
 def test_unit_processing():
     """Test the unit processing."""
     # Test correct unit processing with Entity
-    assert np.isclose(_unit_processing(me.H(1 * u.A / u.m), u.A / u.m), 1)
-    assert np.isclose(_unit_processing(me.H(1 * u.kA / u.m), u.A / u.m), 1000)
+    assert np.isclose(
+        _unit_processing(me.H(1 * u.A / u.m), u.A / u.m, return_quantity=False), 1
+    )
+    assert np.isclose(
+        _unit_processing(me.H(1 * u.kA / u.m), u.A / u.m, return_quantity=False), 1000
+    )
+    assert u.isclose(
+        _unit_processing(me.H(1 * u.A / u.m), u.A / u.m, return_quantity=True),
+        1 * u.A / u.m,
+    )
+    assert u.isclose(
+        _unit_processing(me.H(1 * u.kA / u.m), u.A / u.m, return_quantity=True),
+        1000 * u.A / u.m,
+    )
 
     # Test correct unit processing with Quantity
-    assert np.isclose(_unit_processing(1 * u.A / u.m, u.A / u.m), 1)
-    assert np.isclose(_unit_processing(1 * u.kA / u.m, u.A / u.m), 1000)
+    assert np.isclose(
+        _unit_processing(1 * u.A / u.m, u.A / u.m, return_quantity=False), 1
+    )
+    assert np.isclose(
+        _unit_processing(1 * u.kA / u.m, u.A / u.m, return_quantity=False), 1000
+    )
+    assert u.isclose(
+        _unit_processing(1 * u.A / u.m, u.A / u.m, return_quantity=True), 1 * u.A / u.m
+    )
+    assert u.isclose(
+        _unit_processing(1 * u.kA / u.m, u.A / u.m, return_quantity=True),
+        1000 * u.A / u.m,
+    )
 
     # Test correct unit processing with Numpy Array
-    assert np.isclose(_unit_processing(1, u.A / u.m), 1)
-    assert np.isclose(_unit_processing(1000, u.A / u.m), 1000)
+    assert np.isclose(_unit_processing(1, u.A / u.m, return_quantity=False), 1)
+    assert np.isclose(_unit_processing(1000, u.A / u.m, return_quantity=False), 1000)
+    assert u.isclose(
+        _unit_processing(1 * u.A / u.m, u.A / u.m, return_quantity=True), 1 * u.A / u.m
+    )
+    assert u.isclose(
+        _unit_processing(1000 * u.A / u.m, u.A / u.m, return_quantity=True),
+        1000 * u.A / u.m,
+    )
 
     # Test with arrays of each type
     assert np.allclose(
-        _unit_processing(me.H(np.array([1, 2, 3]) * u.A / u.m), u.A / u.m), [1, 2, 3]
+        _unit_processing(
+            me.H(np.array([1, 2, 3]) * u.A / u.m), u.A / u.m, return_quantity=False
+        ),
+        [1, 2, 3],
     )
     assert np.allclose(
-        _unit_processing(me.H(np.array([1, 2, 3]) * u.kA / u.m), u.A / u.m),
+        _unit_processing(
+            me.H(np.array([1, 2, 3]) * u.kA / u.m), u.A / u.m, return_quantity=False
+        ),
         [1000, 2000, 3000],
     )
     assert np.allclose(
-        _unit_processing(np.array([1, 2, 3]) * u.A / u.m, u.A / u.m), [1, 2, 3]
+        _unit_processing(
+            np.array([1, 2, 3]) * u.A / u.m, u.A / u.m, return_quantity=False
+        ),
+        [1, 2, 3],
     )
     assert np.allclose(
-        _unit_processing(np.array([1, 2, 3]) * u.kA / u.m, u.A / u.m),
+        _unit_processing(
+            np.array([1, 2, 3]) * u.kA / u.m, u.A / u.m, return_quantity=False
+        ),
         [1000, 2000, 3000],
+    )
+
+    assert u.allclose(
+        _unit_processing(
+            me.H(np.array([1, 2, 3]) * u.A / u.m), u.A / u.m, return_quantity=True
+        ),
+        np.array([1, 2, 3]) * u.A / u.m,
+    )
+    assert u.allclose(
+        _unit_processing(
+            me.H(np.array([1, 2, 3]) * u.kA / u.m), u.A / u.m, return_quantity=True
+        ),
+        np.array([1000, 2000, 3000]) * u.A / u.m,
+    )
+    assert u.allclose(
+        _unit_processing(
+            np.array([1, 2, 3]) * u.A / u.m, u.A / u.m, return_quantity=True
+        ),
+        np.array([1, 2, 3]) * u.A / u.m,
+    )
+    assert u.allclose(
+        _unit_processing(
+            np.array([1, 2, 3]) * u.kA / u.m, u.A / u.m, return_quantity=True
+        ),
+        np.array([1000, 2000, 3000]) * u.A / u.m,
     )
 
     # Test with invalid inputs
