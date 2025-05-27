@@ -143,8 +143,8 @@ def extract_coercive_field(
         ValueError: If the coercive field cannot be calculated.
     """
     # Extract values for computation
-    h_val = _unit_processing(H, u.A / u.m)
-    m_val = _unit_processing(M, u.A / u.m)
+    h_val = _unit_processing(H, u.A / u.m, return_quantity=False)
+    m_val = _unit_processing(M, u.A / u.m, return_quantity=False)
 
     # Check monotonicity on the values
     _check_monotonicity(h_val)
