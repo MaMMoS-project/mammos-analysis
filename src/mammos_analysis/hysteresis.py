@@ -150,6 +150,9 @@ def extract_coercive_field(
     # Check monotonicity on the values
     _check_monotonicity(h_val)
 
+    if np.isnan(m_val).any():
+        raise ValueError("Magnetization contains NaN values.")
+
     # Interpolation only works on increasing data
     idx = np.argsort(m_val)
     h_sorted = h_val[idx]
