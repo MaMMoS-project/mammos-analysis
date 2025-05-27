@@ -178,9 +178,9 @@ class _A_function_of_temperature:
             _, ax = plt.subplots()
         if T is None:
             T = self._T
-        ax.plot(T, self(T))
-        ax.set_xlabel("T")
-        ax.set_ylabel("A")
+        ax.plot(T, self(T), "r")
+        ax.set_xlabel("Temperature [K]")
+        ax.set_ylabel("Exchange Stiffness Constant [J / m]")
         ax.grid()
         return ax
 
@@ -226,9 +226,9 @@ class _K1_function_of_temperature:
             _, ax = plt.subplots()
         if T is None:
             T = self._T
-        ax.plot(T, self(T))
-        ax.set_xlabel("T")
-        ax.set_ylabel("K1")
+        ax.plot(T, self(T), "g")
+        ax.set_xlabel("Temperature [K]")
+        ax.set_ylabel("Uniaxial Anisotropy Constant [J / m3]")
         ax.grid()
         return ax
 
@@ -276,7 +276,7 @@ class _Ms_function_of_temperature:
         if T is None:
             T = self._T
         ax.plot(T, self(T))
-        ax.set_xlabel("T")
-        ax.set_ylabel("Ms")
+        ax.set_xlabel("Temperature [K]")
+        ax.set_ylabel("Spontaneous Magnetization [A / m]")
         ax.grid()
         return ax
