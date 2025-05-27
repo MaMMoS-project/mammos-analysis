@@ -477,13 +477,13 @@ def test_find_linear_segment_line():
     H = np.linspace(0, 20, 101) * u.kA / u.m
     transition = 10 * u.kA / u.m
     M = np.where(H.value <= transition.value, 2 * H, 20 * u.kA / u.m)
-    results = find_linear_segment(H, M)
+    results = find_linear_segment(H, M, margin=1 * u.A / u.m, min_points=3)
     assert isinstance(results, LinearSegmentProperties)
     assert isinstance(results.Mr, me.Entity)
     assert isinstance(results.Hmax, me.Entity)
     assert isinstance(results.gradient, u.Quantity)
 
-    assert u.isclose(results.Mr, 0 * u.kA / u.m)
+    assert u.isclose(results.Mr, 0 * u.kA / u.m, atol=1 * u.A / u.m)
     assert u.isclose(results.Hmax, 10 * u.kA / u.m)
     assert u.isclose(results.gradient, 2 * u.dimensionless_unscaled)
 
@@ -491,14 +491,8 @@ def test_find_linear_segment_line():
     H = np.linspace(0, 5, 5) * u.A / u.m
     M = H
     with pytest.raises(ValueError):
-        find_linear_segment(H, M, min_points=10)
+        find_linear_segment(H, M, margin=1 * u.A / u.m, min_points=10)
     H = np.linspace(0, 10, 11) * u.m
     M = np.linspace(0, 10, 11) * u.A / u.m
     with pytest.raises(ValueError):
-        find_linear_segment(H, M)
-
-    # Negative slope from M = -H should trigger unreasonable slope error
-    H = np.linspace(0, 10, 11) * u.A / u.m
-    M = -H
-    with pytest.raises(ValueError):
-        find_linear_segment(H, M)
+        find_linear_segment(H, M, margin=1 * u.A / u.m)

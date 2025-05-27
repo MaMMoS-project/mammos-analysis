@@ -1,7 +1,7 @@
 """Hysteresis analysis and postprocessing functions."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 import numbers
 
 if TYPE_CHECKING:
@@ -143,8 +143,8 @@ def extract_coercive_field(
         ValueError: If the coercive field cannot be calculated.
     """
     # Extract values for computation
-    h_val = _unit_processing(H, u.A / u.m, return_quantity=False)
-    m_val = _unit_processing(M, u.A / u.m, return_quantity=False)
+    h_val = _unit_processing(H, u.A / u.m)
+    m_val = _unit_processing(M, u.A / u.m)
 
     # Check monotonicity on the values
     _check_monotonicity(h_val)
@@ -351,8 +351,7 @@ def extrinsic_properties(
 def find_linear_segment(
     H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
     M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
-    threshold: Optional[mammos_entity.Entity | mammos_units.Quantity] = None,
-    margin: Optional[mammos_entity.Entity | mammos_units.Quantity] = None,
+    margin: mammos_entity.Entity | mammos_units.Quantity | numbers.Number,
     min_points: int = 10,
 ) -> LinearSegmentProperties:
     """Identify the largest field value over which the loop is linear.
@@ -360,7 +359,6 @@ def find_linear_segment(
     Args:
         H: Applied magnetic field values.
         M: Magnetization values.
-        threshold: Upper magnetization threshold.
         margin: Allowed deviation from the linear fit.
         min_points: Minimum points required for fitting.
 
@@ -372,8 +370,9 @@ def find_linear_segment(
         RuntimeError: If slope optimization fails.
     """
     # Validate inputs
-    H = _unit_processing(H, u.A / u.m)
-    M = _unit_processing(M, u.A / u.m)
+    H = _unit_processing(H, u.A / u.m, return_quantity=False)
+    M = _unit_processing(M, u.A / u.m, return_quantity=False)
+    margin = _unit_processing(margin, u.A / u.m, return_quantity=False)
 
     if H.shape != M.shape:
         raise ValueError("H and M must have the same shape.")
