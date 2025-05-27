@@ -11,7 +11,6 @@ if TYPE_CHECKING:
 import numpy as np
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
-from scipy.optimize import minimize
 
 import mammos_entity as me
 import mammos_units as u
@@ -376,57 +375,39 @@ def find_linear_segment(
     H = _unit_processing(H, u.A / u.m)
     M = _unit_processing(M, u.A / u.m)
 
-    # Default threshold and margin
-    if threshold is not None:
-        threshold = _unit_processing(threshold, u.A / u.m)
-    else:
-        threshold = M.max()
-    if margin is not None:
-        margin = _unit_processing(margin, u.A / u.m)
-    else:
-        margin = 0.01 * M.max()
+    if H.shape != M.shape:
+        raise ValueError("H and M must have the same shape.")
+    if len(H) < min_points:
+        raise ValueError("Not enough data points.")
 
-    # 1) Find bounds in H based on magnetization thresholds
-    idx_upper = np.argmin(np.abs(M - threshold))
-    idx_lower = np.argmin(np.abs(M))
-    H_low = H[idx_lower]
-    H_high = H[idx_upper]
+    # 1) find the index where H is closest to zero
+    start = np.argmin(np.abs(H))
 
-    # 2) Mask the candidate segment
-    mask_segment = (H >= H_low) & (H <= H_high)
-    H_seg = H[mask_segment]
-    M_seg = M[mask_segment]
+    last_valid = start
+    # 2) grow the window
+    for end in range(start + min_points - 1, len(H)):
+        H_seg = H[start : end + 1]
+        M_seg = M[start : end + 1]
 
-    if H_seg.size < min_points:
-        raise ValueError(
-            f"Insufficient points ({H_seg.size}) for linear fit (requires >= {min_points})."
-        )
+        # 3) simple linear fit: M ≈ m*H + b
+        m, b = np.polyfit(H_seg, M_seg, 1)
 
-    # 3) Fix intercept at H=0
-    intercept_idx = np.argmin(np.abs(H_seg))
-    b_val = M_seg[intercept_idx]
+        # 4) compute max absolute deviation
+        dev = np.abs(M_seg - (m * H_seg + b))
+        if np.max(dev) <= margin:
+            last_valid = end
+        else:
+            break
 
-    # 4) Objective: sum of squared residuals for slope m only
-    def objective(m_val):
-        return np.sum((M_seg - (m_val * H_seg + b_val)) ** 2)
+    if last_valid == start:
+        raise ValueError("No linear segment found with the given parameters.")
+    # 5) final fit on the maximal segment
+    H_final = H[start : last_valid + 1]
+    M_final = M[start : last_valid + 1]
+    m_opt, b_opt = np.polyfit(H_final, M_final, 1)
 
-    # 5) Optimize
-    result = minimize(objective, x0=[1.0])
-    if not result.success:
-        raise RuntimeError(f"Linear fit failed: {result.message}")
-
-    m_opt = result.x[0]
-    if m_opt < 0 or m_opt > 1e3:
-        raise ValueError(f"Unreasonable slope: {m_opt}")
-
-    # 6) Compute residuals over full dataset and mask within margin
-    residuals = np.abs(M - (m_opt * H + b_val))
-    mask_within = residuals < margin
-    if not np.any(mask_within):
-        raise ValueError("No points found within the specified margin.")
-
-    # 7) Return maximum H in the linear region with unit
-    H_max_lin = np.max(H[mask_within])
     return LinearSegmentProperties(
-        Mr=me.Mr(b_val), Hmax=me.H(H_max_lin), gradient=m_opt * u.dimensionless_unscaled
+        Mr=me.Mr(b_opt),
+        Hmax=me.H(H[last_valid]),
+        gradient=m_opt * u.dimensionless_unscaled,
     )
