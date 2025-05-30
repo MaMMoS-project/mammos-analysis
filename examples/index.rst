@@ -1,2 +1,2 @@
-mammos-analysis examples
-========================
+mammos-analysis
+===============
