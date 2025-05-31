@@ -352,61 +352,164 @@ def find_linear_segment(
     H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
     M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
     margin: mammos_entity.Entity | mammos_units.Quantity | numbers.Number,
-    min_points: int = 10,
+    method: str = "maxdev",
+    min_points: int = 5,
 ) -> LinearSegmentProperties:
-    """Identify the largest field value over which the loop is linear.
+    r"""Identify the largest field value over which the hysteresis loop is linear.
 
-    Args:
-        H: Applied magnetic field values.
-        M: Magnetization values.
-        margin: Allowed deviation from the linear fit.
-        min_points: Minimum points required for fitting.
+    There are two possible criteria, selected by the `method` argument:
+
+    1. **Max‐Deviation Criterion** (`method="maxdev"`):
+       Require that every data point in the segment satisfies
+       \[
+         \max_{\,i_0 \le i \le i_{\max}}\;\bigl|\,M_i - (m\,H_i + b)\bigr|
+         \;\le\; \delta,
+       \]
+       where:
+       - \(\{(H_i, M_i)\}\) are the data points,
+       - \(m\) is the fitted slope,
+       - \(b\) is the fitted intercept (value of \(M\) at \(H=0\)),
+       - \(\delta\) is the user‐supplied margin (in the same units as \(M\)).
+       This guarantees **each** point lies within \(\pm \delta\).
+
+    2. **RMS Criterion** (`method="rms"`):
+       Require that the root‐mean‐square error over the segment satisfies
+       \[
+         \mathrm{RMSE}
+         \;=\;
+         \sqrt{\frac{1}{n}\sum_{\,i=i_0}^{\,i_{\max}}
+         \bigl(M_i - (m\,H_i + b)\bigr)^2}
+         \;\le\; \delta,
+       \]
+       where \(n = i_{\max} - i_0 + 1\).  Occasional points may exceed \(\delta\)
+       provided the overall RMS error remains within \(\delta\).
+
+    We return a single `LinearSegmentProperties` instance containing:
+      - `Mr`: fitted intercept \(b\) (magnetization at \(H=0\)),
+      - `Hmax`: largest field value up to which data remain “linear” under the
+         chosen criterion,
+      - `gradient`: fitted slope \(m\) (dimensionless).
+
+    Parameters
+    ----------
+    H : Applied magnetic field values. Must be monotonic.
+    M : Magnetization values corresponding to `H`.
+    margin : Allowed deviation \(\delta\).
+    method : Which deviation test to use:
+          - `"maxdev"` (default): per‐point maximum deviation,
+          - `"rms"`: root‐mean‐square deviation.
+    min_points : Minimum number of points required to attempt any fit.
 
     Returns:
-        LinearSegmentProperties with Mr, Hmax, and gradient.
+    -------
+    LinearSegmentProperties
+        Contains:
+          - `Mr`: intercept \(b\) (magnetization at \(H=0\)),
+          - `Hmax`: largest field for which the chosen criterion holds,
+          - `gradient`: slope \(m\) of the fitted line on that segment.
 
-    Raises:
-        ValueError: For incompatible inputs or no linear region.
-        RuntimeError: If slope optimization fails.
+    Notes:
+    -----
+    **Growing‐Window Fit**
+       We attempt to extend the segment one index at a time:
+       \[
+         \{\,i_0,\,i_0+1,\,\dots,\,i\,\}.
+       \]
+       For each candidate endpoint \(i\), we fit a line
+       \(\hat{M}(H) = m\,H + b\) via `np.polyfit(H[i_0:i+1], M[i_0:i+1], 1)`.
+       Then we compute either:
+         - **Max‐Deviation**:
+           \(\max_{j=i_0}^i\,\bigl|M_j - (m\,H_j + b)\bigr| \le \delta,\) or
+         - **RMS**:
+            \[
+             \mathrm{RMSE} \;=\;
+             \sqrt{\frac{1}{\,i - i_0 + 1\,}
+                   \sum_{j=i_0}^{i}
+                     \bigl(M_j - (m\,H_j + b)\bigr)^2}
+             \;\le\; \delta.
+           \]
+
+       As soon as adding \(i+1\) would violate the chosen inequality, we stop
+       and take \(i_{\max} = i\). We then refit \((m,b)\) on \(\{i_0,\dots,i_{\max}\}\)
+       to produce the final slope/intercept returned.
+
     """
-    # Validate inputs
-    H = _unit_processing(H, u.A / u.m, return_quantity=False)
-    M = _unit_processing(M, u.A / u.m, return_quantity=False)
-    margin = _unit_processing(margin, u.A / u.m, return_quantity=False)
+    # 1) Normalize inputs to unitless numpy arrays in A/m
+    H_arr = _unit_processing(H, u.A / u.m, return_quantity=False)
+    M_arr = _unit_processing(M, u.A / u.m, return_quantity=False)
+    margin_val = _unit_processing(margin, u.A / u.m, return_quantity=False)
 
-    if H.shape != M.shape:
-        raise ValueError("H and M must have the same shape.")
-    if len(H) < min_points:
-        raise ValueError("Not enough data points.")
+    # 2) Basic sanity checks
+    if H_arr.shape != M_arr.shape:
+        raise ValueError("`H` and `M` must have the same shape.")
+    if len(H_arr) < min_points:
+        raise ValueError(f"Need at least {min_points} points; got {len(H_arr)}.")
+    if method not in {"maxdev", "rms"}:
+        raise ValueError("`method` must be either 'maxdev' or 'rms'.")
 
-    # 1) find the index where H is closest to zero
-    start = np.argmin(np.abs(H))
+    # 3) Check monotonicity and reverse if strictly decreasing
+    _check_monotonicity(H_arr)
+    increasing = np.all(np.diff(H_arr) >= 0)
+    decreasing = np.all(np.diff(H_arr) <= 0)
 
-    last_valid = start
-    # 2) grow the window
-    for end in range(start + min_points - 1, len(H)):
-        H_seg = H[start : end + 1]
-        M_seg = M[start : end + 1]
+    if decreasing and not increasing:
+        H_proc = H_arr[::-1].copy()
+        M_proc = M_arr[::-1].copy()
+        reversed_flag = True
+    else:
+        H_proc = H_arr
+        M_proc = M_arr
+        reversed_flag = False
 
-        # 3) simple linear fit: M ≈ m*H + b
-        m, b = np.polyfit(H_seg, M_seg, 1)
+    # 4) Find index of H closest to zero in the processed array
+    start_idx = int(np.argmin(np.abs(H_proc)))
 
-        # 4) compute max absolute deviation
-        dev = np.abs(M_seg - (m * H_seg + b))
-        if np.max(dev) <= margin:
-            last_valid = end
-        else:
-            break
+    # 5) Grow the window
+    last_valid = start_idx
+    n_total = len(H_proc)
 
-    if last_valid == start:
-        raise ValueError("No linear segment found with the given parameters.")
-    # 5) final fit on the maximal segment
-    H_final = H[start : last_valid + 1]
-    M_final = M[start : last_valid + 1]
+    for end in range(start_idx + min_points - 1, n_total):
+        H_seg = H_proc[start_idx : end + 1]
+        M_seg = M_proc[start_idx : end + 1]
+
+        # Fit line: M ≈ m * H + b
+        m_try, b_try = np.polyfit(H_seg, M_seg, 1)
+        residuals = M_seg - (m_try * H_seg + b_try)
+
+        if method == "maxdev":
+            # Check if every point is within margin
+            if np.max(np.abs(residuals)) <= margin_val:
+                last_valid = end
+            else:
+                break
+
+        else:  # method == "rms"
+            # Compute RMS error
+            rmse = np.sqrt(np.mean(residuals**2))
+            if rmse <= margin_val:
+                last_valid = end
+            else:
+                break
+
+    # 6) If no extension beyond start_idx, fail
+    if last_valid == start_idx:
+        raise ValueError(f"No linear segment found with method='{method}'.")
+
+    # 7) Final fit on the maximal valid window
+    H_final = H_proc[start_idx : last_valid + 1]
+    M_final = M_proc[start_idx : last_valid + 1]
     m_opt, b_opt = np.polyfit(H_final, M_final, 1)
 
+    # 8) Map the final index back if reversed
+    if reversed_flag:
+        orig_idx = len(H_proc) - 1 - last_valid
+        Hmax_val = H_arr[orig_idx]
+    else:
+        Hmax_val = H_arr[last_valid]
+
+    # 9) Return a single LinearSegmentProperties
     return LinearSegmentProperties(
         Mr=me.Mr(b_opt),
-        Hmax=me.H(H[last_valid]),
+        Hmax=me.H(Hmax_val),
         gradient=m_opt * u.dimensionless_unscaled,
     )
