@@ -1,16 +1,19 @@
 """Hysteresis analysis and postprocessing functions."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import numbers
+import re
 
 if TYPE_CHECKING:
     import mammos_entity
     import mammos_units
+    import matplotlib
 
 import numpy as np
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
+import matplotlib.pyplot as plt
 
 import mammos_entity as me
 import mammos_units as u
@@ -59,6 +62,23 @@ class LinearSegmentProperties:
     Mr: me.Entity
     Hmax: me.Entity
     gradient: u.Quantity
+    _H: Optional[mammos_entity.Entity] = None
+    _M: Optional[mammos_entity.Entity] = None
+
+    def plot(self, ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
+        """Plot the spontaneous magnetization data-points."""
+        if not ax:
+            _, ax = plt.subplots()
+        ax = plt.scatter(self._H, y=self._M, marker="x", ax=ax)
+        ax.set_xlabel(
+            re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self._H.ontology_label}")
+            + f" [{self._H.unit}]"
+        )
+        ax.set_ylabel(
+            re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self._M.ontology_label}")
+            + f" [{self._M.unit}]"
+        )
+        return ax
 
 
 def _check_monotonicity(arr: np.ndarray, direction=None) -> None:

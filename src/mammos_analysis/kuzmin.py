@@ -46,18 +46,19 @@ class KuzminResult:
     def plot(
         self,
         T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
-    ) -> (matplotlib.figure.Figure, matplotlib.axes.Axes):
+    ) -> matplotlib.axes.Axes:
         """Create a plot for Ms, A, and K1 as a function of temperature."""
         if self.K1 is None:
-            w, h = figaspect(1 / 2)
+            ncols = 2
         else:
-            w, h = figaspect(1 / 3)
-        fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(w, h))
+            ncols = 3
+        w, h = figaspect(1 / ncols)
+        _, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(w, h))
         self.Ms.plot(T, ax[0], color="b")
         self.A.plot(T, ax[1], color="r")
         if self.K1 is not None:
             self.K1.plot(T, ax[2], color="g")
-        return fig, ax
+        return ax
 
 
 def kuzmin_properties(
