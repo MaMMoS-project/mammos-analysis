@@ -6,7 +6,7 @@ import numbers
 import warnings
 from collections.abc import Callable
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import mammos_entity
 import mammos_entity as me
@@ -39,27 +39,31 @@ class KuzminResult:
 
     Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
     A: Callable[[numbers.Real | u.Quantity], me.Entity]
-    K1: Callable[[numbers.Real | u.Quantity], me.Entity]
     Tc: me.Entity
     s: u.Quantity
+    K1: Optional[Callable[[numbers.Real | u.Quantity], me.Entity]] = None
 
     def plot(
         self,
         T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
     ) -> (matplotlib.figure.Figure, matplotlib.axes.Axes):
         """Create a plot for Ms, A, and K1 as a function of temperature."""
-        w, h = figaspect(1 / 3)
+        if self.K1 is None:
+            w, h = figaspect(1 / 2)
+        else:
+            w, h = figaspect(1 / 3)
         fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(w, h))
         self.Ms.plot(T, ax[0], color="b")
         self.A.plot(T, ax[1], color="r")
-        self.K1.plot(T, ax[2], color="g")
+        if self.K1 is not None:
+            self.K1.plot(T, ax[2], color="g")
         return fig, ax
 
 
 def kuzmin_properties(
     Ms: mammos_entity.Entity,
     T: mammos_entity.Entity,
-    K1_0: mammos_entity.Entity,
+    K1_0: Optional[mammos_entity.Entity] = None,
 ) -> KuzminResult:
     """Evaluate intrinsic micromagnetic properties using Kuz'min model.
 
@@ -79,8 +83,9 @@ def kuzmin_properties(
     Raises:
         ValueError: If K1_0 has incorrect unit.
     """
-    if not isinstance(K1_0, u.Quantity) or K1_0.unit != u.J / u.m**3:
-        K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
+    if K1_0 is not None:
+        if not isinstance(K1_0, u.Quantity) or K1_0.unit != u.J / u.m**3:
+            K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
     # TODO: fix logic - assumption is that Ms is given at T=0K
     Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
@@ -108,10 +113,15 @@ def kuzmin_properties(
     ).si
     A_0 = me.A(Ms_0 * D / (4 * u.constants.muB), unit=u.J / u.m)
 
+    if K1_0 is not None:
+        K1 = _K1_function_of_temperature(K1_0, Ms_0.value, T_c.value, s, T)
+    else:
+        K1 = None
+
     return KuzminResult(
         Ms=_Ms_function_of_temperature(Ms_0.value, T_c.value, s, T),
         A=_A_function_of_temperature(A_0, Ms_0.value, T_c.value, s, T),
-        K1=_K1_function_of_temperature(K1_0, Ms_0.value, T_c.value, s, T),
+        K1=K1,
         Tc=me.Entity("ThermodynamicTemperature", value=T_c, unit="K"),
         s=s * u.dimensionless_unscaled,
     )
