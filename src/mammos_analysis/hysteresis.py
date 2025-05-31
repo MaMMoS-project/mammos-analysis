@@ -538,4 +538,6 @@ def find_linear_segment(
         Mr=me.Mr(b_opt),
         Hmax=me.H(Hmax_val),
         gradient=m_opt * u.dimensionless_unscaled,
+        _H=me.H(H, unit="A/m"),
+        _M=me.Ms(M, unit="A/m"),
     )
