@@ -62,14 +62,20 @@ class LinearSegmentProperties:
     Mr: me.Entity
     Hmax: me.Entity
     gradient: u.Quantity
-    _H: Optional[mammos_entity.Entity] = None
-    _M: Optional[mammos_entity.Entity] = None
+    _H: Optional[me.Entity] = None
+    _M: Optional[me.Entity] = None
 
     def plot(self, ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
         """Plot the spontaneous magnetization data-points."""
         if not ax:
             _, ax = plt.subplots()
         ax = plt.scatter(self._H, y=self._M, marker="x", ax=ax)
+        ax.axvline(self.Hmax.value, color="k", linestyle="--", label="Hmax")
+
+        x = np.linspace(0, self.Hmax.value, 100)
+        y = self.gradient.value * x + self.Mr.value
+        plt.plot(x, y, linestyle="--", c="r", label="Linear fit")
+        plt.legend()
         ax.set_xlabel(
             re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self._H.ontology_label}")
             + f" [{self._H.unit}]"
