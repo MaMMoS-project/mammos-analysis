@@ -69,7 +69,7 @@ class LinearSegmentProperties:
         """Plot the spontaneous magnetization data-points."""
         if not ax:
             _, ax = plt.subplots()
-        ax.scatter(self._H, y=self._M, marker="x")
+        ax.scatter(self._H, y=self._M, label="Data")
         ax.axvline(self.Hmax.value, color="k", linestyle="--", label="Hmax")
 
         x = np.linspace(0, self.Hmax.value, 100)
