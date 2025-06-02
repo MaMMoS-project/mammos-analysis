@@ -38,10 +38,11 @@ class KuzminResult:
     """
 
     Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
+    """Callable returning temperature-dependent spontaneous magnetization."""
     A: Callable[[numbers.Real | u.Quantity], me.Entity]
     Tc: me.Entity
     s: u.Quantity
-    K1: Optional[Callable[[numbers.Real | u.Quantity], me.Entity]] = None
+    K1: Callable[[numbers.Real | u.Quantity], me.Entity] | None = None
 
     def plot(
         self,
@@ -131,7 +132,8 @@ def kuzmin_properties(
 def kuzmin_formula(Ms_0, T_c, s, T):
     """Compute spontaneous magnetization at temperature T using Kuz'min formula.
 
-    TODO: add citation
+    Kuz’min, M.D., Skokov, K.P., Diop, L.B. et al. Exchange stiffness of ferromagnets.
+    Eur. Phys. J. Plus 135, 301 (2020). https://doi.org/10.1140/epjp/s13360-020-00294-y
 
     Args:
         Ms_0: Spontaneous magnetization at 0 K.

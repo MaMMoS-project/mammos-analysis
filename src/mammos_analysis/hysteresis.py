@@ -54,7 +54,7 @@ class LinearSegmentProperties:
     """Linear segment properties extracted from a hysteresis loop.
 
     Attributes:
-        Mr: Remanent magnetization at zero field.
+        Mr: M(H=0) from linear segment fit.
         Hmax: Maximum field strength in the linear segment.
         gradient: Gradient of the linear segment.
     """
@@ -176,7 +176,7 @@ def extract_coercive_field(
     _check_monotonicity(h_val)
 
     if np.isnan(m_val).any():
-        raise ValueError("Magnetization contains NaN values.")
+        return me.Hc(np.nan)
 
     # Interpolation only works on increasing data
     idx = np.argsort(m_val)

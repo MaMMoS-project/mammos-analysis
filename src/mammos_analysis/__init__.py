@@ -1,4 +1,4 @@
-"""Analysis functions."""
+"""Post-processing (hysteresis loop, kuzmin, ...)."""
 
 from mammos_analysis import hysteresis
 from mammos_analysis.kuzmin import kuzmin_properties
