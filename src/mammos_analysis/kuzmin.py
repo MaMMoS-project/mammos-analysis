@@ -124,7 +124,7 @@ def kuzmin_properties(
         Ms=_Ms_function_of_temperature(Ms_0.value, T_c.value, s, T),
         A=_A_function_of_temperature(A_0, Ms_0.value, T_c.value, s, T),
         K1=K1,
-        Tc=me.Entity("ThermodynamicTemperature", value=T_c, unit="K"),
+        Tc=me.Tc(value=T_c, unit="K"),
         s=s * u.dimensionless_unscaled,
     )
 
