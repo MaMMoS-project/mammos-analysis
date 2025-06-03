@@ -1,9 +1,8 @@
 """Post-processing (hysteresis loop, kuzmin, ...)."""
 
-from mammos_analysis import hysteresis
-from mammos_analysis.kuzmin import kuzmin_properties
+import importlib.metadata
 
-__all__ = [
-    "hysteresis",
-    "kuzmin_properties",
-]
+from mammos_analysis import hysteresis as hysteresis
+from mammos_analysis.kuzmin import kuzmin_properties as kuzmin_properties
+
+__version__ = importlib.metadata.version(__package__)

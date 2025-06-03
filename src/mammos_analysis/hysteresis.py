@@ -1,22 +1,22 @@
 """Hysteresis analysis and postprocessing functions."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
+
 import numbers
 import re
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import mammos_entity
     import mammos_units
     import matplotlib
 
+import mammos_entity as me
+import mammos_units as u
+import matplotlib.pyplot as plt
 import numpy as np
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
-import matplotlib.pyplot as plt
-
-import mammos_entity as me
-import mammos_units as u
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
@@ -62,8 +62,8 @@ class LinearSegmentProperties:
     Mr: me.Entity
     Hmax: me.Entity
     gradient: u.Quantity
-    _H: Optional[me.Entity] = None
-    _M: Optional[me.Entity] = None
+    _H: me.Entity | None = None
+    _M: me.Entity | None = None
 
     def plot(self, ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
         """Plot the spontaneous magnetization data-points."""
@@ -136,11 +136,11 @@ def _unit_processing(
         ValueError: If units are incompatible.
         TypeError: If input type is unsupported.
     """
-    if isinstance(i, (me.Entity, u.Quantity)) and not unit.is_equivalent(i.unit):
+    if isinstance(i, me.Entity | u.Quantity) and not unit.is_equivalent(i.unit):
         raise ValueError(f"Input unit {i.unit} is not equivalent to {unit}.")
-    if isinstance(i, (me.Entity, u.Quantity)):
+    if isinstance(i, me.Entity | u.Quantity):
         value = i.to(unit).value
-    elif isinstance(i, (np.ndarray, numbers.Number)):
+    elif isinstance(i, np.ndarray | numbers.Number):
         value = i
     else:
         raise TypeError(
@@ -271,8 +271,20 @@ def extract_B_curve(
 
     Raises:
         ValueError: If the coefficient is out of range.
+
+    Examples:
+        >>> import mammos_analysis.hysteresis
+        >>> import mammos_entity as me
+        >>> H = me.H([0, 1e4, 2e4], unit="A/m")
+        >>> M = me.Ms([1e5, 2e5, 3e5], unit="A/m")
+        >>> mammos_analysis.hysteresis.extract_B_curve(H, M, 1/3)
+        MagneticFluxDensity(...)
+
     """
-    if isinstance(demagnetisation_coefficient, (int, float)):
+    # TODO the doctest should use the following line but that sometimes
+    # fails on Mac and/or Windows
+    # MagneticFluxDensity(value=..., unit=T)
+    if isinstance(demagnetisation_coefficient, int | float):
         if demagnetisation_coefficient < 0 or demagnetisation_coefficient > 1:
             raise ValueError("Demagnetisation coefficient must be between 0 and 1.")
     else:

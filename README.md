@@ -4,7 +4,7 @@ Analysis functionality package
 | Description   | Badge                                                                                                                                                                                    |
 |---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Tests         | [![Test package](https://github.com/MaMMoS-project/mammos-analysis/actions/workflows/test.yml/badge.svg)](https://github.com/MaMMoS-project/mammos-analysis/actions/workflows/test.yml)        |
-| Linting       | [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/mammos-project/mammos-mumag/main.svg)](https://results.pre-commit.ci/latest/github/mammos-project/mammos-analysis/main) |
+| Linting       | [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/MaMMoS-project/mammos-analysis/main.svg)](https://results.pre-commit.ci/latest/github/MaMMoS-project/mammos-analysis/main) |
 | Releases      | [![PyPI version](https://badge.fury.io/py/mammos-analysis.svg)](https://badge.fury.io/py/mammos-analysis)                                                                                      |
 | Documentation | [![Documentation](https://img.shields.io/badge/Docs-mammos--project.github.io%2Fmammos-blue)](https://mammos-project.github.io/mammos/index.html)                                        |
 | Binder        | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mammos-project/mammos-analysis/latest?urlpath=lab%2Ftree%2Fexamples)                                       |
