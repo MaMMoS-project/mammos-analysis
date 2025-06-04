@@ -390,77 +390,80 @@ def find_linear_segment(
 
     1. **Max‐Deviation Criterion** (`method="maxdev"`):
        Require that every data point in the segment satisfies
-       \[
-         \max_{\,i_0 \le i \le i_{\max}}\;\bigl|\,M_i - (m\,H_i + b)\bigr|
-         \;\le\; \delta,
-       \]
+
+       .. math::
+
+          \max_{\,i_0 \le i \le i_{\max}}\;\bigl|\,M_i - (m\,H_i + b)\bigr|
+          \;\le\; \delta,
+
        where:
-       - \(\{(H_i, M_i)\}\) are the data points,
-       - \(m\) is the fitted slope,
-       - \(b\) is the fitted intercept (value of \(M\) at \(H=0\)),
-       - \(\delta\) is the user‐supplied margin (in the same units as \(M\)).
-       This guarantees **each** point lies within \(\pm \delta\).
+
+       - :math:`\{(H_i, M_i)\}` are the data points,
+       - :math:`m` is the fitted slope,
+       - :math:`b` is the fitted intercept (value of :math:`M` at :math:`H=0`),
+       - :math:`\delta` is the user‐supplied margin (in the same units as :math:`M`).
+
+       This guarantees **each** point lies within :math:`\pm \delta`.
 
     2. **RMS Criterion** (`method="rms"`):
        Require that the root‐mean‐square error over the segment satisfies
-       \[
+
+       .. math::
+
          \mathrm{RMSE}
          \;=\;
          \sqrt{\frac{1}{n}\sum_{\,i=i_0}^{\,i_{\max}}
          \bigl(M_i - (m\,H_i + b)\bigr)^2}
          \;\le\; \delta,
-       \]
-       where \(n = i_{\max} - i_0 + 1\).  Occasional points may exceed \(\delta\)
-       provided the overall RMS error remains within \(\delta\).
 
-    We return a single `LinearSegmentProperties` instance containing:
-      - `Mr`: fitted intercept \(b\) (magnetization at \(H=0\)),
-      - `Hmax`: largest field value up to which data remain “linear” under the
-         chosen criterion,
-      - `gradient`: fitted slope \(m\) (dimensionless).
+       where :math:`n = i_{\max} - i_0 + 1`. Occasional points may exceed :math:`\delta`
+       provided the overall RMS error remains within :math:`\delta`.
 
-    Parameters
-    ----------
-    H : Applied magnetic field values. Must be monotonic.
-    M : Magnetization values corresponding to `H`.
-    margin : Allowed deviation \(\delta\).
-    method : Which deviation test to use:
-          - `"maxdev"` (default): per‐point maximum deviation,
-          - `"rms"`: root‐mean‐square deviation.
-    min_points : Minimum number of points required to attempt any fit.
+    Parameters:
+      H: Applied magnetic field values. Must be monotonic.
+      M: Magnetization values corresponding to `H`.
+      margin: Allowed deviation :math:`\delta`.
+      method: Which deviation test to use:
+        - `"maxdev"` (default): per‐point maximum deviation,
+        - `"rms"`: root‐mean‐square deviation.
+      min_points: Minimum number of points required to attempt any fit.
 
     Returns:
-    -------
-    LinearSegmentProperties
-        Contains:
-          - `Mr`: intercept \(b\) (magnetization at \(H=0\)),
-          - `Hmax`: largest field for which the chosen criterion holds,
-          - `gradient`: slope \(m\) of the fitted line on that segment.
+      LinearSegmentProperties containing:
+
+      - `Mr`: fitted intercept :math:`b` (magnetization at :math:`H=0`),
+      - `Hmax`: largest field value up to which data remain “linear” under the
+        chosen criterion,
+      - `gradient`: fitted slope :math:`m` (dimensionless).
 
     Notes:
-    -----
-    **Growing‐Window Fit**
-       We attempt to extend the segment one index at a time:
-       \[
-         \{\,i_0,\,i_0+1,\,\dots,\,i\,\}.
-       \]
-       For each candidate endpoint \(i\), we fit a line
-       \(\hat{M}(H) = m\,H + b\) via `np.polyfit(H[i_0:i+1], M[i_0:i+1], 1)`.
-       Then we compute either:
-         - **Max‐Deviation**:
-           \(\max_{j=i_0}^i\,\bigl|M_j - (m\,H_j + b)\bigr| \le \delta,\) or
-         - **RMS**:
-            \[
-             \mathrm{RMSE} \;=\;
-             \sqrt{\frac{1}{\,i - i_0 + 1\,}
-                   \sum_{j=i_0}^{i}
-                     \bigl(M_j - (m\,H_j + b)\bigr)^2}
-             \;\le\; \delta.
-           \]
+      **Growing‐Window Fit**
+      We attempt to extend the segment one index at a time:
 
-       As soon as adding \(i+1\) would violate the chosen inequality, we stop
-       and take \(i_{\max} = i\). We then refit \((m,b)\) on \(\{i_0,\dots,i_{\max}\}\)
-       to produce the final slope/intercept returned.
+      .. math::
+
+         \{\,i_0,\,i_0+1,\,\dots,\,i\,\}.
+
+      For each candidate endpoint :math:`i`, we fit a line
+      :math:`\hat{M}(H) = m\,H + b` via `np.polyfit(H[i_0:i+1], M[i_0:i+1], 1)`.
+      Then we compute either:
+
+      - **Max‐Deviation**:
+        :math:`\max_{j=i_0}^i\,\bigl|M_j - (m\,H_j + b)\bigr| \le \delta,` or
+      - **RMS**:
+
+        .. math::
+
+           \mathrm{RMSE} \;=\;
+           \sqrt{\frac{1}{\,i - i_0 + 1\,}
+                 \sum_{j=i_0}^{i}
+                 \bigl(M_j - (m\,H_j + b)\bigr)^2}
+           \;\le\; \delta.
+
+
+      As soon as adding :math:`i+1` would violate the chosen inequality, we stop and
+      take :math:`i_{\max} = i`. We then refit :math:`(m,b)` on
+      :math:`\{i_0,\dots,i_{\max}\}` to produce the final slope/intercept returned.
 
     """
     # 1) Normalize inputs to unitless numpy arrays in A/m
