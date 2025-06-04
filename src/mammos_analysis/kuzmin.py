@@ -27,22 +27,18 @@ if TYPE_CHECKING:
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class KuzminResult:
-    """Result of Kuz'min magnetic properties estimation.
-
-    Attributes:
-        Ms: Callable returning temperature-dependent spontaneous magnetization.
-        A: Callable returning temperature-dependent exchange stiffness.
-        K1: Callable returning temperature-dependent uniaxial anisotropy.
-        Tc: Curie temperature.
-        s: Kuzmin parameter.
-    """
+    """Result of Kuz'min magnetic properties estimation."""
 
     Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
     """Callable returning temperature-dependent spontaneous magnetization."""
     A: Callable[[numbers.Real | u.Quantity], me.Entity]
+    """Callable returning temperature-dependent exchange stiffness."""
     Tc: me.Entity
+    """Curie temperature."""
     s: u.Quantity
+    """Kuzmin parameter."""
     K1: Callable[[numbers.Real | u.Quantity], me.Entity] | None = None
+    """Callable returning temperature-dependent uniaxial anisotropy."""
 
     def plot(
         self,

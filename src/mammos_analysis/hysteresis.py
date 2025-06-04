@@ -21,47 +21,38 @@ from pydantic.dataclasses import dataclass
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class ExtrinsicProperties:
-    """Extrinsic properties extracted from a hysteresis loop.
-
-    Attributes:
-        Hc: Coercive field.
-        Mr: Remanent magnetization.
-        BHmax: Maximum energy product.
-    """
+    """Extrinsic properties extracted from a hysteresis loop."""
 
     Hc: me.Entity
+    """Coercive field."""
     Mr: me.Entity
+    """Remanent magnetization."""
     BHmax: me.Entity
+    """Maximum energy product."""
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class MaximumEnergyProductProperties:
-    """Properties related to the maximum energy product in a hysteresis loop.
-
-    Attributes:
-        Hd: Field strength at which BHmax occurs.
-        Bd: Flux density at which BHmax occurs.
-        BHmax: Maximum energy product value.
-    """
+    """Properties related to the maximum energy product in a hysteresis loop."""
 
     Hd: me.Entity
+    """Field strength at which BHmax occurs."""
     Bd: me.Entity
+    """Flux density at which BHmax occurs."""
     BHmax: me.Entity
+    """Maximum energy product value."""
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class LinearSegmentProperties:
-    """Linear segment properties extracted from a hysteresis loop.
-
-    Attributes:
-        Mr: M(H=0) from linear segment fit.
-        Hmax: Maximum field strength in the linear segment.
-        gradient: Gradient of the linear segment.
-    """
+    """Linear segment properties extracted from a hysteresis loop."""
 
     Mr: me.Entity
+    """M(H=0) from linear segment fit."""
     Hmax: me.Entity
+    """Maximum field strength in the linear segment."""
     gradient: u.Quantity
+    """Gradient of the linear segment."""
     _H: me.Entity | None = None
     _M: me.Entity | None = None
 
