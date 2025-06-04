@@ -2,22 +2,22 @@
 
 from __future__ import annotations
 
+import mammos_entity as me
+import mammos_units as u
 import numpy as np
 import pytest
 
-import mammos_entity as me
-import mammos_units as u
 from mammos_analysis.hysteresis import (
-    extract_coercive_field,
-    extract_remanent_magnetization,
-    _check_monotonicity,
-    extract_B_curve,
-    extract_maximum_energy_product,
-    extrinsic_properties,
-    MaximumEnergyProductProperties,
-    _unit_processing,
-    find_linear_segment,
     LinearSegmentProperties,
+    MaximumEnergyProductProperties,
+    _check_monotonicity,
+    _unit_processing,
+    extract_B_curve,
+    extract_coercive_field,
+    extract_maximum_energy_product,
+    extract_remanent_magnetization,
+    extrinsic_properties,
+    find_linear_segment,
 )
 
 

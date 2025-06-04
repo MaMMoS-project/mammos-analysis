@@ -1,17 +1,16 @@
 """Tests for Kuzmin functions."""
 
-import numpy as np
-
 import mammos_entity as me
 import mammos_units as u
+import numpy as np
 
 from mammos_analysis.kuzmin import (
-    kuzmin_formula,
-    _Ms_function_of_temperature,
+    KuzminResult,
     _A_function_of_temperature,
     _K1_function_of_temperature,
+    _Ms_function_of_temperature,
+    kuzmin_formula,
     kuzmin_properties,
-    KuzminResult,
 )
 
 

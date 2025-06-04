@@ -6,7 +6,7 @@ import numbers
 import warnings
 from collections.abc import Callable
 from functools import partial
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import mammos_entity
 import mammos_entity as me
@@ -49,10 +49,7 @@ class KuzminResult:
         T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
     ) -> matplotlib.axes.Axes:
         """Create a plot for Ms, A, and K1 as a function of temperature."""
-        if self.K1 is None:
-            ncols = 2
-        else:
-            ncols = 3
+        ncols = 2 if self.K1 is None else 3
         w, h = figaspect(1 / ncols)
         _, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(w, h))
         self.Ms.plot(T, ax[0], color="b")
@@ -65,7 +62,7 @@ class KuzminResult:
 def kuzmin_properties(
     Ms: mammos_entity.Entity,
     T: mammos_entity.Entity,
-    K1_0: Optional[mammos_entity.Entity] = None,
+    K1_0: mammos_entity.Entity | None = None,
 ) -> KuzminResult:
     """Evaluate intrinsic micromagnetic properties using Kuz'min model.
 
@@ -85,9 +82,10 @@ def kuzmin_properties(
     Raises:
         ValueError: If K1_0 has incorrect unit.
     """
-    if K1_0 is not None:
-        if not isinstance(K1_0, u.Quantity) or K1_0.unit != u.J / u.m**3:
-            K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
+    if K1_0 is not None and (
+        not isinstance(K1_0, u.Quantity) or K1_0.unit != u.J / u.m**3
+    ):
+        K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
     # TODO: fix logic - assumption is that Ms is given at T=0K
     Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
@@ -147,7 +145,7 @@ def kuzmin_formula(Ms_0, T_c, s, T):
     base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
     out = np.zeros_like(T, dtype=np.float64)
     # only compute base**(1/3) where T < T_c; elsewhere leave as zero
-    np.power(base, 1 / 3, out=out, where=(T < T_c))
+    np.power(base, 1 / 3, out=out, where=(T_c > T))
     return Ms_0 * out
 
 
