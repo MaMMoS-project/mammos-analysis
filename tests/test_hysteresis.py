@@ -211,7 +211,7 @@ def test_B_curve():
     M = me.Ms(m_values * u.A / u.m)
 
     # Extract the B curve
-    B_curve = extract_B_curve(H, M, demagnetisation_coefficient=1 / 3)
+    B_curve = extract_B_curve(H, M, demagnetization_coefficient=1 / 3)
 
     # Check if the B curve is an Entity
     assert isinstance(B_curve, me.Entity)
@@ -229,13 +229,13 @@ def test_B_curve_errors():
     H = me.H(h_values * u.A / u.m)
     M = me.Ms(m_values * u.A / u.m)
 
-    # Test with invalid demagnetisation coefficient
+    # Test with invalid demagnetization coefficient
     with pytest.raises(ValueError):
-        extract_B_curve(H, M, demagnetisation_coefficient=None)
+        extract_B_curve(H, M, demagnetization_coefficient=None)
     with pytest.raises(ValueError):
-        extract_B_curve(H, M, demagnetisation_coefficient=1.5)
+        extract_B_curve(H, M, demagnetization_coefficient=1.5)
     with pytest.raises(ValueError):
-        extract_B_curve(H, M, demagnetisation_coefficient=-1)
+        extract_B_curve(H, M, demagnetization_coefficient=-1)
 
 
 @pytest.mark.parametrize(
@@ -343,24 +343,24 @@ def test_extrinsic_properties():
     M = me.Ms(m_values * u.A / u.m)
 
     # Extract the extrinsic properties
-    ep = extrinsic_properties(H, M, demagnetisation_coefficient=1 / 3)
+    ep = extrinsic_properties(H, M, demagnetization_coefficient=1 / 3)
 
     # Check if the extracted properties are correct
     assert isinstance(ep.Hc, me.Entity)
     assert isinstance(ep.Mr, me.Entity)
     assert isinstance(ep.BHmax, me.Entity)
 
-    ep = extrinsic_properties(H.quantity, M.quantity, demagnetisation_coefficient=1 / 3)
+    ep = extrinsic_properties(H.quantity, M.quantity, demagnetization_coefficient=1 / 3)
     assert isinstance(ep.Hc, me.Entity)
     assert isinstance(ep.Mr, me.Entity)
     assert isinstance(ep.BHmax, me.Entity)
 
-    ep = extrinsic_properties(H.value, M.value, demagnetisation_coefficient=1 / 3)
+    ep = extrinsic_properties(H.value, M.value, demagnetization_coefficient=1 / 3)
     assert isinstance(ep.Hc, me.Entity)
     assert isinstance(ep.Mr, me.Entity)
     assert isinstance(ep.BHmax, me.Entity)
 
-    ep = extrinsic_properties(H, M, demagnetisation_coefficient=None)
+    ep = extrinsic_properties(H, M, demagnetization_coefficient=None)
     assert isinstance(ep.Hc, me.Entity)
     assert isinstance(ep.Mr, me.Entity)
     assert isinstance(ep.BHmax, me.Entity)
