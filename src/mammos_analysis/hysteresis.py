@@ -248,14 +248,14 @@ def extract_remanent_magnetization(
 def extract_B_curve(
     H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
     M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
-    demagnetisation_coefficient: float,
+    demagnetization_coefficient: float,
 ) -> me.Entity:
     """Compute the B–H curve from a hysteresis loop.
 
     Args:
         H: External magnetic field.
         M: Spontaneous magnetization.
-        demagnetisation_coefficient: Demagnetisation coefficient (0 to 1).
+        demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
         Magnetic flux density as an Entity.
@@ -275,17 +275,17 @@ def extract_B_curve(
     # TODO the doctest should use the following line but that sometimes
     # fails on Mac and/or Windows
     # MagneticFluxDensity(value=..., unit=T)
-    if isinstance(demagnetisation_coefficient, int | float):
-        if demagnetisation_coefficient < 0 or demagnetisation_coefficient > 1:
-            raise ValueError("Demagnetisation coefficient must be between 0 and 1.")
+    if isinstance(demagnetization_coefficient, int | float):
+        if demagnetization_coefficient < 0 or demagnetization_coefficient > 1:
+            raise ValueError("Demagnetization coefficient must be between 0 and 1.")
     else:
-        raise ValueError("Demagnetisation coefficient must be a float or int.")
+        raise ValueError("Demagnetization coefficient must be a float or int.")
 
     H = _unit_processing(H, u.A / u.m)
     M = _unit_processing(M, u.A / u.m)
 
     # Calculate internal field and flux density
-    H_internal = H - demagnetisation_coefficient * M
+    H_internal = H - demagnetization_coefficient * M
     B_internal = (H_internal + M) * u.constants.mu0
 
     return me.Entity("MagneticFluxDensity", value=B_internal)
@@ -345,14 +345,14 @@ def extract_maximum_energy_product(
 def extrinsic_properties(
     H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
     M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
-    demagnetisation_coefficient: float | None = None,
+    demagnetization_coefficient: float | None = None,
 ) -> ExtrinsicProperties:
     """Compute extrinsic properties of a hysteresis loop.
 
     Args:
         H: External magnetic field.
         M: Spontaneous magnetization.
-        demagnetisation_coefficient: Demagnetisation coefficient for BHmax.
+        demagnetization_coefficient: Demagnetization coefficient for BHmax.
 
     Returns:
         ExtrinsicProperties containing Hc, Mr, and BHmax.
@@ -363,11 +363,11 @@ def extrinsic_properties(
     Hc = extract_coercive_field(H, M)
     Mr = extract_remanent_magnetization(H, M)
 
-    if demagnetisation_coefficient is None:
+    if demagnetization_coefficient is None:
         BHmax = me.BHmax(np.nan)
     else:
         result = extract_maximum_energy_product(
-            H, extract_B_curve(H, M, demagnetisation_coefficient)
+            H, extract_B_curve(H, M, demagnetization_coefficient)
         )
         BHmax = result.BHmax
     return ExtrinsicProperties(
