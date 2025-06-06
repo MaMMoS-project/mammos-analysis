@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numbers
-import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -67,14 +66,8 @@ class LinearSegmentProperties:
         y = self.gradient.value * x + self.Mr.value
         plt.plot(x, y, linestyle="--", c="r", label="Linear fit")
         plt.legend()
-        ax.set_xlabel(
-            re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self._H.ontology_label}")
-            + f" [{self._H.unit}]"
-        )
-        ax.set_ylabel(
-            re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self._M.ontology_label}")
-            + f" [{self._M.unit}]"
-        )
+        ax.set_xlabel(self._H.axis_label)
+        ax.set_ylabel(self._M.axis_label)
         return ax
 
 

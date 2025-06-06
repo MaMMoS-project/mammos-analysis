@@ -47,11 +47,12 @@ class KuzminResult:
         """Create a plot for Ms, A, and K1 as a function of temperature."""
         ncols = 2 if self.K1 is None else 3
         w, h = figaspect(1 / ncols)
+        default_color_cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         _, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(w, h))
-        self.Ms.plot(T, ax[0], color="b")
-        self.A.plot(T, ax[1], color="r")
+        self.Ms.plot(T, ax[0], color=default_color_cycle[0])
+        self.A.plot(T, ax[1], color=default_color_cycle[1])
         if self.K1 is not None:
-            self.K1.plot(T, ax[2], color="g")
+            self.K1.plot(T, ax[2], color=default_color_cycle[2])
         return ax
 
 
@@ -186,9 +187,12 @@ class _A_function_of_temperature:
             _, ax = plt.subplots()
         if T is None:
             T = np.linspace(min(self._T.value), max(self._T.value), 100)
-        ax.plot(T, self(T), **kwargs)
-        ax.set_xlabel("Temperature [K]")
-        ax.set_ylabel("Exchange Stiffness Constant [J / m]")
+        if not isinstance(T, me.Entity):
+            T = me.T(T)
+        A = self(T)
+        ax.plot(T, A, **kwargs)
+        ax.set_xlabel(T.axis_label)
+        ax.set_ylabel(A.axis_label)
         ax.grid()
         return ax
 
@@ -235,9 +239,12 @@ class _K1_function_of_temperature:
             _, ax = plt.subplots()
         if T is None:
             T = np.linspace(min(self._T.value), max(self._T.value), 100)
-        ax.plot(T, self(T), **kwargs)
-        ax.set_xlabel("Temperature [K]")
-        ax.set_ylabel("Uniaxial Anisotropy Constant [J / m3]")
+        if not isinstance(T, me.Entity):
+            T = me.T(T)
+        K1 = self(T)
+        ax.plot(T, K1, **kwargs)
+        ax.set_xlabel(T.axis_label)
+        ax.set_ylabel(K1.axis_label)
         ax.grid()
         return ax
 
@@ -285,8 +292,11 @@ class _Ms_function_of_temperature:
             _, ax = plt.subplots()
         if T is None:
             T = np.linspace(min(self._T.value), max(self._T.value), 100)
-        ax.plot(T, self(T), **kwargs)
-        ax.set_xlabel("Temperature [K]")
-        ax.set_ylabel("Spontaneous Magnetization [A / m]")
+        if not isinstance(T, me.Entity):
+            T = me.T(T)
+        Ms = self(T)
+        ax.plot(T, Ms, **kwargs)
+        ax.set_xlabel(T.axis_label)
+        ax.set_ylabel(Ms.axis_label)
         ax.grid()
         return ax
