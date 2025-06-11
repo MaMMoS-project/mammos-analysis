@@ -19,8 +19,8 @@ from pydantic.dataclasses import dataclass
 from scipy import optimize
 
 if TYPE_CHECKING:
+    import astropy.units
     import mammos_entity
-    import mammos_units
     import matplotlib
     import numpy
 
@@ -42,7 +42,7 @@ class KuzminResult:
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
     ) -> matplotlib.axes.Axes:
         """Create a plot for Ms, A, and K1 as a function of temperature."""
         ncols = 2 if self.K1 is None else 3
@@ -180,7 +180,7 @@ class _A_function_of_temperature:
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         **kwargs,
     ) -> matplotlib.axes.Axes:
@@ -232,7 +232,7 @@ class _K1_function_of_temperature:
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         **kwargs,
     ) -> matplotlib.axes.Axes:
@@ -267,7 +267,7 @@ class _Ms_function_of_temperature:
         self,
         Ms_0: mammos_entity.Entity,
         T_c: mammos_entity.Entity,
-        s: mammos_units.Quantity,
+        s: astropy.units.Quantity,
         T: mammos_entity.Entity,
     ):
         self.Ms_0 = Ms_0
@@ -285,7 +285,7 @@ class _Ms_function_of_temperature:
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         **kwargs,
     ) -> matplotlib.axes.Axes:

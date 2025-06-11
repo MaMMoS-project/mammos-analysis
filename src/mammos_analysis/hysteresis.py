@@ -6,10 +6,13 @@ import numbers
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import mammos_entity
+    import astropy.units
     import mammos_units
     import matplotlib
+    import numpy
 
+import astropy.units
+import mammos_entity
 import mammos_entity as me
 import mammos_units as u
 import matplotlib.pyplot as plt
@@ -22,11 +25,11 @@ from pydantic.dataclasses import dataclass
 class ExtrinsicProperties:
     """Extrinsic properties extracted from a hysteresis loop."""
 
-    Hc: me.Entity
+    Hc: mammos_entity.Entity
     """Coercive field."""
-    Mr: me.Entity
+    Mr: mammos_entity.Entity
     """Remanent magnetization."""
-    BHmax: me.Entity
+    BHmax: mammos_entity.Entity
     """Maximum energy product."""
 
 
@@ -34,11 +37,11 @@ class ExtrinsicProperties:
 class MaximumEnergyProductProperties:
     """Properties related to the maximum energy product in a hysteresis loop."""
 
-    Hd: me.Entity
+    Hd: mammos_entity.Entity
     """Field strength at which BHmax occurs."""
-    Bd: me.Entity
+    Bd: mammos_entity.Entity
     """Flux density at which BHmax occurs."""
-    BHmax: me.Entity
+    BHmax: mammos_entity.Entity
     """Maximum energy product value."""
 
 
@@ -46,14 +49,14 @@ class MaximumEnergyProductProperties:
 class LinearSegmentProperties:
     """Linear segment properties extracted from a hysteresis loop."""
 
-    Mr: me.Entity
+    Mr: mammos_entity.Entity
     """M(H=0) from linear segment fit."""
-    Hmax: me.Entity
+    Hmax: mammos_entity.Entity
     """Maximum field strength in the linear segment."""
-    gradient: u.Quantity
+    gradient: astropy.units.Quantity
     """Gradient of the linear segment."""
-    _H: me.Entity | None = None
-    _M: me.Entity | None = None
+    _H: mammos_entity.Entity | None = None
+    _M: mammos_entity.Entity | None = None
 
     def plot(self, ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
         """Plot the spontaneous magnetization data-points."""
@@ -71,7 +74,7 @@ class LinearSegmentProperties:
         return ax
 
 
-def _check_monotonicity(arr: np.ndarray, direction=None) -> None:
+def _check_monotonicity(arr: numpy.ndarray, direction=None) -> None:
     """Check if an array is monotonically increasing or decreasing.
 
     Args:
@@ -102,10 +105,10 @@ def _check_monotonicity(arr: np.ndarray, direction=None) -> None:
 
 
 def _unit_processing(
-    i: mammos_entity.Entity | mammos_units.Quantity | np.ndarray | numbers.Number,
+    i: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | numbers.Number,
     unit: mammos_units.Unit,
     return_quantity: bool = True,
-) -> np.ndarray:
+) -> numpy.ndarray:
     """Convert input data to a consistent unit for calculations.
 
     Args:
@@ -124,7 +127,7 @@ def _unit_processing(
         raise ValueError(f"Input unit {i.unit} is not equivalent to {unit}.")
     if isinstance(i, me.Entity | u.Quantity):
         value = i.to(unit).value
-    elif isinstance(i, np.ndarray | numbers.Number):
+    elif isinstance(i, numpy.ndarray | numbers.Number):
         value = i
     else:
         raise TypeError(
@@ -138,8 +141,9 @@ def _unit_processing(
 
 
 def extract_coercive_field(
-    H: me.Entity | u.Quantity | np.ndarray, M: me.Entity | u.Quantity | np.ndarray
-) -> me.Entity:
+    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+) -> mammos_entity.Entity:
     """Extract the coercive field from a hysteresis loop.
 
     Args:
@@ -185,8 +189,9 @@ def extract_coercive_field(
 
 
 def extract_remanent_magnetization(
-    H: me.Entity | u.Quantity | np.ndarray, M: me.Entity | u.Quantity | np.ndarray
-) -> me.Entity:
+    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+) -> mammos_entity.Entity:
     """Extract the remanent magnetization from a hysteresis loop.
 
     Args:
@@ -239,10 +244,10 @@ def extract_remanent_magnetization(
 
 
 def extract_B_curve(
-    H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
-    M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
+    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
     demagnetization_coefficient: float,
-) -> me.Entity:
+) -> mammos_entity.Entity:
     """Compute the B–H curve from a hysteresis loop.
 
     Args:
@@ -285,8 +290,8 @@ def extract_B_curve(
 
 
 def extract_maximum_energy_product(
-    H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
-    B: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
+    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    B: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
 ) -> MaximumEnergyProductProperties:
     """Determine the maximum energy product from a hysteresis loop.
 
@@ -336,8 +341,8 @@ def extract_maximum_energy_product(
 
 
 def extrinsic_properties(
-    H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
-    M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
+    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
     demagnetization_coefficient: float | None = None,
 ) -> ExtrinsicProperties:
     """Compute extrinsic properties of a hysteresis loop.
@@ -371,9 +376,9 @@ def extrinsic_properties(
 
 
 def find_linear_segment(
-    H: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
-    M: mammos_entity.Entity | mammos_units.Quantity | np.ndarray,
-    margin: mammos_entity.Entity | mammos_units.Quantity | numbers.Number,
+    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    margin: mammos_entity.Entity | astropy.units.Quantity | numbers.Number,
     method: str = "maxdev",
     min_points: int = 5,
 ) -> LinearSegmentProperties:
@@ -422,7 +427,7 @@ def find_linear_segment(
       min_points: Minimum number of points required to attempt any fit.
 
     Returns:
-      LinearSegmentProperties containing:
+      An object containing
 
       - `Mr`: fitted intercept :math:`b` (magnetization at :math:`H=0`),
       - `Hmax`: largest field value up to which data remain “linear” under the
