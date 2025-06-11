@@ -127,7 +127,7 @@ def _unit_processing(
         raise ValueError(f"Input unit {i.unit} is not equivalent to {unit}.")
     if isinstance(i, me.Entity | u.Quantity):
         value = i.to(unit).value
-    elif isinstance(i, numpy.ndarray | numbers.Number):
+    elif isinstance(i, np.ndarray | numbers.Number):
         value = i
     else:
         raise TypeError(
