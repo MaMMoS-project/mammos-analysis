@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mammos-analysis"
-version = "0.1.1"
+version = "0.1.2"
 description = "Analysis functionality package."
 readme = "README.md"
 authors = [
