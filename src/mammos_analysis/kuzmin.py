@@ -63,9 +63,11 @@ def kuzmin_properties(
 ) -> KuzminResult:
     """Evaluate intrinsic micromagnetic properties using Kuz'min model.
 
-    If temperature data T is provided, the intrinsic properties are
-    evaluated at those temperatures.
-    Otherwise, Ms, A, and K1 are callables of temperature.
+    Computes Ms, A, and K1 as funtcion of temperature by fitting the Kuzmin equation
+    to Ms vs T. The attributes Ms, A and K1 in the returned object can be called to get
+    values at arbitrary temperatures.
+
+    K1 is only available in the output data if a zero-temperature value has been passed.
 
     Args:
         Ms: Spontaneous magnetization data points as a me.Entity.
@@ -73,7 +75,7 @@ def kuzmin_properties(
         K1_0: Magnetocrystalline anisotropy at 0 K as a me.Entity.
 
     Returns:
-        KuzminResult with temperature-dependent or evaluated values, Curie temperature,
+        KuzminResult with temperature-dependent Ms, A, K1 (optional), Curie temperature,
         and exponent.
 
     Raises:
