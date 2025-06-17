@@ -309,7 +309,6 @@ def extract_maximum_energy_product(
     B = _unit_processing(B, u.T)
 
     _check_monotonicity(H.value)
-    _check_monotonicity(B.value)
 
     # check if H is increasing or decreasing
     if np.all(np.diff(H) >= 0):
