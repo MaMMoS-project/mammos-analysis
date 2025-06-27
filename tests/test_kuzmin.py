@@ -71,15 +71,15 @@ def test_Ms_function_of_temperature():
     # numeric input
     m = ms_func(100.0)
     assert isinstance(m, me.Entity)
-    assert u.allclose(m, kuzmin_formula(Ms0, Tc, s, 100.0) * u.A / u.m)
+    assert u.allclose(m.q, kuzmin_formula(Ms0, Tc, s, 100.0) * u.A / u.m)
     # quantity input
     Tq = 100.0 * u.K
     m_q = ms_func(Tq)
-    assert u.allclose(m_q, m)
+    assert m_q == m
     # entity input
     T_entity = me.Entity("ThermodynamicTemperature", value=100, unit="K")
     m_entity = ms_func(T_entity)
-    assert u.allclose(m_entity, m)
+    assert m_entity == m
 
 
 def test_A_function_of_temperature():
@@ -95,18 +95,18 @@ def test_A_function_of_temperature():
     # numeric input
     a = a_func(100.0)
     assert isinstance(a, me.Entity)
-    expected_a = me.A(A0 * (kuzmin_formula(Ms0, Tc, s, 100.0) / Ms0) ** 2)
-    assert u.allclose(a, expected_a)
+    expected_a = me.A(A0.q * (kuzmin_formula(Ms0, Tc, s, 100.0) / Ms0) ** 2)
+    assert a == expected_a
     # quantity input
     Tq = 100.0 * u.K
     a_q = a_func(Tq)
     assert isinstance(a_q, me.Entity)
-    assert u.allclose(a_q, a)
+    assert a_q == a
     # entity input
     T_entity = me.Entity("ThermodynamicTemperature", value=100, unit="K")
     a_entity = a_func(T_entity)
     assert isinstance(a_entity, me.Entity)
-    assert u.allclose(a_entity, a)
+    assert a_entity == a
 
 
 def test_K1_function_of_temperature():
@@ -122,18 +122,18 @@ def test_K1_function_of_temperature():
     # numeric input
     k1 = k1_func(100.0)
     assert isinstance(k1, me.Entity)
-    expected_k1 = me.Ku(K1_0 * (kuzmin_formula(Ms_0, T_c, s, 100.0) / Ms_0) ** 3)
-    assert u.allclose(k1, expected_k1)
+    expected_k1 = me.Ku(K1_0.q * (kuzmin_formula(Ms_0, T_c, s, 100.0) / Ms_0) ** 3)
+    assert k1 == expected_k1
     # quantity input
     Tq = 100.0 * u.K
     k1_q = k1_func(Tq)
     assert isinstance(k1_q, me.Entity)
-    assert u.allclose(k1_q, k1)
+    assert k1_q == k1
     # entity input
     T_entity = me.Entity("ThermodynamicTemperature", value=100, unit="K")
     k1_entity = k1_func(T_entity)
     assert isinstance(k1_entity, me.Entity)
-    assert u.allclose(k1_entity, k1)
+    assert k1_entity == k1
 
 
 def test_kuzmin_properties():

@@ -62,7 +62,7 @@ class LinearSegmentProperties:
         """Plot the spontaneous magnetization data-points."""
         if not ax:
             _, ax = plt.subplots()
-        ax.scatter(self._H, y=self._M, label="Data")
+        ax.scatter(self._H.q, y=self._M.q, label="Data")
         ax.axvline(self.Hmax.value, color="k", linestyle="--", label="Hmax")
 
         x = np.linspace(0, self.Hmax.value, 100)
@@ -125,7 +125,10 @@ def _unit_processing(
     """
     if isinstance(i, me.Entity | u.Quantity) and not unit.is_equivalent(i.unit):
         raise ValueError(f"Input unit {i.unit} is not equivalent to {unit}.")
-    if isinstance(i, me.Entity | u.Quantity):
+
+    if isinstance(i, me.Entity):
+        value = i.q.to(unit).value
+    elif isinstance(i, u.Quantity):
         value = i.to(unit).value
     elif isinstance(i, np.ndarray | numbers.Number):
         value = i
@@ -267,7 +270,7 @@ def extract_B_curve(
         >>> H = me.H([0, 1e4, 2e4], unit="A/m")
         >>> M = me.Ms([1e5, 2e5, 3e5], unit="A/m")
         >>> mammos_analysis.hysteresis.extract_B_curve(H, M, 1/3)
-        MagneticFluxDensity(...)
+        Entity(ontology_label='MagneticFluxDensity', ...)
 
     """
     # TODO the doctest should use the following line but that sometimes
@@ -541,6 +544,6 @@ def find_linear_segment(
         Mr=me.Mr(b_opt),
         Hmax=me.H(Hmax_val),
         gradient=m_opt * u.dimensionless_unscaled,
-        _H=me.H(H, unit="A/m"),
-        _M=me.Ms(M, unit="A/m"),
+        _H=me.H(H.value, unit="A/m"),
+        _M=me.Ms(M.value, unit="A/m"),
     )

@@ -82,7 +82,7 @@ def kuzmin_properties(
         ValueError: If K1_0 has incorrect unit.
     """
     if K1_0 is not None and (
-        not isinstance(K1_0, u.Quantity) or K1_0.unit != u.J / u.m**3
+        not isinstance(K1_0, me.Entity) or K1_0.unit != u.J / u.m**3
     ):
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
@@ -106,7 +106,7 @@ def kuzmin_properties(
     T_c = T_c * u.K
     D = (
         0.1509
-        * ((6 * u.constants.muB) / (s * Ms_0)) ** (2.0 / 3)
+        * ((6 * u.constants.muB) / (s * Ms_0.q)) ** (2.0 / 3)
         * u.constants.k_B
         * T_c
     ).si
@@ -141,6 +141,12 @@ def kuzmin_formula(Ms_0, T_c, s, T):
     Returns:
         Spontaneous magnetization at temperature T as an array.
     """
+    if isinstance(Ms_0, me.Entity):
+        Ms_0 = Ms_0.value
+    if isinstance(T_c, me.Entity):
+        T_c = T_c.value
+    if isinstance(T, me.Entity):
+        T = T.value
     base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
     out = np.zeros_like(T, dtype=np.float64)
     # only compute base**(1/3) where T < T_c; elsewhere leave as zero
@@ -175,7 +181,8 @@ class _A_function_of_temperature:
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
         return me.A(
-            self.A_0 * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 2
+            self.A_0.q
+            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 2
         )
 
     def plot(
@@ -192,7 +199,7 @@ class _A_function_of_temperature:
         if not isinstance(T, me.Entity):
             T = me.T(T)
         A = self(T)
-        ax.plot(T, A, **kwargs)
+        ax.plot(T.q, A.q, **kwargs)
         ax.set_xlabel(T.axis_label)
         ax.set_ylabel(A.axis_label)
         ax.grid()
@@ -222,11 +229,11 @@ class _K1_function_of_temperature:
     def __repr__(self):
         return "K1(T)"
 
-    def __call__(self, T: numbers.Real | u.Quantity):
+    def __call__(self, T: numbers.Real | u.Quantity) -> me.Entity:
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
         return me.Ku(
-            self.K1_0
+            self.K1_0.q
             * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 3
         )
 
@@ -244,7 +251,7 @@ class _K1_function_of_temperature:
         if not isinstance(T, me.Entity):
             T = me.T(T)
         K1 = self(T)
-        ax.plot(T, K1, **kwargs)
+        ax.plot(T.q, K1.q, **kwargs)
         ax.set_xlabel(T.axis_label)
         ax.set_ylabel(K1.axis_label)
         ax.grid()
@@ -297,7 +304,7 @@ class _Ms_function_of_temperature:
         if not isinstance(T, me.Entity):
             T = me.T(T)
         Ms = self(T)
-        ax.plot(T, Ms, **kwargs)
+        ax.plot(T.q, Ms.q, **kwargs)
         ax.set_xlabel(T.axis_label)
         ax.set_ylabel(Ms.axis_label)
         ax.grid()
