@@ -116,17 +116,17 @@ def test_linear_Hc_properties(m, b):
     # Test Entity
     Hc = extract_coercive_field(H, M)
     assert isinstance(Hc, me.Entity)
-    assert u.isclose(Hc, expected["Hc"] * u.A / u.m)
+    assert u.isclose(Hc.q, expected["Hc"] * u.A / u.m)
 
     # Test Quantity
     Hc = extract_coercive_field(H.quantity, M.quantity)
     assert isinstance(Hc, me.Entity)
-    assert u.isclose(Hc, expected["Hc"] * u.A / u.m)
+    assert u.isclose(Hc.q, expected["Hc"] * u.A / u.m)
 
     # Test Numpy Array
     Hc = extract_coercive_field(H.value, M.value)
     assert isinstance(Hc, me.Entity)
-    assert u.isclose(Hc, expected["Hc"] * u.A / u.m)
+    assert u.isclose(Hc.q, expected["Hc"] * u.A / u.m)
 
 
 @pytest.mark.parametrize(
@@ -175,17 +175,17 @@ def test_linear_Mr_properties(m, b):
     # Test Entity
     Mr = extract_remanent_magnetization(H, M)
     assert isinstance(Mr, me.Entity)
-    assert u.isclose(Mr, expected["Mr"] * u.A / u.m)
+    assert u.isclose(Mr.q, expected["Mr"] * u.A / u.m)
 
     # Test Quantity
     Mr = extract_remanent_magnetization(H.quantity, M.quantity)
     assert isinstance(Mr, me.Entity)
-    assert u.isclose(Mr, expected["Mr"] * u.A / u.m)
+    assert u.isclose(Mr.q, expected["Mr"] * u.A / u.m)
 
     # Test Numpy Array
     Mr = extract_remanent_magnetization(H.value, M.value)
     assert isinstance(Mr, me.Entity)
-    assert u.isclose(Mr, expected["Mr"] * u.A / u.m)
+    assert u.isclose(Mr.q, expected["Mr"] * u.A / u.m)
 
 
 def test_partial_Mr_errors():
@@ -217,7 +217,7 @@ def test_B_curve():
     assert isinstance(B_curve, me.Entity)
 
     # Check if the B curve has the expected shape
-    assert B_curve.shape == (101,)
+    assert B_curve.value.shape == (101,)
 
 
 def test_B_curve_errors():
@@ -281,12 +281,12 @@ def test_extract_maximum_energy_product_linear(m, c):
     assert isinstance(result.Bd, me.Entity)
     assert isinstance(result.BHmax, me.Entity)
 
-    assert u.isclose(result.Hd, H_opt * u.A / u.m, atol=dh)
+    assert u.isclose(result.Hd.q, H_opt * u.A / u.m, atol=dh)
     assert u.isclose(
-        result.Bd, expected_val_Bd, atol=(m * dh.value) * u.T
+        result.Bd.q, expected_val_Bd, atol=(m * dh.value) * u.T
     )  # B tolerance related to H discretization
     assert u.isclose(
-        result.BHmax,
+        result.BHmax.q,
         expected_val_BHmax,
         atol=(2 * m * H_opt + c) * dh.value * (u.A / u.m * u.T),
     )  # BHmax tolerance related to discretization
@@ -486,8 +486,8 @@ def test_find_linear_segment_line(method):
     assert isinstance(results.Hmax, me.Entity)
     assert isinstance(results.gradient, u.Quantity)
 
-    assert u.isclose(results.Mr, 0 * u.kA / u.m, atol=1 * u.A / u.m)
-    assert u.isclose(results.Hmax, 10 * u.kA / u.m)
+    assert u.isclose(results.Mr.q, 0 * u.kA / u.m, atol=1 * u.A / u.m)
+    assert u.isclose(results.Hmax.q, 10 * u.kA / u.m)
     assert u.isclose(results.gradient, 2 * u.dimensionless_unscaled)
 
     # Too few points (<10) should raise ValueError
@@ -520,6 +520,6 @@ def test_find_linear_segment_reversed(method):
     assert isinstance(results.Hmax, me.Entity)
     assert isinstance(results.gradient, u.Quantity)
 
-    assert u.isclose(results.Mr, 0 * u.kA / u.m, atol=1 * u.A / u.m)
-    assert u.isclose(results.Hmax, 10 * u.kA / u.m)
+    assert u.isclose(results.Mr.q, 0 * u.kA / u.m, atol=1 * u.A / u.m)
+    assert u.isclose(results.Hmax.q, 10 * u.kA / u.m)
     assert u.isclose(results.gradient, 2 * u.dimensionless_unscaled)
