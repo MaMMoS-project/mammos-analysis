@@ -94,11 +94,8 @@ def kuzmin_properties(
     ):
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
-    u.set_enabled_equivalencies(u.magnetic_flux_field())
     if Ms_0 is None:
         Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
-    else:
-        Ms_0 = me.Ms(Ms_0.value.item(), unit=u.A / u.m)
 
     # determine if Tc is optimized
     optimize_Tc = Tc is None
