@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     import numpy
 
 
+
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class KuzminResult:
     """Result of Kuz'min magnetic properties estimation."""
@@ -97,7 +98,7 @@ def kuzmin_properties(
     if Ms_0 is None:
         Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
     else:
-        Ms_0 = me.Ms(Ms_0, unit=u.A / u.m)
+        Ms_0 = me.Ms(Ms_0.value.item(), unit=u.A / u.m)
 
     # determine if Tc is optimized
     optimize_Tc = Tc is None
