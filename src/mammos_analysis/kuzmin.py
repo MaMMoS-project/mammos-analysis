@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     import numpy
 
 
-
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class KuzminResult:
     """Result of Kuz'min magnetic properties estimation."""
