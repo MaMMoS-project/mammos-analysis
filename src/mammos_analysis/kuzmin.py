@@ -5,7 +5,6 @@ from __future__ import annotations
 import numbers
 import warnings
 from collections.abc import Callable
-from functools import partial
 from typing import TYPE_CHECKING
 
 import mammos_entity
@@ -59,24 +58,32 @@ class KuzminResult:
 def kuzmin_properties(
     Ms: mammos_entity.Entity,
     T: mammos_entity.Entity,
+    Tc: mammos_entity.Entity | None = None,
+    Ms_0: mammos_entity.Entity | None = None,
     K1_0: mammos_entity.Entity | None = None,
 ) -> KuzminResult:
     """Evaluate intrinsic micromagnetic properties using Kuz'min model.
 
-    Computes Ms, A, and K1 as funtcion of temperature by fitting the Kuzmin equation
+    Computes Ms, A, and K1 as function of temperature by fitting the Kuzmin equation
     to Ms vs T. The attributes Ms, A and K1 in the returned object can be called to get
     values at arbitrary temperatures.
 
     K1 is only available in the output data if a zero-temperature value has been passed.
+    If Ms_0 is None, the first value in the Ms series is taken as the
+    zero temperature magnetization Ms_0.
+    If Tc is None, it will be treated as an optimization variable
+    and estimated during the fitting process.
 
     Args:
         Ms: Spontaneous magnetization data points as a me.Entity.
         T: Temperature data points as a me.Entity.
         K1_0: Magnetocrystalline anisotropy at 0 K as a me.Entity.
+        TC: Curie-Temperature value as a me.Entity.
+        Ms_0: Spontaneous magnetization at T=0 value as a me.Entity.
 
     Returns:
-        KuzminResult with temperature-dependent Ms, A, K1 (optional), Curie temperature,
-        and exponent.
+        KuzminResult with temperature-dependent Ms, A, K1 (optional),
+        Curie temperature (optional), and exponent.
 
     Raises:
         ValueError: If K1_0 has incorrect unit.
@@ -86,24 +93,47 @@ def kuzmin_properties(
     ):
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
-    # TODO: fix logic - assumption is that Ms is given at T=0K
-    Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
-    M_kuzmin = partial(kuzmin_formula, Ms_0.value)
+    u.set_enabled_equivalencies(u.magnetic_flux_field())
+    if Ms_0 is None:
+        Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
+    else:
+        Ms_0 = me.Ms(Ms_0, unit=u.A / u.m)
 
-    def residuals(params_, T_, M_):
-        T_c_, s_ = params_
-        return M_ - M_kuzmin(T_c_, s_, T_)
+    # determine if Tc is optimized
+    optimize_Tc = Tc is None
 
-    with warnings.catch_warnings(action="ignore"):
+    # set init guess and bounds
+    init_guess = [300, 0.5] if optimize_Tc else [0.5]
+    bounds = ([0, 0], [np.inf, np.inf]) if optimize_Tc else ([0], [np.inf])
+
+    def residuals(params, T_, M_):
+        if optimize_Tc:
+            Tc_, s_ = params
+        else:
+            Tc_ = Tc.value.item() if Tc.value.ndim == 0 else Tc.value[0][0]
+            s_ = params[0]
+        return M_ - kuzmin_formula(Ms_0.value, Tc_, s_, T_)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
         results = optimize.least_squares(
             residuals,
-            (400, 0.5),
+            init_guess,
             args=(T.value, Ms.value),
-            bounds=((0, 0), (np.inf, np.inf)),
+            bounds=bounds,
             jac="3-point",
         )
-    T_c, s = results.x
+
+    if optimize_Tc:
+        T_c, s = results.x
+
+    else:
+        T_c_val = Tc.value.item() if Tc.value.ndim == 0 else Tc.value[0][0]
+        T_c = T_c_val
+        s = results.x[0]
+
     T_c = T_c * u.K
+
     D = (
         0.1509
         * ((6 * u.constants.muB) / (s * Ms_0.q)) ** (2.0 / 3)
