@@ -141,7 +141,8 @@ def test_kuzmin_properties():
     Ms = me.Ms([200, 100.0], unit=u.A / u.m)
     Tc = me.Entity("ThermodynamicTemperature", value=[0, 100], unit="K")
     K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
-    result = kuzmin_properties(Ms, Tc, K1_0)
+    
+    result = kuzmin_properties(Ms=Ms, Tc=Tc, K1_0=K1_0)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
     assert isinstance(result.A, _A_function_of_temperature)
@@ -149,7 +150,7 @@ def test_kuzmin_properties():
     assert isinstance(result.Tc, me.Entity)
     assert isinstance(result.s, u.Quantity)
 
-    result = kuzmin_properties(Ms, Tc)
+    result = kuzmin_properties(Ms=Ms, Tc=Tc)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
     assert isinstance(result.A, _A_function_of_temperature)
