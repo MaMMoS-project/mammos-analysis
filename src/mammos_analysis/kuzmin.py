@@ -62,9 +62,9 @@ def kuzmin_properties(
     Ms_0: mammos_entity.Entity | None = None,
     K1_0: mammos_entity.Entity | None = None,
 ) -> KuzminResult:
-    """Evaluate intrinsic micromagnetic properties using Kuz'min model.
+    """Evaluate intrinsic micromagnetic properties using Kuz’min model.
 
-    Computes Ms, A, and K1 as function of temperature by fitting the Kuzmin equation
+    Computes Ms, A, and K1 as function of temperature by fitting the Kuz’min equation
     to Ms vs T. The attributes Ms, A and K1 in the returned object can be called to get
     values at arbitrary temperatures.
 
@@ -73,13 +73,13 @@ def kuzmin_properties(
     temperature magnetization Ms_0 only if the first entry of the T series is zero;
     otherwise, a ValueError is raised.
     If Tc is None, it will be treated as an optimization variable
-    and estimated during the fitting process.
+    and estimated during the fitting process via least squares.
 
     Args:
         Ms: Spontaneous magnetization data points as a me.Entity.
         T: Temperature data points as a me.Entity.
         K1_0: Magnetocrystalline anisotropy at 0 K as a me.Entity.
-        TC: Curie-Temperature value as a me.Entity.
+        Tc: Curie temperature value as a me.Entity.
         Ms_0: Spontaneous magnetization at T=0 value as a me.Entity.
 
     Returns:
