@@ -100,18 +100,21 @@ def kuzmin_properties(
             raise ValueError("Value of Ms at zero temperature is not given.")
         Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
 
-    # determine if Tc is optimized
-    optimize_Tc = Tc is None
-
-    # set init guess and bounds
-    init_guess = [300, 0.5] if optimize_Tc else [0.5]
-    bounds = ([0, 0], [np.inf, np.inf]) if optimize_Tc else ([0], [np.inf])
+    if Tc is None:
+        optimize_Tc = True
+        init_guess = [300, 0.5]
+        bounds = ([0, 0], [np.inf, np.inf])
+    else:
+        optimize_Tc = False
+        init_guess = [0.5]
+        bounds = ([0], [np.inf])
+        Tc = me.Entity("CurieTemperature", value=Tc.q.flatten())
 
     def residuals(params, T_, M_):
         if optimize_Tc:
             Tc_, s_ = params
         else:
-            Tc_ = Tc.value.item() if Tc.value.ndim == 0 else Tc.value[0][0]
+            Tc_ = Tc.value[0]
             s_ = params[0]
         return M_ - kuzmin_formula(Ms_0.value, Tc_, s_, T_)
 
@@ -126,33 +129,29 @@ def kuzmin_properties(
         )
 
     if optimize_Tc:
-        T_c, s = results.x
-
+        Tc_, s = results.x
+        Tc = me.Tc(Tc_)
     else:
-        T_c_val = Tc.value.item() if Tc.value.ndim == 0 else Tc.value[0][0]
-        T_c = T_c_val
         s = results.x[0]
-
-    T_c = T_c * u.K
 
     D = (
         0.1509
         * ((6 * u.constants.muB) / (s * Ms_0.q)) ** (2.0 / 3)
         * u.constants.k_B
-        * T_c
+        * Tc.q
     ).si
     A_0 = me.A(Ms_0 * D / (4 * u.constants.muB), unit=u.J / u.m)
 
     if K1_0 is not None:
-        K1 = _K1_function_of_temperature(K1_0, Ms_0.value, T_c.value, s, T)
+        K1 = _K1_function_of_temperature(K1_0, Ms_0.value, Tc.value, s, T)
     else:
         K1 = None
 
     return KuzminResult(
-        Ms=_Ms_function_of_temperature(Ms_0.value, T_c.value, s, T),
-        A=_A_function_of_temperature(A_0, Ms_0.value, T_c.value, s, T),
+        Ms=_Ms_function_of_temperature(Ms_0.value, Tc.value, s, T),
+        A=_A_function_of_temperature(A_0, Ms_0.value, Tc.value, s, T),
         K1=K1,
-        Tc=me.Tc(value=T_c, unit="K"),
+        Tc=Tc,
         s=s * u.dimensionless_unscaled,
     )
 
