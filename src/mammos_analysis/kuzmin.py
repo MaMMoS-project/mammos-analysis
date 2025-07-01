@@ -79,8 +79,8 @@ def kuzmin_properties(
         Ms: Spontaneous magnetization data points as a me.Entity.
         T: Temperature data points as a me.Entity.
         K1_0: Magnetocrystalline anisotropy at 0 K as a me.Entity.
-        Tc: Curie temperature value as a me.Entity.
-        Ms_0: Spontaneous magnetization at T=0 value as a me.Entity.
+        Tc: Curie temperature.
+        Ms_0: Spontaneous magnetization at T=0.
 
     Returns:
         KuzminResult with temperature-dependent Ms, A, K1 (optional),
