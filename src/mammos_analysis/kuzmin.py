@@ -132,7 +132,7 @@ def kuzmin_properties(
         Tc_, s = results.x
         Tc = me.Tc(Tc_)
     else:
-        s, = results.x
+        (s,) = results.x
 
     D = (
         0.1509
