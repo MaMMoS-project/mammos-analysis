@@ -102,7 +102,7 @@ def kuzmin_properties(
 
     if Tc is None:
         optimize_Tc = True
-        init_guess = [300, 0.5]
+        init_guess = [400, 0.5]
         bounds = ([0, 0], [np.inf, np.inf])
     else:
         optimize_Tc = False
