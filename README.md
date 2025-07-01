@@ -9,7 +9,7 @@ Analysis functionality package
 | Documentation | [![Documentation](https://img.shields.io/badge/Docs-mammos--project.github.io%2Fmammos-blue)](https://mammos-project.github.io/mammos/index.html)                                        |
 | Binder        | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mammos-project/mammos-analysis/latest?urlpath=lab%2Ftree%2Fexamples)                                       |
 | License       | [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)                                                                                     |
-| DOI           | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15755235.svg)](https://doi.org/10.5281/zenodo.15755235)                                                             |
+| DOI           | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15755234.svg)](https://doi.org/10.5281/zenodo.15755234)                                                             |
 
 
 ## Try it in the cloud
