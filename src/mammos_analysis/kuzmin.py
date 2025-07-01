@@ -69,8 +69,9 @@ def kuzmin_properties(
     values at arbitrary temperatures.
 
     K1 is only available in the output data if a zero-temperature value has been passed.
-    If Ms_0 is None, the first value in the Ms series is taken as the
-    zero temperature magnetization Ms_0.
+    If Ms_0 is None, the first value in the Ms series is taken as the zero
+    temperature magnetization Ms_0 only if the first entry of the T series is zero;
+    otherwise, a ValueError is raised.
     If Tc is None, it will be treated as an optimization variable
     and estimated during the fitting process.
 
@@ -86,6 +87,7 @@ def kuzmin_properties(
         Curie temperature (optional), and exponent.
 
     Raises:
+        ValueError: Value of Ms at zero temperature is not given.
         ValueError: If K1_0 has incorrect unit.
     """
     if K1_0 is not None and (
@@ -94,6 +96,8 @@ def kuzmin_properties(
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
     if Ms_0 is None:
+        if not np.allclose(T.value[0], 0):
+            raise ValueError("Value of Ms at zero temperature is not given.")
         Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
 
     # determine if Tc is optimized
