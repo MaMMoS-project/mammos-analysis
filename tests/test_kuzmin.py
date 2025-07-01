@@ -170,13 +170,20 @@ def test_kuzmin_properties():
     with pytest.raises(ValueError):
         kuzmin_properties(T=T_2, Ms=Ms)
 
-    Tc = me.Tc(value=300, unit="K")
-    T_data = me.Entity("ThermodynamicTemperature", value=[0, 48, 108, 192, 300])
-    Ms_data = me.Ms(kuzmin_formula(Ms_0=100, T_c=300, s=0.5, T=T_data.value))
+    Tc = me.Tc(value=500, unit="K")
+    T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
+    Ms_data = me.Ms(kuzmin_formula(Ms_0=100, T_c=500, s=0.5, T=T_data.value))
     result = kuzmin_properties(Ms=Ms_data, T=T_data)
     assert result.Tc == Tc
     assert np.allclose(result.s, 0.5)
     assert result.Ms(T_data) == Ms_data
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc)
+    assert np.allclose(result.s, 0.5)
+    assert result.Ms(T_data) == Ms_data
+    Ms_0 = me.Ms(Ms_data.q[0])
+    Ms_data = me.Ms(Ms_data.q[1:])
+    T_data = me.Entity("ThermodynamicTemperature", value=T_data.q[1:])
+    result = kuzmin_properties(Ms=Ms_data, T=T_data, Ms_0=Ms_0)
+    assert result.Tc == Tc
     assert np.allclose(result.s, 0.5)
     assert result.Ms(T_data) == Ms_data
