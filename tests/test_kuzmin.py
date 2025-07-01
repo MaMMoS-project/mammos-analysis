@@ -3,6 +3,7 @@
 import mammos_entity as me
 import mammos_units as u
 import numpy as np
+import pytest
 
 from mammos_analysis.kuzmin import (
     KuzminResult,
@@ -137,12 +138,19 @@ def test_K1_function_of_temperature():
 
 
 def test_kuzmin_properties():
-    """Test the kuzmin_properties function."""
+    """Test the kuzmin_properties function.
+
+    We check that the all the attributes are defined and are of the right type.
+    We check that if K1_0 is not given, then the attribute K1 is None.
+    We check that an error is raised if the Ms_0 is not given either as an input
+    or in the data vector Ms.
+    We check that the function works as intended both giving Tc and not.
+    """
     Ms = me.Ms([200, 100.0], unit=u.A / u.m)
-    Tc = me.Entity("ThermodynamicTemperature", value=[0, 100], unit="K")
+    T = me.Entity("ThermodynamicTemperature", value=[0, 100], unit="K")
     K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
 
-    result = kuzmin_properties(Ms=Ms, Tc=Tc, K1_0=K1_0)
+    result = kuzmin_properties(Ms=Ms, T=T, K1_0=K1_0)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
     assert isinstance(result.A, _A_function_of_temperature)
@@ -150,10 +158,25 @@ def test_kuzmin_properties():
     assert isinstance(result.Tc, me.Entity)
     assert isinstance(result.s, u.Quantity)
 
-    result = kuzmin_properties(Ms=Ms, Tc=Tc)
+    result = kuzmin_properties(Ms=Ms, T=T)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
     assert isinstance(result.A, _A_function_of_temperature)
     assert result.K1 is None
     assert isinstance(result.Tc, me.Entity)
     assert isinstance(result.s, u.Quantity)
+
+    T_2 = me.Entity("ThermodynamicTemperature", value=[50, 100], unit="K")
+    with pytest.raises(ValueError):
+        kuzmin_properties(T=T_2, Ms=Ms)
+
+    Tc = me.Tc(value=300, unit="K")
+    T_data = me.Entity("ThermodynamicTemperature", value=[0, 48, 108, 192, 300])
+    Ms_data = me.Ms(kuzmin_formula(Ms_0=100, T_c=300, s=0.5, T=T_data.value))
+    result = kuzmin_properties(Ms=Ms_data, T=T_data)
+    assert result.Tc == Tc
+    assert np.allclose(result.s, 0.5)
+    assert result.Ms(T_data) == Ms_data
+    result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc)
+    assert np.allclose(result.s, 0.5)
+    assert result.Ms(T_data) == Ms_data
