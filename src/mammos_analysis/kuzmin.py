@@ -68,10 +68,13 @@ def kuzmin_properties(
     to Ms vs T. The attributes Ms, A and K1 in the returned object can be called to get
     values at arbitrary temperatures.
 
-    K1 is only available in the output data if a zero-temperature value has been passed.
+    K1 is only available in the output data if the value of the zero-temperature
+    uniaxial anisotropy constant K1_0 has been passed.
+
     If Ms_0 is None, the first value in the Ms series is taken as the zero
     temperature magnetization Ms_0 only if the first entry of the T series is zero;
     otherwise, a ValueError is raised.
+
     If Tc is None, it will be treated as an optimization variable
     and estimated during the fitting process via least squares.
 
