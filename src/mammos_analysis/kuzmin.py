@@ -108,16 +108,17 @@ def kuzmin_properties(
         init_guess = [400, 0.5]
         bounds = ([0, 0], [np.inf, np.inf])
     else:
+        Tc = Tc.value.flatten()[0] if Tc.value.ndim > 0 else Tc.value
         optimize_Tc = False
         init_guess = [0.5]
         bounds = ([0], [np.inf])
-        Tc = me.Entity("CurieTemperature", value=Tc.q.flatten())
+        Tc = me.Entity("CurieTemperature", value=Tc)
 
     def residuals(params, T_, M_):
         if optimize_Tc:
             Tc_, s_ = params
         else:
-            Tc_ = Tc.value[0]
+            Tc_ = Tc.value
             s_ = params[0]
         return M_ - kuzmin_formula(Ms_0.value, Tc_, s_, T_)
 
@@ -177,7 +178,7 @@ def kuzmin_formula(Ms_0, T_c, s, T):
     if isinstance(Ms_0, me.Entity):
         Ms_0 = Ms_0.value
     if isinstance(T_c, me.Entity):
-        T_c = T_c.value
+        T_c = T_c.value.flatten()[0] if T_c.value.ndim > 0 else T_c.value
     if isinstance(T, me.Entity):
         T = T.value
     base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
