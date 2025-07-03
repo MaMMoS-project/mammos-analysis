@@ -3,6 +3,7 @@
 import mammos_entity as me
 import mammos_units as u
 import numpy as np
+import pytest
 
 from mammos_analysis.kuzmin import (
     KuzminResult,
@@ -136,23 +137,118 @@ def test_K1_function_of_temperature():
     assert k1_entity == k1
 
 
-def test_kuzmin_properties():
-    """Test the kuzmin_properties function."""
-    Ms = me.Ms([200, 100.0], unit=u.A / u.m)
-    Tc = me.Entity("ThermodynamicTemperature", value=[0, 100], unit="K")
+def test_kuzmin_properties_all_info():
+    """Test the kuzmin_properties function with all information.
+
+    We create virtual data with some fixed values of Tc and s in order to
+    anticipate the results of the optimization.
+    """
+    s = 0.75
+    Tc = me.Tc(value=500, unit="K")
     K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
-    result = kuzmin_properties(Ms, Tc, K1_0)
+    T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
+    Ms_0 = me.Ms(100)
+    Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data))
+    result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
     assert isinstance(result.A, _A_function_of_temperature)
     assert isinstance(result.K1, _K1_function_of_temperature)
     assert isinstance(result.Tc, me.Entity)
     assert isinstance(result.s, u.Quantity)
+    assert result.Tc == Tc
+    assert result.K1(0) == K1_0
+    assert np.allclose(result.s, 0.75)
+    assert result.Ms(T_data) == Ms_data
+    assert result.Ms(0) == Ms_0
+    A_0 = me.A(
+        Ms_0.q
+        * 0.1509
+        * ((6 * u.constants.muB) / (s * Ms_0.q)) ** (2.0 / 3)
+        * u.constants.k_B
+        * Tc.q
+        / (4 * u.constants.muB)
+    )
+    assert result.A(0) == A_0
+    Tc = me.Tc(value=[500], unit="K")
+    K1_0 = me.Ku([1e5], unit=u.J / u.m**3)
+    Ms_0 = me.Ms([100])
+    Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=0.75, T=T_data))
+    result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
+    # result.Tc is a 0-d vector even though Tc was a 1-d vector.
+    assert result.Tc == me.Tc(500)
+    assert result.K1(0) == K1_0
+    assert result.Ms(0) == Ms_0
+    Tc = me.Tc(value=[[500]], unit="K")
+    K1_0 = me.Ku([[1e5]], unit=u.J / u.m**3)
+    # Ms_0 = me.Ms([[100]]) # TODO: fix in future PR
+    Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=0.75, T=T_data))
+    result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
+    # result.Tc is a 0-d vector even though Tc was a 2-d vector.
+    assert result.Tc == me.Tc(500)
+    assert result.K1(0) == K1_0
+    assert result.Ms(0) == Ms_0
 
-    result = kuzmin_properties(Ms, Tc)
+
+def test_kuzmin_properties_no_K1_0():
+    """Test the kuzmin_properties function without K1_0."""
+    Tc = me.Tc(value=500, unit="K")
+    T_data = me.Entity("ThermodynamicTemperature", value=[0, 100])
+    Ms_0 = me.Ms(100)
+    Ms_data = me.Ms([100, 90])
+    result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
     assert isinstance(result.A, _A_function_of_temperature)
     assert result.K1 is None
     assert isinstance(result.Tc, me.Entity)
     assert isinstance(result.s, u.Quantity)
+    assert result.Ms(0) == Ms_0
+
+
+def test_kuzmin_properties_no_Tc():
+    """Test the kuzmin properties function without Tc.
+
+    We create virtual data with some fixed value of s in order to
+    anticipate the results of the optimization.
+    """
+    Tc = me.Tc(value=500, unit="K")
+    K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
+    T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
+    Ms_0 = me.Ms(100)
+    Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=0.75, T=T_data))
+    result = kuzmin_properties(Ms=Ms_data, T=T_data, Ms_0=Ms_0, K1_0=K1_0)
+    assert isinstance(result, KuzminResult)
+    assert isinstance(result.Ms, _Ms_function_of_temperature)
+    assert isinstance(result.A, _A_function_of_temperature)
+    assert isinstance(result.K1, _K1_function_of_temperature)
+    assert isinstance(result.Tc, me.Entity)
+    assert isinstance(result.s, u.Quantity)
+    assert result.Tc == Tc
+    assert result.K1(0) == K1_0
+    assert np.allclose(result.s, 0.75)
+    assert result.Ms(T_data) == Ms_data
+    assert result.Ms(0) == Ms_0
+
+
+def test_kuzmin_properties_no_Ms_0():
+    """Test the kuzmin_properties function without Ms_0."""
+    Tc = me.Tc(value=500, unit="K")
+    Ms_data = me.Ms([200, 100.0], unit=u.A / u.m)
+    T_data = me.Entity("ThermodynamicTemperature", value=[0, 100], unit="K")
+    K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
+    result = kuzmin_properties(Ms=Ms_data, T=T_data, K1_0=K1_0, Tc=Tc)
+    assert isinstance(result, KuzminResult)
+    assert isinstance(result.Ms, _Ms_function_of_temperature)
+    assert isinstance(result.A, _A_function_of_temperature)
+    assert isinstance(result.K1, _K1_function_of_temperature)
+    assert isinstance(result.Tc, me.Entity)
+    assert isinstance(result.s, u.Quantity)
+    assert result.Tc == Tc
+    assert result.K1(0) == K1_0
+    assert result.Ms(T_data) == Ms_data
+    assert result.Ms(0) == me.Ms(200)
+    T_data = me.Entity("ThermodynamicTemperature", value=[50, 100], unit="K")
+    with pytest.raises(ValueError):
+        # This test will fail as there is no data on Ms_0
+        kuzmin_properties(Ms=Ms_data, T=T_data, K1_0=K1_0, Tc=Tc)

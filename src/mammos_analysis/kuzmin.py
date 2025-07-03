@@ -5,7 +5,6 @@ from __future__ import annotations
 import numbers
 import warnings
 from collections.abc import Callable
-from functools import partial
 from typing import TYPE_CHECKING
 
 import mammos_entity
@@ -59,26 +58,39 @@ class KuzminResult:
 def kuzmin_properties(
     Ms: mammos_entity.Entity,
     T: mammos_entity.Entity,
+    Tc: mammos_entity.Entity | None = None,
+    Ms_0: mammos_entity.Entity | None = None,
     K1_0: mammos_entity.Entity | None = None,
 ) -> KuzminResult:
-    """Evaluate intrinsic micromagnetic properties using Kuz'min model.
+    """Evaluate intrinsic micromagnetic properties using Kuz’min model.
 
-    Computes Ms, A, and K1 as funtcion of temperature by fitting the Kuzmin equation
+    Computes Ms, A, and K1 as function of temperature by fitting the Kuz’min equation
     to Ms vs T. The attributes Ms, A and K1 in the returned object can be called to get
     values at arbitrary temperatures.
 
-    K1 is only available in the output data if a zero-temperature value has been passed.
+    K1 is only available in the output data if the value of the zero-temperature
+    uniaxial anisotropy constant K1_0 has been passed.
+
+    If Ms_0 is None, the first value in the Ms series is taken as the zero
+    temperature magnetization Ms_0 only if the first entry of the T series is zero;
+    otherwise, a ValueError is raised.
+
+    If Tc is None, it will be treated as an optimization variable
+    and estimated during the fitting process via least squares.
 
     Args:
         Ms: Spontaneous magnetization data points as a me.Entity.
         T: Temperature data points as a me.Entity.
         K1_0: Magnetocrystalline anisotropy at 0 K as a me.Entity.
+        Tc: Curie temperature.
+        Ms_0: Spontaneous magnetization at T=0.
 
     Returns:
-        KuzminResult with temperature-dependent Ms, A, K1 (optional), Curie temperature,
-        and exponent.
+        KuzminResult with temperature-dependent Ms, A, K1 (optional),
+        Curie temperature (optional), and exponent.
 
     Raises:
+        ValueError: Value of Ms at zero temperature is not given.
         ValueError: If K1_0 has incorrect unit.
     """
     if K1_0 is not None and (
@@ -86,42 +98,64 @@ def kuzmin_properties(
     ):
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
-    # TODO: fix logic - assumption is that Ms is given at T=0K
-    Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
-    M_kuzmin = partial(kuzmin_formula, Ms_0.value)
+    if Ms_0 is None:
+        if not np.allclose(T.value[0], 0):
+            raise ValueError("Value of Ms at zero temperature is not given.")
+        Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
 
-    def residuals(params_, T_, M_):
-        T_c_, s_ = params_
-        return M_ - M_kuzmin(T_c_, s_, T_)
+    if Tc is None:
+        optimize_Tc = True
+        init_guess = [400, 0.5]
+        bounds = ([0, 0], [np.inf, np.inf])
+    else:
+        Tc = Tc.value.flatten()[0] if Tc.value.ndim > 0 else Tc.value
+        optimize_Tc = False
+        init_guess = [0.5]
+        bounds = ([0], [np.inf])
+        Tc = me.Entity("CurieTemperature", value=Tc)
 
-    with warnings.catch_warnings(action="ignore"):
+    def residuals(params, T_, M_):
+        if optimize_Tc:
+            Tc_, s_ = params
+        else:
+            Tc_ = Tc.value
+            s_ = params[0]
+        return M_ - kuzmin_formula(Ms_0.value, Tc_, s_, T_)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
         results = optimize.least_squares(
             residuals,
-            (400, 0.5),
+            init_guess,
             args=(T.value, Ms.value),
-            bounds=((0, 0), (np.inf, np.inf)),
+            bounds=bounds,
             jac="3-point",
         )
-    T_c, s = results.x
-    T_c = T_c * u.K
+
+    if optimize_Tc:
+        Tc_, s = results.x
+        Tc = me.Tc(Tc_)
+    else:
+        (s,) = results.x
+
     D = (
         0.1509
         * ((6 * u.constants.muB) / (s * Ms_0.q)) ** (2.0 / 3)
         * u.constants.k_B
-        * T_c
+        * Tc.q
     ).si
     A_0 = me.A(Ms_0 * D / (4 * u.constants.muB), unit=u.J / u.m)
 
     if K1_0 is not None:
-        K1 = _K1_function_of_temperature(K1_0, Ms_0.value, T_c.value, s, T)
+        K1 = _K1_function_of_temperature(K1_0, Ms_0.value, Tc.value, s, T)
     else:
         K1 = None
 
     return KuzminResult(
-        Ms=_Ms_function_of_temperature(Ms_0.value, T_c.value, s, T),
-        A=_A_function_of_temperature(A_0, Ms_0.value, T_c.value, s, T),
+        Ms=_Ms_function_of_temperature(Ms_0.value, Tc.value, s, T),
+        A=_A_function_of_temperature(A_0, Ms_0.value, Tc.value, s, T),
         K1=K1,
-        Tc=me.Tc(value=T_c, unit="K"),
+        Tc=Tc,
         s=s * u.dimensionless_unscaled,
     )
 
@@ -144,7 +178,7 @@ def kuzmin_formula(Ms_0, T_c, s, T):
     if isinstance(Ms_0, me.Entity):
         Ms_0 = Ms_0.value
     if isinstance(T_c, me.Entity):
-        T_c = T_c.value
+        T_c = T_c.value.flatten()[0] if T_c.value.ndim > 0 else T_c.value
     if isinstance(T, me.Entity):
         T = T.value
     base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
