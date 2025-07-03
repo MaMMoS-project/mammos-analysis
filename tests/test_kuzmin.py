@@ -255,18 +255,13 @@ def test_kuzmin_properties_no_Ms_0():
         # This test will fail as there is no data on Ms_0
         kuzmin_properties(Ms=Ms_data, T=T_data, K1_0=K1_0, Tc=Tc)
 
+
 def test_kuzmin_low_Tc():
     """Test the kuzmin_properties function to retrieve a low Tc value."""
-    T_data = me.Entity(
-        "ThermodynamicTemperature",
-        np.linspace(0, 500, 50)
-    )
+    T_data = me.Entity("ThermodynamicTemperature", np.linspace(0, 500, 50))
     Ms_data = me.Ms(
         kuzmin_formula(
-            Ms_0=me.Ms(100),
-            T_c=me.Tc(value=100, unit="K"),
-            s=0.75,
-            T=T_data
+            Ms_0=me.Ms(100), T_c=me.Tc(value=100, unit="K"), s=0.75, T=T_data
         )
     )
     result = kuzmin_properties(Ms=Ms_data, T=T_data)
