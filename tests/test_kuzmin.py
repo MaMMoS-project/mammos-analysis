@@ -138,7 +138,11 @@ def test_K1_function_of_temperature():
 
 
 def test_kuzmin_properties_all_info():
-    """Test the kuzmin_properties function with all information."""
+    """Test the kuzmin_properties function with all information.
+
+    We create virtual data with some fixed values of Tc and s in order to
+    anticipate the results of the optimization.
+    """
     Tc = me.Tc(value=500, unit="K")
     K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
@@ -191,7 +195,11 @@ def test_kuzmin_properties_no_K1_0():
 
 
 def test_kuzmin_properties_no_Tc():
-    """Test the kuzmin properties function without Tc."""
+    """Test the kuzmin properties function without Tc.
+
+    We create virtual data with some fixed value of s in order to
+    anticipate the results of the optimization.
+    """
     Tc = me.Tc(value=500, unit="K")
     K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
