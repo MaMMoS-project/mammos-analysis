@@ -167,7 +167,8 @@ def test_kuzmin_properties_all_info():
         * ((6 * u.constants.muB) / (s * Ms_0.q)) ** (2.0 / 3)
         * u.constants.k_B
         * Tc.q
-        / (4 * u.constants.muB))
+        / (4 * u.constants.muB)
+    )
     assert result.A(0) == A_0
     Tc = me.Tc(value=[500], unit="K")
     K1_0 = me.Ku([1e5], unit=u.J / u.m**3)
