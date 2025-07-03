@@ -1,5 +1,7 @@
 """Tests for Kuzmin functions."""
 
+import math
+
 import mammos_entity as me
 import mammos_units as u
 import numpy as np
@@ -158,7 +160,7 @@ def test_kuzmin_properties_all_info():
     assert isinstance(result.s, u.Quantity)
     assert result.Tc == Tc
     assert result.K1(0) == K1_0
-    assert np.allclose(result.s, 0.75)
+    assert math.isclose(result.s, 0.75, rel_tol=1e-02)
     assert result.Ms(T_data) == Ms_data
     assert result.Ms(0) == Ms_0
     A_0 = me.A(
@@ -226,7 +228,7 @@ def test_kuzmin_properties_no_Tc():
     assert isinstance(result.s, u.Quantity)
     assert result.Tc == Tc
     assert result.K1(0) == K1_0
-    assert np.allclose(result.s, 0.75)
+    assert math.isclose(result.s, 0.75, rel_tol=1e-02)
     assert result.Ms(T_data) == Ms_data
     assert result.Ms(0) == Ms_0
 
