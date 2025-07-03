@@ -249,4 +249,5 @@ def test_kuzmin_properties_no_Ms_0():
     assert result.Ms(0) == me.Ms(200)
     T_data = me.Entity("ThermodynamicTemperature", value=[50, 100], unit="K")
     with pytest.raises(ValueError):
+        # This test will fail as there is no data on Ms_0
         kuzmin_properties(Ms=Ms_data, T=T_data, K1_0=K1_0, Tc=Tc)
