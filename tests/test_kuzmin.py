@@ -143,11 +143,12 @@ def test_kuzmin_properties_all_info():
     We create virtual data with some fixed values of Tc and s in order to
     anticipate the results of the optimization.
     """
+    s = 0.75
     Tc = me.Tc(value=500, unit="K")
     K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
     Ms_0 = me.Ms(100)
-    Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=0.75, T=T_data))
+    Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data))
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
@@ -160,6 +161,14 @@ def test_kuzmin_properties_all_info():
     assert np.allclose(result.s, 0.75)
     assert result.Ms(T_data) == Ms_data
     assert result.Ms(0) == Ms_0
+    A_0 = me.A(
+        Ms_0.q
+        * 0.1509
+        * ((6 * u.constants.muB) / (s * Ms_0.q)) ** (2.0 / 3)
+        * u.constants.k_B
+        * Tc.q
+        / (4 * u.constants.muB))
+    assert result.A(0) == A_0
     Tc = me.Tc(value=[500], unit="K")
     K1_0 = me.Ku([1e5], unit=u.J / u.m**3)
     Ms_0 = me.Ms([100])
