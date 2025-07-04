@@ -1,15 +1,15 @@
 # mammos-analysis
 Analysis functionality package
 
-| Description   | Badge                                                                                                                                                                                    |
-|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Tests         | [![Test package](https://github.com/MaMMoS-project/mammos-analysis/actions/workflows/test.yml/badge.svg)](https://github.com/MaMMoS-project/mammos-analysis/actions/workflows/test.yml)        |
-| Linting       | [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/MaMMoS-project/mammos-analysis/main.svg)](https://results.pre-commit.ci/latest/github/MaMMoS-project/mammos-analysis/main) |
-| Releases      | [![PyPI version](https://badge.fury.io/py/mammos-analysis.svg)](https://badge.fury.io/py/mammos-analysis)                                                                                      |
-| Documentation | [![Documentation](https://img.shields.io/badge/Docs-mammos--project.github.io%2Fmammos-blue)](https://mammos-project.github.io/mammos/index.html)                                        |
-| Binder        | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mammos-project/mammos-analysis/latest?urlpath=lab%2Ftree%2Fexamples)                                       |
-| License       | [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)                                                                                     |
-| DOI           | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15755234.svg)](https://doi.org/10.5281/zenodo.15755234)                                                             |
+| Description   | Badge                                                                                                                                                                                                                                                   |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Tests         | [![Test package](https://github.com/MaMMoS-project/mammos-analysis/actions/workflows/test.yml/badge.svg)](https://github.com/MaMMoS-project/mammos-analysis/actions/workflows/test.yml)                                                                 |
+| Linting       | [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/MaMMoS-project/mammos-analysis/main.svg)](https://results.pre-commit.ci/latest/github/MaMMoS-project/mammos-analysis/main)                                                          |
+| Releases      | [![PyPI version](https://badge.fury.io/py/mammos-analysis.svg)](https://badge.fury.io/py/mammos-analysis)                                                                                                                                               |
+| Documentation | [![Documentation](https://img.shields.io/badge/Docs-mammos--project.github.io%2Fmammos-blue)](https://mammos-project.github.io/mammos/index.html)                                                                                                       |
+| Binder        | [![Binder](.binder/badge-launch-binder.svg)](https://mybinder.org/v2/gh/mammos-project/mammos-analysis/latest?urlpath=lab%2Ftree%2Fexamples) [![Binder2](.binder/badge-launch-binder2.svg)](https://notebooks.mpcdf.mpg.de/binder/v2/gl/mammos-project%2Fmammos-analysis/latest?urlpath=lab%2Ftree%2Fexamples) |
+| License       | [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)                                                                                                                                                    |
+| DOI           | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15755234.svg)](https://doi.org/10.5281/zenodo.15755234)                                                                                                                                             |
 
 
 ## Try it in the cloud
