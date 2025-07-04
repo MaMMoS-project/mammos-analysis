@@ -183,12 +183,9 @@ def kuzmin_formula(Ms_0, T_c, s, T):
         T = T.value
     base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
     base = np.array(base)  # we make sure that it is a numpy.ndarray
-    pos = np.zeros_like(base, dtype=np.float64)
-    neg = np.zeros_like(base, dtype=np.float64)
-    np.power(base, 1 / 3, out=pos, where=np.logical_and(T_c > T, base > 0))
-    np.power(-base, 1 / 3, out=neg, where=np.logical_and(T_c > T, base < 0))
-    # both pos and neg will be zero when T >= T_c
-    return Ms_0 * (pos - neg)
+    out = np.zeros_like(base, dtype=np.float64)
+    np.cbrt(base, out=out, where=T_c > T)
+    return Ms_0 * out
 
 
 class _A_function_of_temperature:
