@@ -105,7 +105,7 @@ def kuzmin_properties(
 
     if Tc is None:
         optimize_Tc = True
-        init_guess = [400, 0.5]
+        init_guess = [T.value[1], 0.5]
         bounds = ([0, 0], [np.inf, np.inf])
     else:
         Tc = Tc.value.flatten()[0] if Tc.value.ndim > 0 else Tc.value
@@ -182,9 +182,9 @@ def kuzmin_formula(Ms_0, T_c, s, T):
     if isinstance(T, me.Entity):
         T = T.value
     base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
-    out = np.zeros_like(T, dtype=np.float64)
-    # only compute base**(1/3) where T < T_c; elsewhere leave as zero
-    np.power(base, 1 / 3, out=out, where=(T_c > T))
+    base = np.array(base)  # we make sure that it is a numpy.ndarray
+    out = np.zeros_like(base, dtype=np.float64)
+    np.cbrt(base, out=out, where=T_c > T)
     return Ms_0 * out
 
 

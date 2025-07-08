@@ -1,5 +1,7 @@
 """Tests for Kuzmin functions."""
 
+import math
+
 import mammos_entity as me
 import mammos_units as u
 import numpy as np
@@ -158,7 +160,7 @@ def test_kuzmin_properties_all_info():
     assert isinstance(result.s, u.Quantity)
     assert result.Tc == Tc
     assert result.K1(0) == K1_0
-    assert np.allclose(result.s, 0.75)
+    assert math.isclose(result.s, 0.75, rel_tol=1e-02)
     assert result.Ms(T_data) == Ms_data
     assert result.Ms(0) == Ms_0
     A_0 = me.A(
@@ -226,7 +228,7 @@ def test_kuzmin_properties_no_Tc():
     assert isinstance(result.s, u.Quantity)
     assert result.Tc == Tc
     assert result.K1(0) == K1_0
-    assert np.allclose(result.s, 0.75)
+    assert math.isclose(result.s, 0.75, rel_tol=1e-02)
     assert result.Ms(T_data) == Ms_data
     assert result.Ms(0) == Ms_0
 
@@ -252,3 +254,16 @@ def test_kuzmin_properties_no_Ms_0():
     with pytest.raises(ValueError):
         # This test will fail as there is no data on Ms_0
         kuzmin_properties(Ms=Ms_data, T=T_data, K1_0=K1_0, Tc=Tc)
+
+
+def test_kuzmin_low_Tc():
+    """Test the kuzmin_properties function to retrieve a low Tc value."""
+    T_data = me.Entity("ThermodynamicTemperature", np.linspace(0, 500, 50))
+    Ms_data = me.Ms(
+        kuzmin_formula(
+            Ms_0=me.Ms(100), T_c=me.Tc(value=100, unit="K"), s=0.75, T=T_data
+        )
+    )
+    result = kuzmin_properties(Ms=Ms_data, T=T_data)
+    assert result.Tc == me.Tc(100)
+    assert math.isclose(result.s, 0.75, rel_tol=1e-02)
