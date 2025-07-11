@@ -234,7 +234,29 @@ def test_kuzmin_properties_no_Tc():
 
 
 def test_kuzmin_properties_no_Ms_0():
-    """Test the kuzmin_properties function without Ms_0."""
+    """Test the kuzmin_properties function without Ms_0.
+
+    In the first test, no value at temperature zero is given. Hence, Ms_0 is optimized.
+    In the second test, data at T=0K is given. Hence, Ms_0 is taken from Ms_data.
+    """
+    s = 0.75
+    Tc = me.Tc(value=500, unit="K")
+    K1_0 = me.Ku([1e5], unit=u.J / u.m**3)
+    T_data = me.Entity("ThermodynamicTemperature", value=[100, 200, 300, 400, 500])
+    Ms_0 = me.Ms(100)
+    Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data))
+    result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, K1_0=K1_0)
+    assert isinstance(result, KuzminResult)
+    assert isinstance(result.Ms, _Ms_function_of_temperature)
+    assert isinstance(result.A, _A_function_of_temperature)
+    assert isinstance(result.K1, _K1_function_of_temperature)
+    assert isinstance(result.Tc, me.Entity)
+    assert isinstance(result.s, u.Quantity)
+    assert result.Tc == Tc
+    assert math.isclose(result.s, 0.75, rel_tol=1e-02)
+    assert result.Ms(T_data) == Ms_data
+    assert result.Ms(0) == Ms_0
+
     Tc = me.Tc(value=500, unit="K")
     Ms_data = me.Ms([200, 100.0], unit=u.A / u.m)
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100], unit="K")
@@ -251,9 +273,27 @@ def test_kuzmin_properties_no_Ms_0():
     assert result.Ms(T_data) == Ms_data
     assert result.Ms(0) == me.Ms(200)
     T_data = me.Entity("ThermodynamicTemperature", value=[50, 100], unit="K")
-    with pytest.raises(ValueError):
-        # This test will fail as there is no data on Ms_0
-        kuzmin_properties(Ms=Ms_data, T=T_data, K1_0=K1_0, Tc=Tc)
+
+
+def test_kuzmin_properties_no_Ms_0_no_Tc():
+    """Test the kuzmin_properties function without Ms_0 and Tc. """
+    s = 0.75
+    Tc = me.Tc(value=500, unit="K")
+    K1_0 = me.Ku([1e5], unit=u.J / u.m**3)
+    T_data = me.Entity("ThermodynamicTemperature", value=[100, 200, 300, 400, 500])
+    Ms_0 = me.Ms(100)
+    Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data))
+    result = kuzmin_properties(Ms=Ms_data, T=T_data, K1_0=K1_0)
+    assert isinstance(result, KuzminResult)
+    assert isinstance(result.Ms, _Ms_function_of_temperature)
+    assert isinstance(result.A, _A_function_of_temperature)
+    assert isinstance(result.K1, _K1_function_of_temperature)
+    assert isinstance(result.Tc, me.Entity)
+    assert isinstance(result.s, u.Quantity)
+    assert result.Tc == Tc
+    assert math.isclose(result.s, 0.75, rel_tol=1e-02)
+    assert result.Ms(T_data) == Ms_data
+    assert result.Ms(0) == Ms_0
 
 
 def test_kuzmin_low_Tc():
