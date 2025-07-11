@@ -98,29 +98,36 @@ def kuzmin_properties(
     ):
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
-    if Ms_0 is None:
-        if not np.allclose(T.value[0], 0):
-            raise ValueError("Value of Ms at zero temperature is not given.")
-        Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
+    init_guess = [0.5]
+    bounds = ([0], [np.inf])
+
+    if Ms_0 is not None:
+        optimize_Ms_0 = False
+    else:
+        if np.allclose(T.value[0], 0):
+            optimize_Ms_0 = False
+            Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
+        else:
+            optimize_Ms_0 = True
+            init_guess.append(Ms.value[0])
+            bounds[0].append(0)  # Ms lower bound: 0
+            bounds[1].append(np.inf)  # Ms upper bound: inf
 
     if Tc is None:
         optimize_Tc = True
-        init_guess = [T.value[1], 0.5]
-        bounds = ([0, 0], [np.inf, np.inf])
+        init_guess.append(T.value[1])
+        bounds[0].append(0)  # Tc lower bound: 0
+        bounds[1].append(np.inf)  # Tc upper bound: inf
     else:
-        Tc = Tc.value.flatten()[0] if Tc.value.ndim > 0 else Tc.value
         optimize_Tc = False
-        init_guess = [0.5]
-        bounds = ([0], [np.inf])
+        Tc = Tc.value.flatten()[0] if Tc.value.ndim > 0 else Tc.value
         Tc = me.Entity("CurieTemperature", value=Tc)
 
     def residuals(params, T_, M_):
-        if optimize_Tc:
-            Tc_, s_ = params
-        else:
-            Tc_ = Tc.value
-            s_ = params[0]
-        return M_ - kuzmin_formula(Ms_0.value, Tc_, s_, T_)
+        s_ = params[0]
+        Ms_0_ = params[1] if optimize_Ms_0 else Ms_0.value
+        Tc_ = params[-1] if optimize_Tc else Tc.value
+        return M_ - kuzmin_formula(Ms_0_, Tc_, s_, T_)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -132,11 +139,11 @@ def kuzmin_properties(
             jac="3-point",
         )
 
+    s = results.x[0]
+    if optimize_Ms_0:
+        Ms_0 = me.Ms(results.x[1])
     if optimize_Tc:
-        Tc_, s = results.x
-        Tc = me.Tc(Tc_)
-    else:
-        (s,) = results.x
+        Tc = me.Tc(results.x[-1])
 
     D = (
         0.1509
