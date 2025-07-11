@@ -5,7 +5,6 @@ import math
 import mammos_entity as me
 import mammos_units as u
 import numpy as np
-import pytest
 
 from mammos_analysis.kuzmin import (
     KuzminResult,
@@ -276,7 +275,7 @@ def test_kuzmin_properties_no_Ms_0():
 
 
 def test_kuzmin_properties_no_Ms_0_no_Tc():
-    """Test the kuzmin_properties function without Ms_0 and Tc. """
+    """Test the kuzmin_properties function without Ms_0 and Tc."""
     s = 0.75
     Tc = me.Tc(value=500, unit="K")
     K1_0 = me.Ku([1e5], unit=u.J / u.m**3)
