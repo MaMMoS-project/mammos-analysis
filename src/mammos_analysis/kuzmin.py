@@ -98,6 +98,9 @@ def kuzmin_properties(
     ):
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
+    # We initialize initial guess and bounds for s.
+    # If Ms_0 and Tc needs to be optimized, too,
+    # we expand these two variables.
     init_guess = [0.5]
     bounds = ([0], [np.inf])
 
@@ -109,9 +112,11 @@ def kuzmin_properties(
             Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
         else:
             optimize_Ms_0 = True
+            # We set the first value of data vector Ms
+            # as initial guess and lower bound for Ms_0.
             init_guess.append(Ms.value[0])
-            bounds[0].append(0)  # Ms lower bound: 0
-            bounds[1].append(np.inf)  # Ms upper bound: inf
+            bounds[0].append(Ms.value[0])
+            bounds[1].append(np.inf)  # Ms_0 upper bound: inf
 
     if Tc is None:
         optimize_Tc = True
