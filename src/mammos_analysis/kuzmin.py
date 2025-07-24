@@ -180,10 +180,10 @@ def kuzmin_formula(Ms_0, T_c, s, T):
 
     .. math::
 
-      M_s(T) = M_0 \left[ 1 - s \left( \frac{T}{T_c} \right)^{3/2} - (1-s) \left( \frac{T}{T_c} \right)^p \right]^\beta
+      M_s(T) = M_0 \left[ 1 - s \left( \frac{T}{T_c} \right)^{3/2} - (1-s) \left( \frac{T}{T_c} \right)^{5/2} \right]^\beta
 
     where :math:`M_0` is the saturation magnetization, :math:`T_c` is the Curie
-    temperature, :math:`p = 5/2`, :math:`\beta=1/3` and :math:`s` is an adjustable
+    temperature, :math:`\beta=1/3` and :math:`s` is an adjustable
     parameter.
 
     Kuz’min, M.D., Skokov, K.P., Diop, L.B. et al. Exchange stiffness of ferromagnets.
