@@ -173,7 +173,18 @@ def kuzmin_properties(
 
 
 def kuzmin_formula(Ms_0, T_c, s, T):
-    """Compute spontaneous magnetization at temperature T using Kuz'min formula.
+    r"""Compute spontaneous magnetization at temperature T using Kuz'min formula.
+
+    The formula approximate spontaneous magnetization :math:`M_s(T)` for
+    :math:`0 < T < T_c` as
+
+    .. math::
+
+      M_s(T) = M_0 \left[ 1 - s \left( \frac{T}{T_c} \right)^{3/2} \\
+      - (1-s) \left( \frac{T}{T_c} \right)^{5/2} \right]^{1/3}
+
+    where :math:`M_0` is the saturation magnetization, :math:`T_c` is the Curie
+    temperature, and :math:`s` is an adjustable parameter.
 
     Kuz’min, M.D., Skokov, K.P., Diop, L.B. et al. Exchange stiffness of ferromagnets.
     Eur. Phys. J. Plus 135, 301 (2020). https://doi.org/10.1140/epjp/s13360-020-00294-y
