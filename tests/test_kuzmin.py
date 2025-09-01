@@ -5,6 +5,7 @@ import math
 import mammos_entity as me
 import mammos_units as u
 import numpy as np
+import pytest
 
 from mammos_analysis.kuzmin import (
     KuzminResult,
@@ -306,3 +307,33 @@ def test_kuzmin_low_Tc():
     result = kuzmin_properties(Ms=Ms_data, T=T_data)
     assert result.Tc == me.Tc(100)
     assert math.isclose(result.s, 0.75, rel_tol=1e-02)
+
+
+def test_kuzmin_tesla():
+    """Test the kuzmin_properties function with a polarisation input."""
+    with pytest.raises(u.UnitConversionError):
+        kuzmin_properties(
+            T=me.Entity("ThermodynamicTemperature", value=[100, 200]),
+            Ms=me.Js(1, 2),
+        )
+
+
+def test_kuzmin_kA_m():
+    """Test the kuzmin_properties function with magnetization input in kA/m."""
+    s = 0.75
+    Tc = me.Tc(value=500, unit="K")
+    T_data = me.Entity("ThermodynamicTemperature", value=[100, 200, 300, 400, 500])
+    Ms_0 = me.Ms(100)
+    Ms_data = me.Ms(
+        kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data) * 1e-3, unit="kA/m"
+    )
+    result = kuzmin_properties(Ms=Ms_data, T=T_data)
+    assert isinstance(result, KuzminResult)
+    assert isinstance(result.Ms, _Ms_function_of_temperature)
+    assert isinstance(result.A, _A_function_of_temperature)
+    assert isinstance(result.Tc, me.Entity)
+    assert isinstance(result.s, u.Quantity)
+    assert result.Tc == Tc
+    assert math.isclose(result.s, 0.75, rel_tol=1e-02)
+    assert result.Ms(T_data) == Ms_data
+    assert result.Ms(0) == Ms_0

@@ -98,6 +98,11 @@ def kuzmin_properties(
     ):
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
+    if Ms.unit != u.A / u.m:
+        Ms = me.Ms(Ms, unit=u.A / u.m)
+    if Ms_0 is not None and (Ms_0.unit != u.A / u.m):
+        Ms_0 = me.Ms(Ms_0, unit=u.A / u.m)
+
     # We initialize initial guess and bounds for s.
     # If Ms_0 and Tc needs to be optimized, too,
     # we expand these two variables.
