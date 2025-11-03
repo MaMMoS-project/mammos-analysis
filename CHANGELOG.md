@@ -6,6 +6,13 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-analysis 0.1.5](https://github.com/MaMMoS-project/mammos-analysis/tree/0.1.5) – 2025-11-03
+
+### Fixed
+
+- The function `kuzmin_properties` will not assume the magnetization input is in `A/m`. If the input is in a unit not convertible to `A/m` (e.g., Tesla), an error is raised. ([#31](https://github.com/MaMMoS-project/mammos-analysis/pull/31))
+
+
 ## [mammos-analysis 0.1.4](https://github.com/MaMMoS-project/mammos-analysis/tree/0.1.4) – 2025-08-12
 
 ### Misc
