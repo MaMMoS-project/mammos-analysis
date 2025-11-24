@@ -42,16 +42,27 @@ class KuzminResult:
     def plot(
         self,
         T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
+        ax: matplotlib.axes.Axes | None = None,
+        celsius: bool = False,
     ) -> matplotlib.axes.Axes:
-        """Create a plot for Ms, A, and K1 as a function of temperature."""
+        """Create a plot for Ms, A, and K1 as a function of temperature.
+
+        Args:
+            T: If specified, the entities are plotted against this array. Otherwise, a
+                uniform array of 100 points is generated between the minimum and the
+                maximum available data.
+            ax: optional matplotlib ``Axes`` instance to plot on an existing subplot.
+            celsius: If True, plots the temperature in degree Celsius.
+        """
         ncols = 2 if self.K1 is None else 3
         w, h = figaspect(1 / ncols)
         default_color_cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-        _, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(w, h))
-        self.Ms.plot(T, ax[0], color=default_color_cycle[0])
-        self.A.plot(T, ax[1], color=default_color_cycle[1])
+        if not ax:
+            _, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(w, h))
+        self.Ms.plot(T, ax[0], celsius=celsius, color=default_color_cycle[0])
+        self.A.plot(T, ax[1], celsius=celsius, color=default_color_cycle[1])
         if self.K1 is not None:
-            self.K1.plot(T, ax[2], color=default_color_cycle[2])
+            self.K1.plot(T, ax[2], celsius=celsius, color=default_color_cycle[2])
         return ax
 
 
@@ -251,9 +262,19 @@ class _A_function_of_temperature:
         self,
         T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
+        celsius: bool = False,
         **kwargs,
     ) -> matplotlib.axes.Axes:
-        """Plot A as a function of temperature using Kuzmin formula."""
+        """Plot A as a function of temperature using Kuzmin formula.
+
+        Args:
+            T: If specified, the exchange stiffnedd is plotted against this array.
+                Otherwise, a uniform array of 100 points is generated between the
+                minimum and the maximum available data.
+            ax: optional matplotlib ``Axes`` instance to plot on an existing subplot.
+            celsius: If True, plots the temperature in degree Celsius.
+            **kwargs: Additional plotting arguments.
+        """
         if not ax:
             _, ax = plt.subplots()
         if T is None:
@@ -261,8 +282,14 @@ class _A_function_of_temperature:
         if not isinstance(T, me.Entity):
             T = me.T(T)
         A = self(T)
-        ax.plot(T.q, A.q, **kwargs)
-        ax.set_xlabel(T.axis_label)
+        if celsius:
+            Tq = T.q.to("Celsius", equivalencies=u.temperature())
+            T_label = T.axis_label.replace("(K)", "(°C)")
+        else:
+            Tq = T.q
+            T_label = T.axis_label
+        ax.plot(Tq, A.q, **kwargs)
+        ax.set_xlabel(T_label)
         ax.set_ylabel(A.axis_label)
         ax.grid()
         return ax
@@ -303,9 +330,19 @@ class _K1_function_of_temperature:
         self,
         T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
+        celsius: bool = False,
         **kwargs,
     ) -> matplotlib.axes.Axes:
-        """Plot K1 as a function of temperature using Kuzmin formula."""
+        """Plot K1 as a function of temperature using Kuzmin formula.
+
+        Args:
+            T: If specified, the uniaxial anisotropy is plotted against this array.
+                Otherwise, a uniform array of 100 points is generated between the
+                minimum and the maximum available data.
+            ax: optional matplotlib ``Axes`` instance to plot on an existing subplot.
+            celsius: If True, plots the temperature in degree Celsius.
+            **kwargs: Additional plotting arguments.
+        """
         if not ax:
             _, ax = plt.subplots()
         if T is None:
@@ -313,8 +350,14 @@ class _K1_function_of_temperature:
         if not isinstance(T, me.Entity):
             T = me.T(T)
         K1 = self(T)
-        ax.plot(T.q, K1.q, **kwargs)
-        ax.set_xlabel(T.axis_label)
+        if celsius:
+            Tq = T.q.to("Celsius", equivalencies=u.temperature())
+            T_label = T.axis_label.replace("(K)", "(°C)")
+        else:
+            Tq = T.q
+            T_label = T.axis_label
+        ax.plot(Tq, K1.q, **kwargs)
+        ax.set_xlabel(T_label)
         ax.set_ylabel(K1.axis_label)
         ax.grid()
         return ax
@@ -356,9 +399,19 @@ class _Ms_function_of_temperature:
         self,
         T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
+        celsius: bool = False,
         **kwargs,
     ) -> matplotlib.axes.Axes:
-        """Plot Ms as a function of temperature using Kuzmin formula."""
+        """Plot Ms as a function of temperature using Kuzmin formula.
+
+        Args:
+            T: If specified, the spontaneous magnetization is plotted against this
+                array. Otherwise, a uniform array of 100 points is generated between the
+                minimum and the maximum available data.
+            ax: optional matplotlib ``Axes`` instance to plot on an existing subplot.
+            celsius: If True, plots the temperature in degree Celsius.
+            **kwargs: Additional plotting arguments.
+        """
         if not ax:
             _, ax = plt.subplots()
         if T is None:
@@ -366,8 +419,14 @@ class _Ms_function_of_temperature:
         if not isinstance(T, me.Entity):
             T = me.T(T)
         Ms = self(T)
-        ax.plot(T.q, Ms.q, **kwargs)
-        ax.set_xlabel(T.axis_label)
+        if celsius:
+            Tq = T.q.to("Celsius", equivalencies=u.temperature())
+            T_label = T.axis_label.replace("(K)", "(°C)")
+        else:
+            Tq = T.q
+            T_label = T.axis_label
+        ax.plot(Tq, Ms.q, **kwargs)
+        ax.set_xlabel(T_label)
         ax.set_ylabel(Ms.axis_label)
         ax.grid()
         return ax
