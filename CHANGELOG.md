@@ -6,6 +6,13 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-analysis 0.2.0](https://github.com/MaMMoS-project/mammos-analysis/tree/0.2.0) – 2025-11-27
+
+### Added
+
+- Added `celsius=True` option in the `plot` methods for the `kuzmin` module to generate plots in degree Celsius. ([#40](https://github.com/MaMMoS-project/mammos-analysis/pull/40))
+
+
 ## [mammos-analysis 0.1.5](https://github.com/MaMMoS-project/mammos-analysis/tree/0.1.5) – 2025-11-03
 
 ### Fixed
