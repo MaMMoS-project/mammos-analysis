@@ -6,6 +6,13 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-analysis 0.3.0](https://github.com/MaMMoS-project/mammos-analysis/tree/0.3.0) – 2025-12-17
+
+### Added
+
+- Initial guesses for the Kuz'min fit are now allowed. ([#50](https://github.com/MaMMoS-project/mammos-analysis/pull/50))
+
+
 ## [mammos-analysis 0.2.0](https://github.com/MaMMoS-project/mammos-analysis/tree/0.2.0) – 2025-11-27
 
 ### Added
