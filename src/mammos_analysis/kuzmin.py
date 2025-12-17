@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import numbers
-import warnings
 from collections.abc import Callable
 from typing import TYPE_CHECKING
+from warnings import warn
 
 import mammos_entity
 import mammos_entity as me
@@ -15,7 +15,7 @@ import numpy as np
 from matplotlib.figure import figaspect
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
-from scipy import optimize
+from scipy.optimize import curve_fit
 
 if TYPE_CHECKING:
     import astropy.units
@@ -72,6 +72,15 @@ def kuzmin_properties(
     Tc: mammos_entity.Entity | None = None,
     Ms_0: mammos_entity.Entity | None = None,
     K1_0: mammos_entity.Entity | None = None,
+    Tc_initial_guess: mammos_entity.Entity
+    | numbers.Real
+    | astropy.units.Quantity
+    | None = None,
+    Ms_0_initial_guess: mammos_entity.Entity
+    | numbers.Real
+    | astropy.units.Quantity
+    | None = None,
+    s_initial_guess: mammos_entity.Entity | numbers.Real | astropy.units.Quantity = 0.5,
 ) -> KuzminResult:
     """Evaluate intrinsic micromagnetic properties using Kuz’min model.
 
@@ -82,12 +91,19 @@ def kuzmin_properties(
     K1 is only available in the output data if the value of the zero-temperature
     uniaxial anisotropy constant K1_0 has been passed.
 
-    If Ms_0 is None, the first value in the Ms series is taken as the zero
-    temperature magnetization Ms_0 only if the first entry of the T series is zero;
-    otherwise, a ValueError is raised.
+    If Ms_0 is None, then we check if the first temperature value is zero. If so, we
+    Ms_0 corresponding to the first value of Ms. Otherwise, its value is fitted from
+    Kuz'min curve.
 
-    If Tc is None, it will be treated as an optimization variable
-    and estimated during the fitting process via least squares.
+    If Tc is None, it will be treated as an optimization variable and estimated during
+    the fitting process via curve fitting.
+
+    If Ms_0 is fitted and `Ms_0_initial_guess` is not defined, we start the optimization
+    from the value 1.2 * max(Ms_0).
+
+    If Tc is fitted and `Tc_initial_guess` is not defined, we start the optimization
+    from the highest temperature value T such that the corresponding Ms is
+    higher than 0.1 * max(Ms).
 
     Args:
         Ms: Spontaneous magnetization data points as a me.Entity.
@@ -95,6 +111,10 @@ def kuzmin_properties(
         K1_0: Magnetocrystalline anisotropy at 0 K as a me.Entity.
         Tc: Curie temperature.
         Ms_0: Spontaneous magnetization at T=0.
+        Tc_initial_guess: Initial guess for Tc (if optimized).
+        Ms_0_initial_guess: Initial guess for Ms_0 (if optimized).
+        s_initial_guess: Initial guess for the parameter `s` appearing in the
+            Kuz'min fit.
 
     Returns:
         KuzminResult with temperature-dependent Ms, A, K1 (optional),
@@ -104,67 +124,86 @@ def kuzmin_properties(
         ValueError: Value of Ms at zero temperature is not given.
         ValueError: If K1_0 has incorrect unit.
     """
-    if K1_0 is not None and (
-        not isinstance(K1_0, me.Entity) or K1_0.unit != u.J / u.m**3
-    ):
+    Ms = me.Ms(Ms, unit=u.A / u.m)
+    T = me.T(T, unit=u.K)
+    if K1_0 is not None:
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
-
-    if Ms.unit != u.A / u.m:
-        Ms = me.Ms(Ms, unit=u.A / u.m)
-    if Ms_0 is not None and (Ms_0.unit != u.A / u.m):
+    if Tc is not None:
+        Tc = me.Tc(Tc, unit=u.K)
+    if Ms_0_initial_guess is not None:
+        Ms_0_initial_guess = me.Ms(Ms_0_initial_guess, unit=u.A / u.m)
+    if Tc_initial_guess is not None:
+        Tc_initial_guess = me.Tc(Tc_initial_guess, u.K)
+    if Ms_0 is not None:
         Ms_0 = me.Ms(Ms_0, unit=u.A / u.m)
 
     # We initialize initial guess and bounds for s.
     # If Ms_0 and Tc needs to be optimized, too,
     # we expand these two variables.
-    init_guess = [0.5]
+    initial_guess = [s_initial_guess]
     bounds = ([0], [np.inf])
 
     if Ms_0 is not None:
         optimize_Ms_0 = False
+        if Ms_0_initial_guess is not None:
+            warn(
+                f"The user defined Ms_0_initial_guess={Ms_0_initial_guess} for the "
+                f"optimizer even though the value Ms_0={Ms_0} was given.",
+                stacklevel=2,
+            )
     else:
-        if np.allclose(T.value[0], 0):
+        if np.isclose(T.value[0], 0):
             optimize_Ms_0 = False
             Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
         else:
             optimize_Ms_0 = True
             # We set the first value of data vector Ms
             # as initial guess and lower bound for Ms_0.
-            init_guess.append(Ms.value[0])
-            bounds[0].append(Ms.value[0])
+            if Ms_0_initial_guess is not None:
+                initial_guess.append(Ms_0_initial_guess.value)
+            else:
+                # As default initial guess for Ms_0 we choose 1.2 * max(Ms)
+                initial_guess.append(Ms.value.max() * 1.2)
+            bounds[0].append(Ms.value.max() * 0.8)  # Ms_0 lower bound: 80% of max Ms
             bounds[1].append(np.inf)  # Ms_0 upper bound: inf
 
     if Tc is None:
         optimize_Tc = True
-        init_guess.append(T.value[1])
+        if Tc_initial_guess is not None:
+            initial_guess.append(Tc_initial_guess.value)
+        else:
+            # If Tc is not given, we set the initial guess as the
+            # maximum temperature T such that Ms is 10% of its maximum value.
+            initial_guess.append(T.value[Ms.q > 0.1 * Ms.q.max()].max())
         bounds[0].append(0)  # Tc lower bound: 0
         bounds[1].append(np.inf)  # Tc upper bound: inf
     else:
         optimize_Tc = False
+        if Tc_initial_guess is not None:
+            warn(
+                f"The user defined Tc_initial_guess={Tc_initial_guess} for the "
+                f"optimizer even though the value Tc={Tc} was given.",
+                stacklevel=2,
+            )
         Tc = Tc.value.flatten()[0] if Tc.value.ndim > 0 else Tc.value
         Tc = me.Entity("CurieTemperature", value=Tc)
 
-    def residuals(params, T_, M_):
+    def F(T_, *params):
         s_ = params[0]
         Ms_0_ = params[1] if optimize_Ms_0 else Ms_0.value
         Tc_ = params[-1] if optimize_Tc else Tc.value
-        return M_ - kuzmin_formula(Ms_0_, Tc_, s_, T_)
+        return kuzmin_formula(Ms_0_, Tc_, s_, T_)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        results = optimize.least_squares(
-            residuals,
-            init_guess,
-            args=(T.value, Ms.value),
-            bounds=bounds,
-            jac="3-point",
-        )
+    results = curve_fit(
+        F, T.value, Ms.value, p0=initial_guess, bounds=bounds, jac="3-point"
+    )
 
-    s = results.x[0]
+    p_opt = results[0]
+    s = p_opt[0]
     if optimize_Ms_0:
-        Ms_0 = me.Ms(results.x[1])
+        Ms_0 = me.Ms(p_opt[1])
     if optimize_Tc:
-        Tc = me.Tc(results.x[-1])
+        Tc = me.Tc(p_opt[-1])
 
     D = (
         0.1509
