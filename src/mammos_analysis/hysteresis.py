@@ -327,13 +327,21 @@ def extract_maximum_energy_product(
     if np.all(np.diff(B) <= 0):
         raise ValueError("B is decreasing while H is increasing, not sure what to do.")
 
+    # Select indices where B > 0 and H < 0 for the BHmax calculation
+    selected_indices = np.where((B > 0) & (H < 0))[0]
+    if selected_indices.size == 0:
+        raise RuntimeError(
+            "No values of H where B > 0 and H < 0 for the calculation of BHmax. "
+            "Increasing the number of simulation H steps for hysteresis loop "
+            "calculation might help."
+        )
     # Calculate maximum energy product and the applied field it occurs at
-    BH = H * B
+    BH = H[selected_indices] * B[selected_indices]
     BHmax = abs(np.min(BH))
-    H_d = H[np.argmin(BH)]
+    H_d = H[selected_indices][np.argmin(BH)]
 
     # Calculate Bd, the flux density at the maximum energy product
-    B_d = B[np.argmin(BH)]
+    B_d = B[selected_indices][np.argmin(BH)]
 
     return MaximumEnergyProductProperties(
         Hd=me.H(H_d),
