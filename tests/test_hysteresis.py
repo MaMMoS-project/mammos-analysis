@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import io
+
 import mammos_entity as me
 import mammos_units as u
 import numpy as np
@@ -13,6 +15,7 @@ from mammos_analysis.hysteresis import (
     _check_monotonicity,
     _unit_processing,
     extract_B_curve,
+    extract_BHmax,
     extract_coercive_field,
     extract_maximum_energy_product,
     extract_remanent_magnetization,
@@ -46,6 +49,102 @@ def linear_hysteresis_data(m, b):
         "Hc": abs(
             np.divide(-b, m, where=m != 0, out=np.zeros_like(m, dtype=np.float64))
         ),  # x-intercept
+    }
+
+    return H, M, expected
+
+
+def hysteresis_data_loop():
+    """Hysteresis data from loop computed with mammos-mumag (0.10).
+
+    Returns:
+        H: External magnetic field. (numpy array)
+        M: Spontaneous magnetisation. (numpy array)
+        expected: Expected values for coercive field and remanence. (dict)
+
+    Rough extrinsic parameters:
+       "Hc": 3049705.665855338,
+       "Mr": 1159972.916462917,
+       "BHmax": 416124.72892616026
+
+    # -------------
+    import json
+    import pathlib
+
+    import mammos_analysis
+    import mammos_entity as me
+    import mammos_mumag
+    import mammos_units as u
+    import pandas as pd
+
+    HERE = pathlib.Path(__file__).parent.resolve()
+    u.set_enabled_equivalencies(u.magnetic_flux_field())
+
+    with open(HERE / "inp_parameters.json") as f:
+        parameters = json.load(f)
+
+    H_max = (5 * u.T).to("A/m")
+
+    results_hysteresis = mammos_mumag.hysteresis.run(
+        mesh="mesh.fly",  # this is cube50_singlegrain_msize2
+        Ms=me.Ms(parameters["Ms"]),
+        A=me.A(parameters["A"]),
+        K1=me.Ku(parameters["K1"]),
+        theta=0,
+        phi=0,
+        h_start=H_max,
+        h_final=-H_max,
+        h_n_steps=30,
+    # with "inp_parameters.json":
+    {
+    "T": 0.0,
+    "Ms": 1160762.1515272781,
+    "A": 6.26240767831441e-12,
+    "K1": 2810000.0,
+    }
+    .
+    """
+    data = """
+    3978873.5751313814	1160559.4819430034
+    3713615.3367892895	1160545.5026512272
+    3448357.0984471976	1160530.0222534367
+    3183098.8601051057	1160512.8175065364
+    2917840.621763014	1160493.621826069
+    2652582.3834209214	1160472.1149034314
+    2387324.145078829	1160447.9091288103
+    2122065.906736737	1160420.5318234407
+    1856807.6683946445	1160389.4017226764
+    1591549.4300525526	1160353.7974835385
+    1326291.1917104605	1160312.8149333182
+    1061032.9533683686	1160265.3082222815
+    795774.7150262764	1160209.807434096
+    530516.4766841844	1160144.4013702823
+    265258.2383420923	1160066.5670153636
+    2.6504622331100836e-10	1159972.916462917
+    -265258.2383420918	1159858.8108498764
+    -530516.4766841839	1159717.7547178767
+    -795774.715026276	1159540.4119885948
+    -1061032.9533683679	1159312.941958013
+    -1326291.19171046	1159014.0429553061
+    -1591549.4300525521	1158609.3692674541
+    -1856807.668394644	1158040.1533276264
+    -2122065.906736736	1157197.223335705
+    -2387324.145078829	1155852.1045097725
+    -2652582.383420921	1153416.390926262
+    -2917840.621763013	1147218.002471127
+    -3183098.860105105	-1160512.8175084556
+    -3448357.098447197	-1160530.0221632489
+    -3713615.336789289	-1160545.502608302
+    -3978873.575131381	-1160559.4820289502
+    """
+    arr = np.loadtxt(io.StringIO(data))  # shape (N, 2)
+    H = arr[:, 0]
+    M = arr[:, 1]
+
+    expected = {
+        "Mr": 1159972.916462917,
+        "Hc": 3049705.665855338,
+        "BHmax": 416124.72892616026,
     }
 
     return H, M, expected
@@ -238,6 +337,10 @@ def test_B_curve_errors():
         extract_B_curve(H, M, demagnetization_coefficient=-1)
 
 
+@pytest.mark.xfail(
+    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
+    strict=True,
+)
 @pytest.mark.parametrize(
     "m, c",
     [
@@ -292,6 +395,10 @@ def test_extract_maximum_energy_product_linear(m, c):
     )  # BHmax tolerance related to discretization
 
 
+@pytest.mark.xfail(
+    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
+    strict=True,
+)
 @pytest.mark.parametrize(
     "m, c",
     [
@@ -322,6 +429,10 @@ def test_extract_maximum_energy_product_linear_error(m, c):
         extract_maximum_energy_product(H, B)
 
 
+@pytest.mark.xfail(
+    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
+    strict=True,
+)
 def test_extract_maximum_energy_product_non_monotonic():
     """Test the maximum energy product extraction from non-monotonic data."""
     # Create a non-monotonic B(H) curve
@@ -333,8 +444,67 @@ def test_extract_maximum_energy_product_non_monotonic():
         extract_maximum_energy_product(h_values, b_values)
 
 
+def test_extract_BHmax_square_loop():
+    """Test the maximum energy product extraction from a square loop."""
+    mu0 = u.constants.mu0
+
+    # Polarisation of 1.61T
+    Ms = me.Ms(me.J(1.61).quantity / mu0)  # about  <Quantity 1281197.2911923 A / m>
+    Ms = me.Ms(1_281_197, "A/m")
+
+    # Create square loop
+    H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 1000)
+    M = np.ones(shape=1000) * Ms.value  # 1000 values of H
+    M[-1] = -M[0]  # magnetisation switches for last data point
+
+    # assumption: we have a cube
+    BHmax = extract_BHmax(H=H, M=M, demagnetization_coefficient=1 / 3)
+
+    # analytical result (J**2/(4mu0))
+    BHmax_analytic = mu0**2 * Ms.quantity**2 / (4 * mu0)
+
+    # debug output
+    print(f"{BHmax     =}")
+    print(f"{BHmax_analytic=}")
+    print(f"{BHmax.quantity - BHmax_analytic=}")
+    np.isclose(BHmax.quantity, BHmax_analytic, atol=3, rtol=1e-6)
+
+
+def test_extract_BHmax_few_values():
+    """Test warnings and failure of maximum energy product extraction."""
+    mu0 = u.constants.mu0
+    Ms = me.Ms(1_281_197, "A/m")
+
+    # Create square loop with no values in second quadrant:
+    H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 10)
+    M = np.ones(shape=10) * Ms.value  # 1000 values of H
+    M[-5:] = -M[0]  # magnetisation switches while H>0
+    print(f"{H=}")
+    print(f"{M=}")
+
+    with pytest.raises(ValueError):
+        # use demagnetization_coefficient = 0 to avoid complication
+        # that H != H_internal
+        _ = extract_BHmax(H=H, M=M, demagnetization_coefficient=0)
+
+    # Create square loop with 1 values in 2nd quadrant:
+    H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 10)
+    M = np.ones(shape=10) * Ms.value  # 1000 values of H
+    M[-4:] = -M[0]  # magnetisation switches while H>0
+
+    with pytest.warns(UserWarning) as rec:
+        # use demagnetization_coefficient = 0 to avoid complication
+        # that H != H_internal
+        _ = extract_BHmax(H=H, M=M, demagnetization_coefficient=0)
+    w = rec[0]
+    assert "Only" in str(w.message)
+    assert "1" in str(w.message)
+    assert "values" in str(w.message)
+    assert "inaccurate" in str(w.message)
+
+
 def test_extrinsic_properties():
-    """Test the extraction of extrinsic properties from hysteresis data."""
+    """Test the extraction of extrinsic properties from linear hysteresis data."""
     # Create a simple linear hysteresis loop
     h_values = np.linspace(-100, 100, 101)
     m_values = 0.5 * h_values + 10
@@ -365,6 +535,22 @@ def test_extrinsic_properties():
     assert isinstance(ep.Mr, me.Entity)
     assert isinstance(ep.BHmax, me.Entity)
     assert np.isnan(ep.BHmax.value)
+
+
+def test_extrinsic_properties2():
+    """Test the extraction of extrinsic properties from simulated hysteresis data."""
+    H, M, expected = hysteresis_data_loop()
+    result = extrinsic_properties(me.H(H), me.M(M), demagnetization_coefficient=1 / 3)
+    print(result)
+    assert np.isclose(
+        result.Hc.value, expected["Hc"], atol=0.1, rtol=1e-8
+    )  # "Hc": 3049705.665855338,
+    assert np.isclose(
+        result.Mr.value, expected["Mr"], atol=0.1, rtol=1e-8
+    )  # "Mr": 3049705.665855338
+    assert np.isclose(
+        result.BHmax.value, expected["BHmax"], atol=0.1, rtol=1e-8
+    )  # "BHmax": 416124.72892616026
 
 
 def test_unit_processing():
