@@ -349,19 +349,19 @@ def extract_BHmax(
 
     assert len(H) == len(M)
 
+    # check if H is increasing or decreasing
+    if np.all(np.diff(H) >= 0):
+        # H is increasing
+        H = H
+        M = M
+    else:
+        # H is decreasing
+        H = H[::-1]
+        M = M[::-1]
+
     # Calculate internal field and flux density
     H_internal = H - demagnetization_coefficient * M
     B_internal = (H_internal + M) * u.constants.mu0
-
-    # check if H is increasing or decreasing
-    if np.all(np.diff(H_internal) >= 0):
-        # H is increasing
-        H_internal = H_internal
-        B_internal = B_internal
-    else:
-        # H is decreasing
-        H_internal = H_internal[::-1]
-        B_internal = B_internal[::-1]
 
     # only consider values in 2nd quadrant
     mask = (H_internal < 0) & (B_internal > 0)  # 2nd quadrant
