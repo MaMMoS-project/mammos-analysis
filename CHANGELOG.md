@@ -6,6 +6,16 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-analysis 0.4.0](https://github.com/MaMMoS-project/mammos-analysis/tree/0.4.0) – 2025-12-22
+
+### Added
+
+- `extract_BHmax`: calculate BHmax based on M, H and demagnization_coefficient. This replaces `extract_maximum_energy_product()` which has the same purpose but a different user interface. ([#53](https://github.com/MaMMoS-project/mammos-analysis/pull/53))
+
+### Removed
+
+- `extract_maximum_energy_product()`. Use `extract_BHmax` instead. ([#53](https://github.com/MaMMoS-project/mammos-analysis/pull/53))
+
 ## [mammos-analysis 0.3.0](https://github.com/MaMMoS-project/mammos-analysis/tree/0.3.0) – 2025-12-17
 
 ### Added
