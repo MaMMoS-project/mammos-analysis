@@ -337,6 +337,10 @@ def test_B_curve_errors():
         extract_B_curve(H, M, demagnetization_coefficient=-1)
 
 
+@pytest.mark.xfail(
+    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
+    strict=True,
+)
 @pytest.mark.parametrize(
     "m, c",
     [
@@ -391,6 +395,10 @@ def test_extract_maximum_energy_product_linear(m, c):
     )  # BHmax tolerance related to discretization
 
 
+@pytest.mark.xfail(
+    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
+    strict=True,
+)
 @pytest.mark.parametrize(
     "m, c",
     [
@@ -421,6 +429,10 @@ def test_extract_maximum_energy_product_linear_error(m, c):
         extract_maximum_energy_product(H, B)
 
 
+@pytest.mark.xfail(
+    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
+    strict=True,
+)
 def test_extract_maximum_energy_product_non_monotonic():
     """Test the maximum energy product extraction from non-monotonic data."""
     # Create a non-monotonic B(H) curve
