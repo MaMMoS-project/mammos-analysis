@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numbers
+import warnings
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -296,50 +297,96 @@ def extract_maximum_energy_product(
     H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
     B: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
 ) -> MaximumEnergyProductProperties:
+    """Function may retire, see issue 54.
+
+    (https://github.com/MaMMoS-project/mammos-analysis/issues/54)
+
+    If you need it as it was up and including version 0.3.0, please install
+    version 0.3.0.
+    """
+    warnings.warn(
+        "extract_maximum_energy_product() (in version 0.3.0) is not using the "
+        "internal field. An alternative is extract_BHmax. Note this has a "
+        "changed interface (input and output).",
+        DeprecationWarning,
+        stacklevel=1,
+    )
+    raise RuntimeError("This function needs to be reviewed.")
+
+
+def extract_BHmax(
+    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    demagnetization_coefficient: float,
+) -> MaximumEnergyProductProperties:
     """Determine the maximum energy product from a hysteresis loop.
+
+    Computes internal fields H_int and B_int from H and M using
+    the demagnetization_coefficient.
 
     Args:
         H: External magnetic field.
-        B: Magnetic flux density.
+        M: Magnetization.
+        demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
         Properties of the maximum energy product.
 
+    Warnings:
+        UserWarning: warns if there are 3 or fewer data points in the
+        second quadrant based on which B*Hmax is computed. (User feedback
+        on this is welcome - is 3 a good number?)
+
     Raises:
-        ValueError: If inputs are not monotonic or B decreases with H.
+        ValueError: If inputs are not monotonic or there are no
+        data points in the second quadrant.
+
     """
     H = _unit_processing(H, u.A / u.m)
-    B = _unit_processing(B, u.T)
+    M = _unit_processing(M, u.A / u.m)
 
-    _check_monotonicity(H.value)
+    _check_monotonicity(H.value)  # do we need this?
+
+    assert len(H) == len(M)
+
+    # Calculate internal field and flux density
+    H_internal = H - demagnetization_coefficient * M
+    B_internal = (H_internal + M) * u.constants.mu0
 
     # check if H is increasing or decreasing
-    if np.all(np.diff(H) >= 0):
+    if np.all(np.diff(H_internal) >= 0):
         # H is increasing
-        H = H
-        B = B
+        H_internal = H_internal
+        B_internal = B_internal
     else:
         # H is decreasing
-        H = H[::-1]
-        B = B[::-1]
+        H_internal = H_internal[::-1]
+        B_internal = B_internal[::-1]
 
-    # if B is decreasing whilst H is increasing error
-    if np.all(np.diff(B) <= 0):
-        raise ValueError("B is decreasing while H is increasing, not sure what to do.")
+    # only consider values in 2nd quadrant
+    mask = (H_internal < 0) & (B_internal > 0)  # 2nd quadrant
+    # how many values in 2nd quadrant have we got?
+    n_values = sum(mask)
+    if n_values == 0:
+        raise ValueError(
+            "Did not find any values in second quadrant.",
+            H_internal,
+            B_internal,
+            H,
+            M,
+            mask,
+        )
+    if n_values <= 3:
+        warnings.warn(
+            f"Only {n_values} (H_internal, M_internal) values in second quadrant - "
+            "estimate of BHmax may be inaccurate.",
+            stacklevel=1,
+        )
 
-    # Calculate maximum energy product and the applied field it occurs at
-    BH = H * B
-    BHmax = abs(np.min(BH))
-    H_d = H[np.argmin(BH)]
-
-    # Calculate Bd, the flux density at the maximum energy product
-    B_d = B[np.argmin(BH)]
-
-    return MaximumEnergyProductProperties(
-        Hd=me.H(H_d),
-        Bd=me.Entity("MagneticFluxDensity", value=B_d),
-        BHmax=me.BHmax(BHmax),
-    )
+    # Compute BHmax
+    p = -B_internal[mask] * H_internal[mask]
+    BHmax = p.max()
+    return me.BHmax(BHmax)
 
 
 def extrinsic_properties(
@@ -366,10 +413,8 @@ def extrinsic_properties(
     if demagnetization_coefficient is None:
         BHmax = me.BHmax(np.nan)
     else:
-        result = extract_maximum_energy_product(
-            H, extract_B_curve(H, M, demagnetization_coefficient)
-        )
-        BHmax = result.BHmax
+        BHmax = extract_BHmax(H, M, demagnetization_coefficient)
+
     return ExtrinsicProperties(
         Hc=me.Hc(Hc),
         Mr=me.Mr(Mr),
