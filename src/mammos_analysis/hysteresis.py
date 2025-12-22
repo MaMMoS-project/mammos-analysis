@@ -322,7 +322,8 @@ def extract_BHmax(
     """Determine the maximum energy product from a hysteresis loop.
 
     Computes internal fields H_int and B_int from H and M using
-    the demagnetization_coefficient.
+    the demagnetization_coefficient. H and M provide array data
+    for a half-hysteresis loop.
 
     Args:
         H: External magnetic field.
@@ -345,7 +346,8 @@ def extract_BHmax(
     H = _unit_processing(H, u.A / u.m)
     M = _unit_processing(M, u.A / u.m)
 
-    _check_monotonicity(H.value)  # do we need this?
+    # processing will not work for full hysteresis loop
+    _check_monotonicity(H.value)
 
     assert len(H) == len(M)
 
