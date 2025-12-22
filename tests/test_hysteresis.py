@@ -15,6 +15,7 @@ from mammos_analysis.hysteresis import (
     _check_monotonicity,
     _unit_processing,
     extract_B_curve,
+    extract_BHmax,
     extract_coercive_field,
     extract_maximum_energy_product,
     extract_remanent_magnetization,
@@ -429,6 +430,65 @@ def test_extract_maximum_energy_product_non_monotonic():
     # Test with non-monotonic data
     with pytest.raises(ValueError):
         extract_maximum_energy_product(h_values, b_values)
+
+
+def test_extract_BHmax_square_loop():
+    """Test the maximum energy product extraction from a square loop."""
+    mu0 = u.constants.mu0
+
+    # Polarisation of 1.61T
+    Ms = me.Ms(me.J(1.61).quantity / mu0)  # about  <Quantity 1281197.2911923 A / m>
+    Ms = me.Ms(1_281_197, "A/m")
+
+    # Create square loop
+    H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 1000)
+    M = np.ones(shape=1000) * Ms.value  # 1000 values of H
+    M[-1] = -M[0]  # magnetisation switches for last data point
+
+    # assumption: we have a cube
+    BHmax = extract_BHmax(H=H, M=M, demagnetization_coefficient=1 / 3)
+
+    # analytical result (J**2/(4mu0))
+    BHmax_analytic = mu0**2 * Ms.quantity**2 / (4 * mu0)
+
+    # debug output
+    print(f"{BHmax     =}")
+    print(f"{BHmax_analytic=}")
+    print(f"{BHmax.quantity - BHmax_analytic=}")
+    np.isclose(BHmax.quantity, BHmax_analytic, atol=3, rtol=1e-6)
+
+
+def test_extract_BHmax_few_values():
+    """Test warnings and failure of maximum energy product extraction."""
+    mu0 = u.constants.mu0
+    Ms = me.Ms(1_281_197, "A/m")
+
+    # Create square loop with no values in second quadrant:
+    H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 10)
+    M = np.ones(shape=10) * Ms.value  # 1000 values of H
+    M[-5:] = -M[0]  # magnetisation switches while H>0
+    print(f"{H=}")
+    print(f"{M=}")
+
+    with pytest.raises(ValueError):
+        # use demagnetization_coefficient = 0 to avoid complication
+        # that H != H_internal
+        _ = extract_BHmax(H=H, M=M, demagnetization_coefficient=0)
+
+    # Create square loop with 1 values in 2nd quadrant:
+    H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 10)
+    M = np.ones(shape=10) * Ms.value  # 1000 values of H
+    M[-4:] = -M[0]  # magnetisation switches while H>0
+
+    with pytest.warns(UserWarning) as rec:
+        # use demagnetization_coefficient = 0 to avoid complication
+        # that H != H_internal
+        _ = extract_BHmax(H=H, M=M, demagnetization_coefficient=0)
+    w = rec[0]
+    assert "Only" in str(w.message)
+    assert "1" in str(w.message)
+    assert "values" in str(w.message)
+    assert "inaccurate" in str(w.message)
 
 
 def test_extrinsic_properties():
