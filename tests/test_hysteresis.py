@@ -54,7 +54,7 @@ def linear_hysteresis_data(m, b):
     return H, M, expected
 
 
-def histeresis_data_loop():
+def hysteresis_data_loop():
     """Hysteresis data from loop computed with mammos-mumag (0.10).
 
     Returns:
@@ -539,7 +539,7 @@ def test_extrinsic_properties():
 
 def test_extrinsic_properties2():
     """Test the extraction of extrinsic properties from simulated hysteresis data."""
-    H, M, expected = histeresis_data_loop()
+    H, M, expected = hysteresis_data_loop()
     result = extrinsic_properties(me.H(H), me.M(M), demagnetization_coefficient=1 / 3)
     print(result)
     assert np.isclose(
