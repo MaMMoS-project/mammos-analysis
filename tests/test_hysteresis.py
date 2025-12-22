@@ -471,13 +471,13 @@ def test_extrinsic_properties2():
     result = extrinsic_properties(me.H(H), me.M(M), demagnetization_coefficient=1 / 3)
     print(result)
     assert np.isclose(
-        result.Hc.value, expected["Hc"], atol=0.1
+        result.Hc.value, expected["Hc"], atol=0.1, rtol=1e-8
     )  # "Hc": 3049705.665855338,
     assert np.isclose(
-        result.Mr.value, expected["Mr"], atol=0.1
+        result.Mr.value, expected["Mr"], atol=0.1, rtol=1e-8
     )  # "Mr": 3049705.665855338
     assert np.isclose(
-        result.BHmax.value, expected["BHmax"], atol=0.1
+        result.BHmax.value, expected["BHmax"], atol=0.1, rtol=1e-8
     )  # "BHmax": 416124.72892616026
 
 
