@@ -333,14 +333,14 @@ def extract_BHmax(
     Returns:
         Properties of the maximum energy product.
 
-    Warnings:
-        UserWarning: warns if there are 3 or fewer data points in the
-        second quadrant based on which B*Hmax is computed. (User feedback
-        on this is welcome - is 3 a good number?)
-
     Raises:
         ValueError: If inputs are not monotonic or there are no
-        data points in the second quadrant.
+            data points in the second quadrant.
+
+    Warnings:
+        UserWarning: warns if there are 3 or fewer data points in the
+            second quadrant based on which B*Hmax is computed. (User feedback
+            on this is welcome - is 3 a good number?)
 
     """
     H = _unit_processing(H, u.A / u.m)
