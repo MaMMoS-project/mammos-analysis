@@ -339,11 +339,11 @@ def extract_BHmax(
         )
 
     # check if H is increasing or decreasing
-    if np.all((np.diff(H) >= 0) and (np.diff(M) >= 0)):
+    if np.all((np.diff(H) >= 0) & (np.diff(M) >= 0)):
         # H is increasing
         H = H
         M = M
-    elif np.all((np.diff(H) <= 0) and (np.diff(M) <= 0)):
+    elif np.all((np.diff(H) <= 0) & (np.diff(M) <= 0)):
         # H is decreasing
         H = H[::-1]
         M = M[::-1]
@@ -357,7 +357,7 @@ def extract_BHmax(
     # only consider values in 2nd quadrant
     mask = (H_internal < 0) & (B_internal > 0)  # 2nd quadrant
 
-    if not np.any(mask): # If no points in 2nd quadrant check 4th
+    if not np.any(mask):  # If no points in 2nd quadrant check 4th
         mask = (H_internal > 0) & (B_internal < 0)
     # how many values in the 2nd or 4th quadrant have we got?
     n_values = sum(mask)
