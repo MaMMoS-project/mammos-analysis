@@ -429,19 +429,15 @@ def test_extract_maximum_energy_product_linear_error(m, c):
         extract_maximum_energy_product(H, B)
 
 
-@pytest.mark.xfail(
-    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
-    strict=True,
-)
-def test_extract_maximum_energy_product_non_monotonic():
+def test_extract_BHmax_non_monotonic():
     """Test the maximum energy product extraction from non-monotonic data."""
     # Create a non-monotonic B(H) curve
     h_values = np.linspace(-100, 100, 101)
-    b_values = np.concatenate((np.linspace(0, 50, 51), np.linspace(50, 0, 51)))
+    m_values = np.concatenate((np.linspace(0, 50e5, 51e5), np.linspace(50e5, 0, 51e5)))
 
     # Test with non-monotonic data
     with pytest.raises(ValueError):
-        extract_maximum_energy_product(h_values, b_values)
+        extract_BHmax(h_values, m_values, 1 / 3)
 
 
 def test_extract_BHmax_square_loop():
@@ -464,9 +460,6 @@ def test_extract_BHmax_square_loop():
     BHmax_analytic = mu0**2 * Ms.quantity**2 / (4 * mu0)
 
     # debug output
-    print(f"{BHmax     =}")
-    print(f"{BHmax_analytic=}")
-    print(f"{BHmax.quantity - BHmax_analytic=}")
     np.isclose(BHmax.quantity, BHmax_analytic, atol=3, rtol=1e-6)
 
 
@@ -479,8 +472,6 @@ def test_extract_BHmax_few_values():
     H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 10)
     M = np.ones(shape=10) * Ms.value  # 1000 values of H
     M[-5:] = -M[0]  # magnetisation switches while H>0
-    print(f"{H=}")
-    print(f"{M=}")
 
     with pytest.raises(ValueError):
         # use demagnetization_coefficient = 0 to avoid complication
@@ -541,7 +532,6 @@ def test_extrinsic_properties2():
     """Test the extraction of extrinsic properties from simulated hysteresis data."""
     H, M, expected = hysteresis_data_loop()
     result = extrinsic_properties(me.H(H), me.M(M), demagnetization_coefficient=1 / 3)
-    print(result)
     assert np.isclose(
         result.Hc.value, expected["Hc"], atol=0.1, rtol=1e-8
     )  # "Hc": 3049705.665855338,
