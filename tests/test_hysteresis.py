@@ -370,6 +370,16 @@ def test_extract_BHmax_square_loop():
     # debug output
     np.isclose(BHmax.quantity, BHmax_analytic, atol=3, rtol=1e-6)
 
+    # Test fourth quadrant
+    H_inv = -H
+    M_inv = -np.ones(shape=1000) * Ms.value
+    M_inv[-1] = -M_inv[0]
+
+    BHmax_inv = extract_BHmax(H_inv, M_inv, demagnetization_coefficient=1 / 3)
+
+    np.isclose(BHmax_inv.q, BHmax.q)
+    np.isclose(BHmax_inv.q, BHmax_analytic, atol=3, rtol=1e-6)
+
 
 def test_extract_BHmax_few_values():
     """Test warnings and failure of maximum energy product extraction."""
