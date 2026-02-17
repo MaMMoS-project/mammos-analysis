@@ -293,27 +293,6 @@ def extract_B_curve(
     return me.Entity("MagneticFluxDensity", value=B_internal)
 
 
-def extract_maximum_energy_product(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    B: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-) -> MaximumEnergyProductProperties:
-    """Function may retire, see issue 54.
-
-    (https://github.com/MaMMoS-project/mammos-analysis/issues/54)
-
-    If you need it as it was up and including version 0.3.0, please install
-    version 0.3.0.
-    """
-    warnings.warn(
-        "extract_maximum_energy_product() (in version 0.3.0) is not using the "
-        "internal field. An alternative is extract_BHmax. Note this has a "
-        "changed interface (input and output).",
-        DeprecationWarning,
-        stacklevel=1,
-    )
-    raise RuntimeError("This function needs to be reviewed.")
-
-
 def extract_BHmax(
     H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
     M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
@@ -334,8 +313,12 @@ def extract_BHmax(
         Properties of the maximum energy product.
 
     Raises:
-        ValueError: If inputs are not monotonic or there are no
+        ValueError: If inputs H and M are not monotonic or there are no
             data points in the second quadrant.
+
+        ValueError: If inputs H and M have different lengths.
+
+        ValueError: If one of H or M is increasing and other is decreasing.
 
     Warnings:
         UserWarning: warns if there are 3 or fewer data points in the
@@ -348,18 +331,24 @@ def extract_BHmax(
 
     # processing will not work for full hysteresis loop
     _check_monotonicity(H.value)
+    _check_monotonicity(M.value)
 
-    assert len(H) == len(M)
+    if len(H) != len(M):
+        raise ValueError(
+            f"H and M have different lengths {len(H)} and {len(M)} respectively."
+        )
 
     # check if H is increasing or decreasing
-    if np.all(np.diff(H) >= 0):
+    if np.all((np.diff(H) >= 0) & (np.diff(M) >= 0)):
         # H is increasing
         H = H
         M = M
-    else:
+    elif np.all((np.diff(H) <= 0) & (np.diff(M) <= 0)):
         # H is decreasing
         H = H[::-1]
         M = M[::-1]
+    else:
+        raise ValueError("H and M should both be either increasing or decreasing.")
 
     # Calculate internal field and flux density
     H_internal = H - demagnetization_coefficient * M
@@ -367,21 +356,23 @@ def extract_BHmax(
 
     # only consider values in 2nd quadrant
     mask = (H_internal < 0) & (B_internal > 0)  # 2nd quadrant
-    # how many values in 2nd quadrant have we got?
+
+    if not np.any(mask):  # If no points in 2nd quadrant check 4th
+        mask = (H_internal > 0) & (B_internal < 0)
+    # how many values in the 2nd or 4th quadrant have we got?
     n_values = sum(mask)
     if n_values == 0:
         raise ValueError(
-            "Did not find any values in second quadrant.",
-            H_internal,
-            B_internal,
-            H,
-            M,
-            mask,
+            "Did not find any values in second or fourth quadrant: ",
+            f"{H_internal=}",
+            f"{B_internal=}",
+            f"{H=}",
+            f"{M=}",
         )
     if n_values <= 3:
         warnings.warn(
-            f"Only {n_values} (H_internal, M_internal) values in second quadrant - "
-            "estimate of BHmax may be inaccurate.",
+            f"Only {n_values} (H_internal, M_internal) values to "
+            "estimate of BHmax. It may be inaccurate.",
             stacklevel=1,
         )
 

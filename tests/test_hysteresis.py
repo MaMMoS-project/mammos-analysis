@@ -11,13 +11,11 @@ import pytest
 
 from mammos_analysis.hysteresis import (
     LinearSegmentProperties,
-    MaximumEnergyProductProperties,
     _check_monotonicity,
     _unit_processing,
     extract_B_curve,
     extract_BHmax,
     extract_coercive_field,
-    extract_maximum_energy_product,
     extract_remanent_magnetization,
     extrinsic_properties,
     find_linear_segment,
@@ -337,111 +335,17 @@ def test_B_curve_errors():
         extract_B_curve(H, M, demagnetization_coefficient=-1)
 
 
-@pytest.mark.xfail(
-    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
-    strict=True,
-)
-@pytest.mark.parametrize(
-    "m, c",
-    [
-        (2.0, 5.0),  # positive slope, positive intercept
-        (1.5, -2.0),  # positive slope, negative intercept
-    ],
-)
-def test_extract_maximum_energy_product_linear(m, c):
-    """Tests the maximum energy product for a linear B(H) = m*H + c.
-
-    This uses the analytic derivation:
-        BH = H * (m*H + c) = mH^2 + cH
-        d(BH)/dH = 2mH + c = 0  ->  H_opt = -c/(2m)
-        BH_max = |m H_opt^2 + c H_opt| = |(-c^2)/(4m)| = c^2/(4|m|)
-
-    Args:
-        m (float): slope of the linear B(H) relationship.
-        c (float): intercept of the linear B(H) relationship.
-
-    Raises:
-        AssertionError: if the computed BHmax deviates from the analytic result.
-    """
-
-    def linear_B(H):
-        """Linear B(H) function."""
-        return m * H + c
-
-    H_opt = -c / (2 * m)
-    H = np.linspace(H_opt - 1.0, H_opt + 1.0, 500) * u.A / u.m
-    dh = H[1] - H[0]
-    B = linear_B(H.value) * u.T
-
-    # Analytic expected maximum energy product
-    expected_val_BHmax = (c**2 / (4 * abs(m))) * (u.A / u.m * u.T)
-    expected_val_Bd = linear_B(H_opt) * u.T
-
-    result = extract_maximum_energy_product(H, B)
-
-    assert isinstance(result, MaximumEnergyProductProperties)
-    assert isinstance(result.Hd, me.Entity)
-    assert isinstance(result.Bd, me.Entity)
-    assert isinstance(result.BHmax, me.Entity)
-
-    assert u.isclose(result.Hd.q, H_opt * u.A / u.m, atol=dh)
-    assert u.isclose(
-        result.Bd.q, expected_val_Bd, atol=(m * dh.value) * u.T
-    )  # B tolerance related to H discretization
-    assert u.isclose(
-        result.BHmax.q,
-        expected_val_BHmax,
-        atol=(2 * m * H_opt + c) * dh.value * (u.A / u.m * u.T),
-    )  # BHmax tolerance related to discretization
-
-
-@pytest.mark.xfail(
-    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
-    strict=True,
-)
-@pytest.mark.parametrize(
-    "m, c",
-    [
-        (-1.5, 2.0),  # negative slope, positive intercept
-        (-2.0, -5.0),  # negative slope, negative intercept
-    ],
-)
-def test_extract_maximum_energy_product_linear_error(m, c):
-    """Tests the maximum energy product for a linear B(H) = m*H + c.
-
-    This uses the analytic derivation:
-        BH = H * (m*H + c) = mH^2 + cH
-        d(BH)/dH = 2mH + c = 0  ->  H_opt = -c/(2m)
-        BH_max = |m H_opt^2 + c H_opt| = |(-c^2)/(4m)| = c^2/(4|m|)
-
-    Args:
-        m (float): slope of the linear B(H) relationship.
-        c (float): intercept of the linear B(H) relationship.
-
-    Raises:
-        AssertionError: if the computed BHmax deviates from the analytic result.
-    """
-    H_opt = -c / (2 * m)
-    H = np.linspace(H_opt - 1.0, H_opt + 1.0, 500) * u.A / u.m
-    B = (m * H.value + c) * u.T
-
-    with pytest.raises(ValueError):
-        extract_maximum_energy_product(H, B)
-
-
-@pytest.mark.xfail(
-    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
-    strict=True,
-)
-def test_extract_maximum_energy_product_non_monotonic():
+def test_extract_BHmax_non_monotonic():
     """Test the maximum energy product extraction from non-monotonic data."""
     # Create a non-monotonic B(H) curve
     h_values = np.linspace(-100, 100, 101)
-    b_values = np.concatenate((np.linspace(0, 50, 51), np.linspace(50, 0, 51)))
+    m_values = np.concatenate(
+        (np.linspace(0, 500000, 510000), np.linspace(500000, 0, 510000))
+    )
 
     # Test with non-monotonic data
     with pytest.raises(ValueError):
-        extract_maximum_energy_product(h_values, b_values)
+        extract_BHmax(h_values, m_values, 1 / 3)
 
 
 def test_extract_BHmax_square_loop():
@@ -464,10 +368,17 @@ def test_extract_BHmax_square_loop():
     BHmax_analytic = mu0**2 * Ms.quantity**2 / (4 * mu0)
 
     # debug output
-    print(f"{BHmax     =}")
-    print(f"{BHmax_analytic=}")
-    print(f"{BHmax.quantity - BHmax_analytic=}")
     np.isclose(BHmax.quantity, BHmax_analytic, atol=3, rtol=1e-6)
+
+    # Test fourth quadrant
+    H_inv = -H
+    M_inv = -np.ones(shape=1000) * Ms.value
+    M_inv[-1] = -M_inv[0]
+
+    BHmax_inv = extract_BHmax(H_inv, M_inv, demagnetization_coefficient=1 / 3)
+
+    np.isclose(BHmax_inv.q, BHmax.q)
+    np.isclose(BHmax_inv.q, BHmax_analytic, atol=3, rtol=1e-6)
 
 
 def test_extract_BHmax_few_values():
@@ -479,8 +390,6 @@ def test_extract_BHmax_few_values():
     H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 10)
     M = np.ones(shape=10) * Ms.value  # 1000 values of H
     M[-5:] = -M[0]  # magnetisation switches while H>0
-    print(f"{H=}")
-    print(f"{M=}")
 
     with pytest.raises(ValueError):
         # use demagnetization_coefficient = 0 to avoid complication
@@ -541,7 +450,6 @@ def test_extrinsic_properties2():
     """Test the extraction of extrinsic properties from simulated hysteresis data."""
     H, M, expected = hysteresis_data_loop()
     result = extrinsic_properties(me.H(H), me.M(M), demagnetization_coefficient=1 / 3)
-    print(result)
     assert np.isclose(
         result.Hc.value, expected["Hc"], atol=0.1, rtol=1e-8
     )  # "Hc": 3049705.665855338,
