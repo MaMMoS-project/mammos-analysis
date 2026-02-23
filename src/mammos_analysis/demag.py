@@ -1,8 +1,12 @@
 """Functions calculating demagnetization factors."""
 
-import astropy
-import mammos_entity
-import numpy
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import astropy
+    import mammos_entity
+    import numpy
+
 import numpy as np
 from mammos_entity import Entity
 
