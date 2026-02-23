@@ -2,8 +2,8 @@
 
 import importlib.metadata
 
+from mammos_analysis import demag as demag
 from mammos_analysis import hysteresis as hysteresis
 from mammos_analysis.kuzmin import kuzmin_properties as kuzmin_properties
-from mammos_analysis import demag
 
 __version__ = importlib.metadata.version(__package__)

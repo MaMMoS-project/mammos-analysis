@@ -1,17 +1,18 @@
 """Functions calculating demagnetization factors."""
 
+import astropy
+import mammos_entity
+import numpy
 import numpy as np
-from astropy.units import Quantity
 from mammos_entity import Entity
 
 
 def rectangular_prism(
     x1: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
     x2: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    x3: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray
-    ) -> mammos_entity.Entity:
-    r"""
-    Calculate demagnetization factors of a rectangular prism.
+    x3: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+) -> mammos_entity.Entity:
+    """Calculate demagnetization factors of a rectangular prism.
 
     Copied from
     https://rmlmcfadden.github.io/bnmr/technical-information/calculators/
@@ -28,13 +29,15 @@ def rectangular_prism(
         same as for input arguments.
     """
     # convert all dimensions to same unit and extract as values
-    if all([hasattr(i, 'unit') for i in [x1, x2, x3]]):
+    if all([hasattr(i, "unit") for i in [x1, x2, x3]]):
         ref_unit = x1.unit
-        x1, x2, x3 = [i.q.to(ref_unit).value if isinstance(i, Entity)
-                      else i.to(ref_unit).value for i in [x1, x2, x3]]
+        x1, x2, x3 = [
+            i.q.to(ref_unit).value if isinstance(i, Entity) else i.to(ref_unit).value
+            for i in [x1, x2, x3]
+        ]
     # don't allow ambiguous situation when only some arguments have unit
-    elif any([hasattr(i, 'unit') for i in [x1, x2, x3]]):
-        raise ValueError('Some arguments contain a unit while others do not.')
+    elif any([hasattr(i, "unit") for i in [x1, x2, x3]]):
+        raise ValueError("Some arguments contain a unit while others do not.")
 
     def _calc_D(x1, x2, x3):
         # the expression takes input as half of the semi-axes
@@ -65,15 +68,12 @@ def rectangular_prism(
             + (a2 * a + b2 * b - 2 * c2 * c) / (3 * abc)
             + ((a2 + b2 - 2 * c2) / (3 * abc)) * r_abc
             + (c / ab) * (r_ac + r_bc)
-            - (r_ab * r_ab * r_ab + r_bc * r_bc * r_bc + r_ac * r_ac * r_ac)
-            / (3 * abc)
+            - (r_ab * r_ab * r_ab + r_bc * r_bc * r_bc + r_ac * r_ac * r_ac) / (3 * abc)
         )
         # divide out the factor of pi
         D = pi_Dz / np.pi
         return D
 
-    D = (_calc_D(x2, x3, x1),
-         _calc_D(x1, x3, x2),
-         _calc_D(x1, x2, x3))
+    D = (_calc_D(x2, x3, x1), _calc_D(x1, x3, x2), _calc_D(x1, x2, x3))
 
     return Entity("DemagnetizingFactor", D)
