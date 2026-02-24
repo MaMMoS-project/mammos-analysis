@@ -22,7 +22,7 @@ def rectangular_prism(
 
     Copied from
     https://rmlmcfadden.github.io/bnmr/technical-information/calculators/
-    Equation from A. Aharoni, J. Appl. Phys. 83, 3422 (1998).
+    Equation 1 from A. Aharoni, J. Appl. Phys. 83, 3422 (1998).
     https://doi.org/10.1063/1.367113
 
     Args:
