@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import astropy
+    import astropy.units
     import mammos_entity
     import numpy
 
