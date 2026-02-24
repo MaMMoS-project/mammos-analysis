@@ -36,6 +36,8 @@ def rectangular_prism(
 
     Raises:
         ValueError: If arguments with and without unit are mixed.
+        ValueError: If arguments are complex
+        ValueError: If arguments are negative
     """
     # convert all dimensions to same unit and extract as values
     if all([hasattr(i, "unit") for i in [x1, x2, x3]]):
@@ -54,6 +56,22 @@ def rectangular_prism(
             x2 is of type {type(x2)} and {hint[hasattr(x2, "unit")]}.
             x3 is of type {type(x3)} and {hint[hasattr(x3, "unit")]}."""
         )
+
+    # check for complex dimensions of prism
+    if np.any(np.iscomplexobj([x1, x2, x3])):
+        hint = ""
+        for key, value in {"x1": x1, "x2": x2, "x3": x3}.items():
+            if np.iscomplexobj(value):
+                hint = hint + f"{key} appears to be a complex object.\n"
+        raise ValueError(f"Complex prism dimensions are not allowed.\n{hint}")
+
+    # check for negative dimensions of prism
+    if np.any(np.array([x1, x2, x3]) < 0):
+        hint = ""
+        for key, value in {"x1": x1, "x2": x2, "x3": x3}.items():
+            if value < 0:
+                hint = hint + f"{key} appears to be a negative number.\n"
+        raise ValueError(f"Negative prism dimensions are not allowed.\n{hint}")
 
     def _calc_D(x1, x2, x3):
         # the expression takes input as half of the semi-axes
