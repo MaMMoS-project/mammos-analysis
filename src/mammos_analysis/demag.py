@@ -33,6 +33,9 @@ def rectangular_prism(
     Returns:
         Demagnetizing factors along each dimension. Order of dimensions is the
         same as for input arguments.
+
+    Raises:
+        ValueError: If arguments with and without unit are mixed.
     """
     # convert all dimensions to same unit and extract as values
     if all([hasattr(i, "unit") for i in [x1, x2, x3]]):
@@ -43,7 +46,14 @@ def rectangular_prism(
         ]
     # don't allow ambiguous situation when only some arguments have unit
     elif any([hasattr(i, "unit") for i in [x1, x2, x3]]):
-        raise ValueError("Some arguments contain a unit while others do not.")
+        hint = {True: "contains a unit", False: "does not contain a unit"}
+        raise ValueError(
+            f"""Only some arguments contain a unit while others do not. This is
+            ambiguous and thus not supported.
+            x1 is of type {type(x1)} and {hint[hasattr(x1, "unit")]}.
+            x2 is of type {type(x2)} and {hint[hasattr(x2, "unit")]}.
+            x3 is of type {type(x3)} and {hint[hasattr(x3, "unit")]}."""
+        )
 
     def _calc_D(x1, x2, x3):
         # the expression takes input as half of the semi-axes
