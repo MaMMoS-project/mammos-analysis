@@ -59,7 +59,7 @@ def rectangular_prism(
         # the expression takes input as half of the semi-axes
         a = 0.5 * x1
         b = 0.5 * x2
-        c = 0.5 * x3  # c is || axis along which the prism was magnetized
+        c = 0.5 * x3
         # define some convenience terms
         a2 = a * a
         b2 = b * b
