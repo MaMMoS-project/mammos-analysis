@@ -58,10 +58,28 @@ def test_demag_array():
     assert np.all(np.isclose(rectangular_prism(a, b, c).value, expected))
 
 
-def test_demag_Exceptions():
+def test_demag_Exceptions_units():
     """Test whether expected exceptions correctly occur."""
     a = me.Entity("Length", 2.1, "mm")
     b = u.Quantity(0.0022, "m")
+    c = 2.2
+    with pytest.raises(ValueError):
+        rectangular_prism(a, b, c)
+
+
+def test_demag_Exceptions_complex():
+    """Test whether expected exceptions correctly occur."""
+    a = 2.1
+    b = 2.1 + 0j
+    c = 2.2
+    with pytest.raises(ValueError):
+        rectangular_prism(a, b, c)
+
+
+def test_demag_Exceptions_negative():
+    """Test whether expected exceptions correctly occur."""
+    a = 2.1
+    b = -2.1
     c = 2.2
     with pytest.raises(ValueError):
         rectangular_prism(a, b, c)
