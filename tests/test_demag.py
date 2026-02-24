@@ -1,7 +1,7 @@
 """Tests for demagnetization factor calculation."""
 
-import astropy.units as u
 import mammos_entity as me
+import mammos_units as u
 import numpy as np
 import pytest
 
