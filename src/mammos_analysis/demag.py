@@ -13,20 +13,20 @@ import numpy as np
 from mammos_entity import Entity
 
 
-def rectangular_prism(
+def demag_cuboid(
     x1: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
     x2: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
     x3: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
 ) -> mammos_entity.Entity:
-    """Calculate demagnetization factors of a rectangular prism.
+    """Calculate demagnetization factors of a rectangular cuboid.
 
     Equation 1 from A. Aharoni, J. Appl. Phys. 83, 3422 (1998).
     https://doi.org/10.1063/1.367113
 
     Args:
-        x1: Full side length of rectangular prism in direction 1
-        x2: Full side length of rectangular prism in direction 2
-        x3: Full side length of rectangular prism in direction 3
+        x1: Full side length of rectangular cuboid in direction 1
+        x2: Full side length of rectangular cuboid in direction 2
+        x3: Full side length of rectangular cuboid in direction 3
 
     Returns:
         Demagnetizing factors along each dimension. Order of dimensions is the
@@ -55,21 +55,21 @@ def rectangular_prism(
             x3 is of type {type(x3)} and {hint[hasattr(x3, "unit")]}."""
         )
 
-    # check for complex dimensions of prism
+    # check for complex dimensions of cuboid
     if np.any(np.iscomplexobj([x1, x2, x3])):
         hint = ""
         for key, value in {"x1": x1, "x2": x2, "x3": x3}.items():
             if np.iscomplexobj(value):
                 hint = hint + f"{key} appears to be a complex object.\n"
-        raise ValueError(f"Complex prism dimensions are not allowed.\n{hint}")
+        raise ValueError(f"Complex cuboid dimensions are not allowed.\n{hint}")
 
-    # check for negative dimensions of prism
+    # check for negative dimensions of cuboid
     if np.any(np.array([x1, x2, x3]) < 0):
         hint = ""
         for key, value in {"x1": x1, "x2": x2, "x3": x3}.items():
             if value < 0:
                 hint = hint + f"{key} appears to be a negative number.\n"
-        raise ValueError(f"Negative prism dimensions are not allowed.\n{hint}")
+        raise ValueError(f"Negative cuboid dimensions are not allowed.\n{hint}")
 
     def _calc_D(x1, x2, x3):
         # the expression takes input as half of the semi-axes
