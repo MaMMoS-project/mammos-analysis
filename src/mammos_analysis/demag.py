@@ -20,8 +20,6 @@ def rectangular_prism(
 ) -> mammos_entity.Entity:
     """Calculate demagnetization factors of a rectangular prism.
 
-    Copied from
-    https://rmlmcfadden.github.io/bnmr/technical-information/calculators/
     Equation 1 from A. Aharoni, J. Appl. Phys. 83, 3422 (1998).
     https://doi.org/10.1063/1.367113
 
