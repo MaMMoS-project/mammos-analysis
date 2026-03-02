@@ -152,7 +152,7 @@ def extract_coercive_field(
 
     Args:
         H: External magnetic field.
-        M: magnetization.
+        M: Magnetization.
 
     Returns:
         Coercive field in the same format as H.
