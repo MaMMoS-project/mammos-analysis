@@ -6,6 +6,17 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-analysis 0.5.0](https://github.com/MaMMoS-project/mammos-analysis/tree/0.5.0) – 2026-03-06
+
+### Changed
+
+- Changed `SpontaneousMagnetization` to `Magnetization` where relevant. Changed `Ms` to `M` where relevant. ([#69](https://github.com/MaMMoS-project/mammos-analysis/pull/69))
+
+### Misc
+
+- Fixes in the documentation syntax. ([#61](https://github.com/MaMMoS-project/mammos-analysis/pull/61))
+
+
 ## [mammos-analysis 0.4.0](https://github.com/MaMMoS-project/mammos-analysis/tree/0.4.0) – 2025-12-22
 
 ### Added
