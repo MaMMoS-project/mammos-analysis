@@ -7,14 +7,13 @@ import warnings
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import astropy.units
     import mammos_units
     import matplotlib
     import numpy
 
-import astropy.units
 import mammos_entity
 import mammos_entity as me
+import mammos_units
 import mammos_units as u
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,7 +53,7 @@ class LinearSegmentProperties:
     """M(H=0) from linear segment fit."""
     Hmax: mammos_entity.Entity
     """Maximum field strength in the linear segment."""
-    gradient: astropy.units.Quantity
+    gradient: mammos_units.Quantity
     """Gradient of the linear segment."""
     _H: mammos_entity.Entity | None = None
     _M: mammos_entity.Entity | None = None
@@ -105,75 +104,46 @@ def _check_monotonicity(arr: numpy.ndarray, direction=None) -> None:
             raise ValueError("Array is not monotonic.")
 
 
-def _unit_processing(
-    i: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | numbers.Number,
-    unit: mammos_units.Unit,
-    return_quantity: bool = True,
-) -> numpy.ndarray:
-    """Convert input data to a consistent unit for calculations.
-
-    Args:
-        i: Input data as an Entity, Quantity, array, or number.
-        unit: Target unit for conversion.
-        return_quantity: If True, return a Quantity object.
-
-    Returns:
-        Data in the specified unit as a Quantity or numpy array.
-
-    Raises:
-        ValueError: If units are incompatible.
-        TypeError: If input type is unsupported.
-    """
-    if isinstance(i, me.Entity | u.Quantity) and not unit.is_equivalent(i.unit):
-        raise ValueError(f"Input unit {i.unit} is not equivalent to {unit}.")
-
-    if isinstance(i, me.Entity):
-        value = i.q.to(unit).value
-    elif isinstance(i, u.Quantity):
-        value = i.to(unit).value
-    elif isinstance(i, np.ndarray | numbers.Number):
-        value = i
-    else:
-        raise TypeError(
-            f"Input must be an Entity, Quantity, or numpy array, not {type(i)}."
-        )
-
-    if return_quantity:
-        return u.Quantity(value, unit)
-    else:
-        return value
-
-
 def extract_coercive_field(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
 ) -> mammos_entity.Entity:
     """Extract the coercive field from a hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Magnetization.
+        H: :entity:`ExternalMagneticField`.
+            If no unit is provided, values are interpreted as 'A / m'.
+        M: :entity:`Magnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
 
     Returns:
-        Coercive field in the same format as H.
+        :entity:`CoercivityHcExternal` in the same format as H.
 
     Raises:
         ValueError: If the coercive field cannot be calculated.
     """
     # Extract values for computation
-    h_val = _unit_processing(H, u.A / u.m)
-    m_val = _unit_processing(M, u.A / u.m)
+    H = me._entity.from_compatible(
+        "ExternalMagneticField", "A / m", H=H, enforce_unit=True
+    )
+    M = me._entity.from_compatible(
+        "Magnetization",
+        "A / m",
+        compatible_entities=("SpontaneousMagnetization",),
+        M=M,
+        enforce_unit=True,
+    )
 
     # Check monotonicity on the values
-    _check_monotonicity(h_val)
+    _check_monotonicity(H.value)
 
-    if np.isnan(m_val).any():
+    if np.isnan(M.q).any():
         return me.Hc(np.nan)
 
     # Interpolation only works on increasing data
-    idx = np.argsort(m_val)
-    h_sorted = h_val[idx]
-    m_sorted = m_val[idx]
+    idx = np.argsort(M.q)
+    h_sorted = H.q[idx]
+    m_sorted = M.q[idx]
 
     hc_val = abs(
         np.interp(
@@ -193,41 +163,51 @@ def extract_coercive_field(
 
 
 def extract_remanent_magnetization(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
 ) -> mammos_entity.Entity:
     """Extract the remanent magnetization from a hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Magnetization.
+        H: :entity:`ExternalMagneticField`.
+            If no unit is provided, values are interpreted as 'A / m'.
+        M: :entity:`Magnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
 
     Returns:
-        Remanent magnetization in the same format as M.
+        :entity:`Remanence` in the same format as M.
 
     Raises:
         ValueError: If the field does not cross zero or calculation fails.
     """
     # Determine input types
-    h_val = _unit_processing(H, u.A / u.m)
-    m_val = _unit_processing(M, u.A / u.m)
+    H = me._entity.from_compatible(
+        "ExternalMagneticField", "A / m", H=H, enforce_unit=True
+    )
+    M = me._entity.from_compatible(
+        "Magnetization",
+        "A / m",
+        compatible_entities=("SpontaneousMagnetization",),
+        M=M,
+        enforce_unit=True,
+    )
 
     # Check monotonicity on the values
-    _check_monotonicity(h_val)
+    _check_monotonicity(H.value)
 
-    if np.isnan(m_val).any():
+    if np.isnan(M.q).any():
         raise ValueError("Magnetization contains NaN values.")
 
     # Check if field crosses zero axis
-    if not ((h_val.min() <= 0) and (h_val.max() >= 0)):
+    if not ((H.q.min() <= 0) and (H.q.max() >= 0)):
         raise ValueError(
             "Field does not cross zero axis. Cannot calculate remanent magnetization."
         )
 
     # Interpolation only works on increasing data
-    idx = np.argsort(h_val)
-    h_sorted = h_val[idx]
-    m_sorted = m_val[idx]
+    idx = np.argsort(H.q)
+    h_sorted = H.q[idx]
+    m_sorted = M.q[idx]
 
     mr_val = abs(
         np.interp(
@@ -248,19 +228,21 @@ def extract_remanent_magnetization(
 
 
 def extract_B_curve(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     demagnetization_coefficient: float,
 ) -> mammos_entity.Entity:
     """Compute the B–H curve from a hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Magnetization.
+        H: :entity:`ExternalMagneticField`.
+            If no unit is provided, values are interpreted as 'A / m'.
+        M: :entity:`Magnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
-        Magnetic flux density as an Entity.
+        :entity:`MagneticFluxDensity`.
 
     Raises:
         ValueError: If the coefficient is out of range.
@@ -283,19 +265,27 @@ def extract_B_curve(
     else:
         raise ValueError("Demagnetization coefficient must be a float or int.")
 
-    H = _unit_processing(H, u.A / u.m)
-    M = _unit_processing(M, u.A / u.m)
+    H = me._entity.from_compatible(
+        "ExternalMagneticField", "A / m", H=H, enforce_unit=True
+    )
+    M = me._entity.from_compatible(
+        "Magnetization",
+        "A / m",
+        compatible_entities=("SpontaneousMagnetization",),
+        M=M,
+        enforce_unit=True,
+    )
 
     # Calculate internal field and flux density
-    H_internal = H - demagnetization_coefficient * M
-    B_internal = (H_internal + M) * u.constants.mu0
+    H_internal = H.q - demagnetization_coefficient * M.q
+    B_internal = (H_internal + M.q) * u.constants.mu0
 
     return me.Entity("MagneticFluxDensity", value=B_internal)
 
 
 def extract_maximum_energy_product(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    B: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    B: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
 ) -> MaximumEnergyProductProperties:
     """Function may retire, see issue 54.
 
@@ -315,10 +305,10 @@ def extract_maximum_energy_product(
 
 
 def extract_BHmax(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     demagnetization_coefficient: float,
-) -> MaximumEnergyProductProperties:
+) -> mammos_entity.Entity:
     """Determine the maximum energy product from a hysteresis loop.
 
     Computes internal fields H_int and B_int from H and M using
@@ -326,12 +316,14 @@ def extract_BHmax(
     for a half-hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Magnetization.
+        H: :entity:`ExternalMagneticField`.
+            If no unit is provided, values are interpreted as 'A / m'.
+        M: :entity:`Magnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
-        Properties of the maximum energy product.
+        :entity:`MaximumEnergyProduct`.
 
     Raises:
         ValueError: If inputs are not monotonic or there are no
@@ -343,11 +335,22 @@ def extract_BHmax(
             on this is welcome - is 3 a good number?)
 
     """
-    H = _unit_processing(H, u.A / u.m)
-    M = _unit_processing(M, u.A / u.m)
+    H = me._entity.from_compatible(
+        "ExternalMagneticField", "A / m", H=H, enforce_unit=True
+    )
+    M = me._entity.from_compatible(
+        "Magnetization",
+        "A / m",
+        compatible_entities=("SpontaneousMagnetization",),
+        M=M,
+        enforce_unit=True,
+    )
 
     # processing will not work for full hysteresis loop
     _check_monotonicity(H.value)
+
+    H = H.q
+    M = M.q
 
     assert len(H) == len(M)
 
@@ -392,15 +395,17 @@ def extract_BHmax(
 
 
 def extrinsic_properties(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     demagnetization_coefficient: float | None = None,
 ) -> ExtrinsicProperties:
     """Compute extrinsic properties of a hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Magnetization.
+        H: :entity:`ExternalMagneticField`.
+            If no unit is provided, values are interpreted as 'A / m'.
+        M: :entity:`Magnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
         demagnetization_coefficient: Demagnetization coefficient for BHmax.
 
     Returns:
@@ -425,9 +430,9 @@ def extrinsic_properties(
 
 
 def find_linear_segment(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    margin: mammos_entity.Entity | astropy.units.Quantity | numbers.Number,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    margin: mammos_entity.Entity | mammos_units.Quantity | numbers.Number,
     method: str = "maxdev",
     min_points: int = 5,
 ) -> LinearSegmentProperties:
@@ -457,66 +462,81 @@ def find_linear_segment(
 
        .. math::
 
-         \mathrm{RMSE}
-         \;=\;
-         \sqrt{\frac{1}{n}\sum_{\,i=i_0}^{\,i_{\max}}
-         \bigl(M_i - (m\,H_i + b)\bigr)^2}
-         \;\le\; \delta,
+          \mathrm{RMSE}
+          \;=\;
+          \sqrt{\frac{1}{n}\sum_{\,i=i_0}^{\,i_{\max}}
+          \bigl(M_i - (m\,H_i + b)\bigr)^2}
+          \;\le\; \delta,
 
-       where :math:`n = i_{\max} - i_0 + 1`. Occasional points may exceed :math:`\delta`
-       provided the overall RMS error remains within :math:`\delta`.
+       where :math:`n = i_{\max} - i_0 + 1`. Occasional points may exceed
+       :math:`\delta` provided the overall RMS error remains
+       within :math:`\delta`.
 
     Parameters:
-      H: Applied magnetic field values. Must be monotonic.
-      M: Magnetization values corresponding to `H`.
-      margin: Allowed deviation :math:`\delta`.
-      method: Which deviation test to use:
-        - `"maxdev"` (default): per‐point maximum deviation,
-        - `"rms"`: root‐mean‐square deviation.
-      min_points: Minimum number of points required to attempt any fit.
+        H: Applied magnetic field values. Must be monotonic.
+        M: Magnetization values corresponding to `H`.
+        margin: Allowed deviation :math:`\delta`.
+        method: Which deviation test to use:
+            - `"maxdev"` (default): per‐point maximum deviation,
+            - `"rms"`: root‐mean‐square deviation.
+        min_points: Minimum number of points required to attempt any fit.
 
     Returns:
-      An object containing
+        An object containing
 
-      - `Mr`: fitted intercept :math:`b` (magnetization at :math:`H=0`),
-      - `Hmax`: largest field value up to which data remain “linear” under the
-        chosen criterion,
-      - `gradient`: fitted slope :math:`m` (dimensionless).
+        - `Mr`: fitted intercept :math:`b` (magnetization at :math:`H=0`),
+        - `Hmax`: largest field value up to which data remain “linear” under the
+          chosen criterion,
+        - `gradient`: fitted slope :math:`m` (dimensionless).
 
     Notes:
-      **Growing‐Window Fit**
-      We attempt to extend the segment one index at a time:
-
-      .. math::
-
-         \{\,i_0,\,i_0+1,\,\dots,\,i\,\}.
-
-      For each candidate endpoint :math:`i`, we fit a line
-      :math:`\hat{M}(H) = m\,H + b` via `np.polyfit(H[i_0:i+1], M[i_0:i+1], 1)`.
-      Then we compute either:
-
-      - **Max‐Deviation**:
-        :math:`\max_{j=i_0}^i\,\bigl|M_j - (m\,H_j + b)\bigr| \le \delta,` or
-      - **RMS**:
+        **Growing‐Window Fit**
+        We attempt to extend the segment one index at a time:
 
         .. math::
 
-           \mathrm{RMSE} \;=\;
-           \sqrt{\frac{1}{\,i - i_0 + 1\,}
-                 \sum_{j=i_0}^{i}
-                 \bigl(M_j - (m\,H_j + b)\bigr)^2}
-           \;\le\; \delta.
+            \{\,i_0,\,i_0+1,\,\dots,\,i\,\}.
+
+        For each candidate endpoint :math:`i`, we fit a line
+        :math:`\hat{M}(H) = m\,H + b` via `np.polyfit(H[i_0:i+1], M[i_0:i+1], 1)`.
+        Then we compute either:
+
+        - **Max‐Deviation**:
+        :math:`\max_{j=i_0}^i\,\bigl|M_j - (m\,H_j + b)\bigr| \le \delta,` or
+        - **RMS**:
+
+        .. math::
+
+            \mathrm{RMSE} \;=\;
+            \sqrt{\frac{1}{\,i - i_0 + 1\,}
+            \sum_{j=i_0}^{i}
+            \bigl(M_j - (m\,H_j + b)\bigr)^2}
+            \;\le\; \delta.
 
 
-      As soon as adding :math:`i+1` would violate the chosen inequality, we stop and
-      take :math:`i_{\max} = i`. We then refit :math:`(m,b)` on
-      :math:`\{i_0,\dots,i_{\max}\}` to produce the final slope/intercept returned.
+        As soon as adding :math:`i+1` would violate the chosen inequality, we stop and
+        take :math:`i_{\max} = i`. We then refit :math:`(m,b)` on
+        :math:`\{i_0,\dots,i_{\max}\}` to produce the final slope/intercept returned.
 
     """
     # 1) Normalize inputs to unitless numpy arrays in A/m
-    H_arr = _unit_processing(H, u.A / u.m, return_quantity=False)
-    M_arr = _unit_processing(M, u.A / u.m, return_quantity=False)
-    margin_val = _unit_processing(margin, u.A / u.m, return_quantity=False)
+    H = me._entity.from_compatible(
+        "ExternalMagneticField", "A / m", H=H, enforce_unit=True
+    )
+    M = me._entity.from_compatible(
+        "Magnetization",
+        "A / m",
+        compatible_entities=("SpontaneousMagnetization",),
+        M=M,
+        enforce_unit=True,
+    )
+    margin = me._entity.from_compatible(
+        "Magnetization", "A / m", margin=margin, enforce_unit=True
+    )
+
+    H_arr = H.value
+    M_arr = M.value
+    margin_val = margin.value
 
     # 2) Basic sanity checks
     if H_arr.shape != M_arr.shape:

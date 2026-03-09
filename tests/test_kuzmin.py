@@ -89,16 +89,16 @@ def test_A_function_of_temperature():
     """Test the A function of temperature."""
     T = me.Entity("ThermodynamicTemperature", value=[0, 100, 200], unit="K")
     A0 = me.A(2.0, unit=u.J / u.m)
-    Ms0 = 100.0
-    Tc = 300.0
-    s = 0.5
+    Ms0 = me.Ms(100.0)
+    Tc = me.Tc(300.0)
+    s = u.Quantity(0.5)
     a_func = _A_function_of_temperature(A0, Ms0, Tc, s, T)
     # repr
     assert repr(a_func) == "A(T)"
     # numeric input
     a = a_func(100.0)
     assert isinstance(a, me.Entity)
-    expected_a = me.A(A0.q * (kuzmin_formula(Ms0, Tc, s, 100.0) / Ms0) ** 2)
+    expected_a = me.A(A0.q * (kuzmin_formula(Ms0, Tc, s, 100.0) / Ms0.value) ** 2)
     assert a == expected_a
     # quantity input
     Tq = 100.0 * u.K
@@ -115,17 +115,19 @@ def test_A_function_of_temperature():
 def test_K1_function_of_temperature():
     """Test the K1 function of temperature."""
     T = me.Entity("ThermodynamicTemperature", value=[0, 100, 200], unit="K")
-    K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
-    Ms_0 = 100.0
-    T_c = 300.0
-    s = 0.5
+    K1_0 = me.K1(1e5, unit=u.J / u.m**3)
+    Ms_0 = me.Ms(100.0)
+    T_c = me.Tc(300.0)
+    s = u.Quantity(0.5)
     k1_func = _K1_function_of_temperature(K1_0, Ms_0, T_c, s, T)
     # repr
     assert repr(k1_func) == "K1(T)"
     # numeric input
     k1 = k1_func(100.0)
     assert isinstance(k1, me.Entity)
-    expected_k1 = me.Ku(K1_0.q * (kuzmin_formula(Ms_0, T_c, s, 100.0) / Ms_0) ** 3)
+    expected_k1 = me.K1(
+        K1_0.q * (kuzmin_formula(Ms_0, T_c, s, 100.0) / Ms_0.value) ** 3
+    )
     assert k1 == expected_k1
     # quantity input
     Tq = 100.0 * u.K
@@ -147,7 +149,7 @@ def test_kuzmin_properties_all_info():
     """
     s = 0.75
     Tc = me.Tc(value=500, unit="K")
-    K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
+    K1_0 = me.K1(1e5, unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
     Ms_0 = me.Ms(100)
     Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data))
@@ -173,7 +175,7 @@ def test_kuzmin_properties_all_info():
     )
     assert result.A(0) == A_0
     Tc = me.Tc(value=[500], unit="K")
-    K1_0 = me.Ku([1e5], unit=u.J / u.m**3)
+    K1_0 = me.K1([1e5], unit=u.J / u.m**3)
     Ms_0 = me.Ms([100])
     Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=0.75, T=T_data))
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
@@ -181,8 +183,8 @@ def test_kuzmin_properties_all_info():
     assert result.Tc == me.Tc(500)
     assert result.K1(0) == K1_0
     assert result.Ms(0) == Ms_0
-    Tc = me.Tc(value=[[500]], unit="K")
-    K1_0 = me.Ku([[1e5]], unit=u.J / u.m**3)
+    Tc = me.Tc(value=500, unit="K")
+    K1_0 = me.K1([1e5], unit=u.J / u.m**3)
     # Ms_0 = me.Ms([[100]]) # TODO: fix in future PR
     Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=0.75, T=T_data))
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
@@ -215,7 +217,7 @@ def test_kuzmin_properties_no_Tc():
     anticipate the results of the optimization.
     """
     Tc = me.Tc(value=500, unit="K")
-    K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
+    K1_0 = me.K1(1e5, unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
     Ms_0 = me.Ms(100)
     Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=0.75, T=T_data))
@@ -241,7 +243,7 @@ def test_kuzmin_properties_no_Ms_0():
     """
     s = 0.75
     Tc = me.Tc(value=500, unit="K")
-    K1_0 = me.Ku([1e5], unit=u.J / u.m**3)
+    K1_0 = me.K1([1e5], unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[100, 200, 300, 400, 500])
     Ms_0 = me.Ms(100)
     Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data))
@@ -260,7 +262,7 @@ def test_kuzmin_properties_no_Ms_0():
     Tc = me.Tc(value=500, unit="K")
     Ms_data = me.Ms([200, 100.0], unit=u.A / u.m)
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100], unit="K")
-    K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
+    K1_0 = me.K1(1e5, unit=u.J / u.m**3)
     result = kuzmin_properties(Ms=Ms_data, T=T_data, K1_0=K1_0, Tc=Tc)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
@@ -279,7 +281,7 @@ def test_kuzmin_properties_no_Ms_0_no_Tc():
     """Test the kuzmin_properties function without Ms_0 and Tc."""
     s = 0.75
     Tc = me.Tc(value=500, unit="K")
-    K1_0 = me.Ku([1e5], unit=u.J / u.m**3)
+    K1_0 = me.K1([1e5], unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[100, 200, 300, 400, 500])
     Ms_0 = me.Ms(100)
     Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data))
@@ -311,7 +313,7 @@ def test_kuzmin_low_Tc():
 
 def test_kuzmin_tesla():
     """Test the kuzmin_properties function with a polarisation input."""
-    with pytest.raises(ValueError, match="Incompatible label"):
+    with pytest.raises(ValueError, match="not compatible"):
         kuzmin_properties(
             T=me.Entity("ThermodynamicTemperature", value=[100, 200]),
             Ms=me.Js([1, 2]),
