@@ -20,6 +20,7 @@ from scipy.optimize import curve_fit
 if TYPE_CHECKING:
     import astropy.units
     import mammos_entity
+    import mammos_units
     import matplotlib
     import numpy
 
@@ -41,7 +42,7 @@ class KuzminResult:
 
     def plot(
         self,
-        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         celsius: bool = False,
     ) -> matplotlib.axes.Axes:
@@ -106,11 +107,13 @@ def kuzmin_properties(
     higher than 0.1 * max(Ms).
 
     Args:
-        Ms: Spontaneous magnetization data points as a me.Entity.
-        T: Temperature data points as a me.Entity.
-        K1_0: Magnetocrystalline anisotropy at 0 K as a me.Entity.
-        Tc: Curie temperature.
-        Ms_0: Spontaneous magnetization at T=0.
+        Ms: Spontaneous magnetization data points
+            as a me.Entity :entity:`SpontaneousMagnetization`.
+        T: Temperature data points as a me.Entity :entity:`Temperature`.
+        K1_0: Magnetocrystalline anisotropy at 0 K
+              as a me.Entity :entity:`UniaxialAnisotropyConstant`.
+        Tc: Curie temperature :entity:`CurieTemperature`.
+        Ms_0: Spontaneous magnetization at T=0 :entity:`SpontaneousMagnetization`.
         Tc_initial_guess: Initial guess for Tc (if optimized).
         Ms_0_initial_guess: Initial guess for Ms_0 (if optimized).
         s_initial_guess: Initial guess for the parameter `s` appearing in the
@@ -406,8 +409,8 @@ class _Ms_function_of_temperature:
     """Callable for temperature-dependent spontaneous magnetization Ms(T).
 
     Attributes:
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        Ms_0: Spontaneous magnetization at 0 K :entity:`SpontaneousMagnetization`.
+        T_c: Curie temperature :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
 
     Call:
