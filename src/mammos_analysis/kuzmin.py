@@ -112,8 +112,8 @@ def kuzmin_properties(
         T: Temperature data points as a me.Entity :entity:`Temperature`.
         K1_0: Magnetocrystalline anisotropy at 0 K
               as me.Entity :entity:`UniaxialAnisotropyConstant`.
-        Tc: Curie temperature :entity:`CurieTemperature`.
-        Ms_0: Spontaneous magnetization at T=0 :entity:`SpontaneousMagnetization`.
+        Tc: Curie temperature as :entity:`CurieTemperature`.
+        Ms_0: Spontaneous magnetization at T=0 as :entity:`SpontaneousMagnetization`.
         Tc_initial_guess: Initial guess for Tc (if optimized).
         Ms_0_initial_guess: Initial guess for Ms_0 (if optimized).
         s_initial_guess: Initial guess for the parameter `s` appearing in the
