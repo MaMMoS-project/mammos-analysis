@@ -131,7 +131,7 @@ def _unit_processing(
         value = i.q.to(unit).value
     elif isinstance(i, u.Quantity):
         value = i.to(unit).value
-    elif isinstance(i, np.typing.ArrayLike):
+    elif isinstance(i, np.ndarray | numbers.Number):
         value = i
     else:
         raise TypeError(
