@@ -43,7 +43,6 @@ class KuzminResult:
     def plot(
         self,
         T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
-        ax: matplotlib.axes.Axes | None = None,
         celsius: bool = False,
     ) -> matplotlib.axes.Axes:
         """Create a plot for Ms, A, and K1 as a function of temperature.
@@ -52,14 +51,12 @@ class KuzminResult:
             T: If specified, the entities are plotted against this array. Otherwise, a
                 uniform array of 100 points is generated between the minimum and the
                 maximum available data.
-            ax: optional matplotlib ``Axes`` instance to plot on an existing subplot.
             celsius: If True, plots the temperature in degree Celsius.
         """
         ncols = 2 if self.K1 is None else 3
         w, h = figaspect(1 / ncols)
         default_color_cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-        if not ax:
-            _, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(w, h))
+        _, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(w, h))
         self.Ms.plot(T, ax[0], celsius=celsius, color=default_color_cycle[0])
         self.A.plot(T, ax[1], celsius=celsius, color=default_color_cycle[1])
         if self.K1 is not None:
@@ -438,7 +435,8 @@ class _Ms_function_of_temperature:
     def __call__(self, T: numbers.Real | u.Quantity):
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
-        return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T))
+        Ms_quant = kuzmin_formula(self.Ms_0, self.T_c, self.s, T) * u.A / u.m
+        return me.Ms(Ms_quant.to("kA/m"))
 
     def plot(
         self,
