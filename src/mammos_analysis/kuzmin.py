@@ -113,9 +113,12 @@ def kuzmin_properties(
         K1_0: Magnetocrystalline anisotropy at 0 K
               as me.Entity :entity:`UniaxialAnisotropyConstant`.
         Tc: Curie temperature as :entity:`CurieTemperature`.
-        Ms_0: Spontaneous magnetization at T=0 as :entity:`SpontaneousMagnetization`.
-        Tc_initial_guess: Initial guess for Tc (if optimized).
-        Ms_0_initial_guess: Initial guess for Ms_0 (if optimized).
+        Ms_0: Spontaneous magnetization at T=0 as
+            :entity:`SpontaneousMagnetization`.
+        Tc_initial_guess: Initial guess for Tc
+            :entity:`CurieTemperature` (if optimized).
+        Ms_0_initial_guess: Initial guess for Ms_0
+            :entity:`SpontaneousMagnetization` (if optimized).
         s_initial_guess: Initial guess for the parameter `s` appearing in the
             Kuz'min fit.
 
@@ -248,10 +251,10 @@ def kuzmin_formula(Ms_0, T_c, s, T):
     Eur. Phys. J. Plus 135, 301 (2020). https://doi.org/10.1140/epjp/s13360-020-00294-y
 
     Args:
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        Ms_0: Spontaneous magnetization at 0 K :entity:`SpontaneousMagnetization`.
+        T_c: Curie temperature :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
-        T: Temperature(s) for evaluation.
+        T: Temperature(s) for evaluation :entity:`ThermodynamicTemperature`.
 
     Returns:
         Spontaneous magnetization at temperature T as an array.
@@ -273,9 +276,9 @@ class _A_function_of_temperature:
     """Callable for temperature-dependent exchange stiffness A(T).
 
     Attributes:
-        A_0: Exchange stiffness at 0 K.
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        A_0: Exchange stiffness at 0 K :entity:`ExchangeStiffnessConstant`.
+        Ms_0: Spontaneous magnetization at 0 K :entity:`SpontaneousMagnetization`.
+        T_c: Curie temperature :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
 
     Call:
@@ -341,9 +344,9 @@ class _K1_function_of_temperature:
     """Callable for temperature-dependent uniaxial anisotropy K1(T).
 
     Attributes:
-        K1_0: Anisotropy constant at 0 K.
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        K1_0: Anisotropy constant at 0 K :entity:`UniaxialAnisotropyConstant`.
+        Ms_0: Spontaneous magnetization at 0 K :entity:`SpontaneousMagnetization`.
+        T_c: Curie temperature :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
 
     Call:
