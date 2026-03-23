@@ -58,6 +58,13 @@ def test_demag_cuboid_array():
     assert np.all(np.isclose(demag_cuboid(a, b, c).value, expected))
 
 
+def test_demag_cuboid_sum():
+    """Test for Dx + Dy + Dz = 1 (Eq. 2 in reference)."""
+    dim = np.random.random(3)
+    result = np.sum(demag_cuboid(*dim).value)
+    assert np.isclose(result, 1)
+
+
 def test_demag_cuboid_ValueError_units():
     """Test whether expected exceptions correctly occur."""
     a = me.Entity("Length", 2.1, "mm")
