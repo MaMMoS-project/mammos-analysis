@@ -92,15 +92,15 @@ def demag_cuboid(
         pi_Dz = (
             ((b2 - c2) / (2 * bc)) * np.log((r_abc - a) / (r_abc + a))
             + ((a2 - c2) / (2 * ac)) * np.log((r_abc - b) / (r_abc + b))
-            + (b / (2 * c)) * np.log((r_ab + a) / (r_ab - a))
-            + (a / (2 * c)) * np.log((r_ab + b) / (r_ab - b))
-            + (c / (2 * a)) * np.log((r_bc - b) / (r_bc + b))
-            + (c / (2 * b)) * np.log((r_ac - a) / (r_ac + a))
+            + (b / (2 * c)) * _log_ratio(r_ab, a)
+            + (a / (2 * c)) * _log_ratio(r_ab, b)
+            + (c / (2 * a)) * _log_ratio(r_bc, -b)
+            + (c / (2 * b)) * _log_ratio(r_ac, -a)
             + 2 * np.arctan2(ab, c * r_abc)
             + (a2 * a + b2 * b - 2 * c2 * c) / (3 * abc)
             + ((a2 + b2 - 2 * c2) / (3 * abc)) * r_abc
             + (c / ab) * (r_ac + r_bc)
-            - (r_ab * r_ab * r_ab + r_bc * r_bc * r_bc + r_ac * r_ac * r_ac) / (3 * abc)
+            - (r_ab**3 + r_bc**3 + r_ac**3) / (3 * abc)
         )
         # divide out the factor of pi
         D = pi_Dz / np.pi
@@ -109,3 +109,8 @@ def demag_cuboid(
     D = (_calc_D(x2, x3, x1), _calc_D(x1, x3, x2), _calc_D(x1, x2, x3))
 
     return Entity("DemagnetizingFactor", D)
+
+
+def _log_ratio(x, y):
+    """Helper function that returns log of ratio (x + y) / (x - y)."""
+    return np.log((x + y) / (x - y))
