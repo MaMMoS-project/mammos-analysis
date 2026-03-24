@@ -90,8 +90,8 @@ def demag_cuboid(
         r_ac = np.sqrt(a2 + c2)
         # compute the factor
         pi_Dz = (
-            ((b2 - c2) / (2 * bc)) * _log_ratio(r_abc - a)
-            + ((a2 - c2) / (2 * ac)) * _log_ratio(r_abc - b)
+            ((b2 - c2) / (2 * bc)) * _log_ratio(r_abc, -a)
+            + ((a2 - c2) / (2 * ac)) * _log_ratio(r_abc, -b)
             + (b / (2 * c)) * _log_ratio(r_ab, a)
             + (a / (2 * c)) * _log_ratio(r_ab, b)
             + (c / (2 * a)) * _log_ratio(r_bc, -b)
