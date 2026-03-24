@@ -409,8 +409,8 @@ class _Ms_function_of_temperature:
     """Callable for temperature-dependent spontaneous magnetization Ms(T).
 
     Attributes:
-        Ms_0: Spontaneous magnetization at 0 K :entity:`SpontaneousMagnetization`.
-        T_c: Curie temperature :entity:`CurieTemperature`.
+        Ms_0: :entity:`SpontaneousMagnetization` at 0 K.
+        T_c: :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
 
     Call:
