@@ -6,6 +6,25 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-analysis 0.5.1](https://github.com/MaMMoS-project/mammos-analysis/tree/0.5.1) – 2026-03-10
+
+### Changed
+
+- Change in the signature of `KuzminResult.plot` function: it does not accept a `matplotlib.axes.Axes` object to plot the Kuzmin plots any more. ([#82](https://github.com/MaMMoS-project/mammos-analysis/pull/82))
+- Store spontaneous magnetisation in kA/m in `KuzminResult`. ([#83](https://github.com/MaMMoS-project/mammos-analysis/pull/83))
+
+
+## [mammos-analysis 0.5.0](https://github.com/MaMMoS-project/mammos-analysis/tree/0.5.0) – 2026-03-06
+
+### Changed
+
+- Changed `SpontaneousMagnetization` to `Magnetization` where relevant. Changed `Ms` to `M` where relevant. ([#69](https://github.com/MaMMoS-project/mammos-analysis/pull/69))
+
+### Misc
+
+- Fixes in the documentation syntax. ([#61](https://github.com/MaMMoS-project/mammos-analysis/pull/61))
+
+
 ## [mammos-analysis 0.4.0](https://github.com/MaMMoS-project/mammos-analysis/tree/0.4.0) – 2025-12-22
 
 ### Added

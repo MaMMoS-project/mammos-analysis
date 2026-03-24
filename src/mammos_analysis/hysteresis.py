@@ -60,7 +60,7 @@ class LinearSegmentProperties:
     _M: mammos_entity.Entity | None = None
 
     def plot(self, ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
-        """Plot the spontaneous magnetization data-points."""
+        """Plot the magnetization data-points."""
         if not ax:
             _, ax = plt.subplots()
         ax.scatter(self._H.q, y=self._M.q, label="Data")
@@ -152,7 +152,7 @@ def extract_coercive_field(
 
     Args:
         H: External magnetic field.
-        M: Spontaneous magnetization.
+        M: Magnetization.
 
     Returns:
         Coercive field in the same format as H.
@@ -200,7 +200,7 @@ def extract_remanent_magnetization(
 
     Args:
         H: External magnetic field.
-        M: Spontaneous magnetization.
+        M: Magnetization.
 
     Returns:
         Remanent magnetization in the same format as M.
@@ -256,7 +256,7 @@ def extract_B_curve(
 
     Args:
         H: External magnetic field.
-        M: Spontaneous magnetization.
+        M: Magnetization.
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
@@ -269,7 +269,7 @@ def extract_B_curve(
         >>> import mammos_analysis.hysteresis
         >>> import mammos_entity as me
         >>> H = me.H([0, 1e4, 2e4], unit="A/m")
-        >>> M = me.Ms([1e5, 2e5, 3e5], unit="A/m")
+        >>> M = me.M([1e5, 2e5, 3e5], unit="A/m")
         >>> mammos_analysis.hysteresis.extract_B_curve(H, M, 1/3)
         Entity(ontology_label='MagneticFluxDensity', ...)
 
@@ -400,7 +400,7 @@ def extrinsic_properties(
 
     Args:
         H: External magnetic field.
-        M: Spontaneous magnetization.
+        M: Magnetization.
         demagnetization_coefficient: Demagnetization coefficient for BHmax.
 
     Returns:
@@ -592,5 +592,5 @@ def find_linear_segment(
         Hmax=me.H(Hmax_val),
         gradient=m_opt * u.dimensionless_unscaled,
         _H=me.H(H.value, unit="A/m"),
-        _M=me.Ms(M.value, unit="A/m"),
+        _M=me.M(M.value, unit="A/m"),
     )
