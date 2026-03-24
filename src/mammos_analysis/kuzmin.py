@@ -65,20 +65,20 @@ class KuzminResult:
 
 
 def kuzmin_properties(
-    Ms: mammos_entity.Entity,
-    T: mammos_entity.Entity,
-    Tc: mammos_entity.Entity | None = None,
-    Ms_0: mammos_entity.Entity | None = None,
-    K1_0: mammos_entity.Entity | None = None,
+    Ms: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    Tc: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
+    Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
+    K1_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
     Tc_initial_guess: mammos_entity.Entity
+    | mammos_units.Quantity
     | numbers.Real
-    | astropy.units.Quantity
     | None = None,
     Ms_0_initial_guess: mammos_entity.Entity
+    | mammos_units.Quantity
     | numbers.Real
-    | astropy.units.Quantity
     | None = None,
-    s_initial_guess: mammos_entity.Entity | numbers.Real | astropy.units.Quantity = 0.5,
+    s_initial_guess: numbers.Real = 0.5,
 ) -> KuzminResult:
     """Evaluate intrinsic micromagnetic properties using Kuz’min model.
 
@@ -104,14 +104,12 @@ def kuzmin_properties(
     higher than 0.1 * max(Ms).
 
     Args:
-        Ms: Spontaneous magnetization data points
-            as me.Entity :entity:`SpontaneousMagnetization`.
-        T: Temperature data points as a me.Entity :entity:`Temperature`.
-        K1_0: Magnetocrystalline anisotropy at 0 K
-              as me.Entity :entity:`UniaxialAnisotropyConstant`.
-        Tc: Curie temperature as :entity:`CurieTemperature`.
-        Ms_0: Spontaneous magnetization at T=0 as
-            :entity:`SpontaneousMagnetization`.
+        Ms: :entity:`SpontaneousMagnetization`. Unit for raw numbers: 'm'.
+        T: :entity:`ThermodynamicTemperature`. Unit for raw numbers: 'K'.
+        K1_0: :entity:`UniaxialAnisotropyConstant` at T = 0 K.
+            Unit for raw numbers: 'J / m^3'
+        Tc: :entity:`CurieTemperature`.
+        Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
         Tc_initial_guess: Initial guess for Tc
             :entity:`CurieTemperature` (if optimized).
         Ms_0_initial_guess: Initial guess for Ms_0
@@ -127,18 +125,39 @@ def kuzmin_properties(
         ValueError: Value of Ms at zero temperature is not given.
         ValueError: If K1_0 has incorrect unit.
     """
-    Ms = me.Ms(Ms, unit=u.A / u.m)
-    T = me.T(T, unit=u.K)
+    Ms = me._entity.from_compatible(
+        "SpontaneousMagnetization", "A/m", Ms=Ms, enforce_unit=True
+    )
+    T = me._entity.from_compatible(
+        "ThermodynamicTemperature", "K", T=T, enforce_unit=True
+    )
+
     if K1_0 is not None:
-        K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
+        K1_0 = me._entity.from_compatible(
+            "UniaxialAnisotropyConstant", "J / m^3", K1_0=K1_0, enforce_unit=True
+        )
     if Tc is not None:
-        Tc = me.Tc(Tc, unit=u.K)
+        Tc = me._entity.from_compatible(
+            "CurieTemperature", "K", Tc=Tc, enforce_unit=True
+        )
     if Ms_0_initial_guess is not None:
-        Ms_0_initial_guess = me.Ms(Ms_0_initial_guess, unit=u.A / u.m)
+        Ms_0_initial_guess = me._entity.from_compatible(
+            "SpontaneousMagnetization",
+            "A/m",
+            Ms_0_initial_guess=Ms_0_initial_guess,
+            enforce_unit=True,
+        )
     if Tc_initial_guess is not None:
-        Tc_initial_guess = me.Tc(Tc_initial_guess, u.K)
+        Tc_initial_guess = me._entity.from_compatible(
+            "CurieTemperature",
+            "K",
+            Tc_initial_guess=Tc_initial_guess,
+            enforce_unit=True,
+        )
     if Ms_0 is not None:
-        Ms_0 = me.Ms(Ms_0, unit=u.A / u.m)
+        Ms_0 = me._entity.from_compatible(
+            "SpontaneousMagnetization", "A/m", Ms_0=Ms_0, enforce_unit=True
+        )
 
     # We initialize initial guess and bounds for s.
     # If Ms_0 and Tc needs to be optimized, too,
