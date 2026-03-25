@@ -104,16 +104,21 @@ def kuzmin_properties(
     higher than 0.1 * max(Ms).
 
     Args:
-        Ms: :entity:`SpontaneousMagnetization`. Unit for raw numbers: 'm'.
-        T: :entity:`ThermodynamicTemperature`. Unit for raw numbers: 'K'.
+        Ms: :entity:`SpontaneousMagnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
+        T: :entity:`ThermodynamicTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
         K1_0: :entity:`UniaxialAnisotropyConstant` at T = 0 K.
-            Unit for raw numbers: 'J / m^3'
+            If no unit is provided, values are interpreted as 'J / m^3'.
         Tc: :entity:`CurieTemperature`.
         Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
+            If no unit is provided, values are interpreted as 'A / m'.
         Tc_initial_guess: Initial guess for Tc
             :entity:`CurieTemperature` (if optimized).
+            If no unit is provided, values are interpreted as 'K'.
         Ms_0_initial_guess: Initial guess for Ms_0
             :entity:`SpontaneousMagnetization` (if optimized).
+            If no unit is provided, values are interpreted as 'A / m'.
         s_initial_guess: Initial guess for the parameter `s` appearing in the
             Kuz'min fit.
 
