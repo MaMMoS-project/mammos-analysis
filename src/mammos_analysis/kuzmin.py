@@ -321,7 +321,7 @@ def kuzmin_formula(
     base = np.array(base)  # we make sure that it is a numpy.ndarray
 
     out = np.zeros_like(base, dtype=np.float64)  # array of zeros
-    np.cbrt(base, out=out, where=Tc > T)  # compute cubic root of base
+    np.cbrt(base, out=out, where=Tc_value > T_value)  # compute cubic root of base
 
     return Ms_0_value * out
 
