@@ -256,7 +256,7 @@ def kuzmin_properties(
 
 def kuzmin_formula(
     T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
-    M_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+    Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
     Tc: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
     s: numbers.Real,
 ):
@@ -279,7 +279,7 @@ def kuzmin_formula(
     Args:
         T: Temperature(s) for evaluation :entity:`ThermodynamicTemperature`.
             If no unit is provided, values are interpreted as 'K'.
-        M_0: :entity:`SpontaneousMagnetization` at T = 0 K.
+        Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
             If no unit is provided, values are interpreted as 'A / m'.
         Tc: Curie temperature :entity:`CurieTemperature`.
             If no unit is provided, values are interpreted as 'K'.
@@ -288,18 +288,18 @@ def kuzmin_formula(
     Returns:
         Spontaneous magnetization at temperature T as an array.
     """
-    M_0 = me._entity.from_compatible(
-        "SpontaneousMagnetization", "A / m", M_0=M_0, enforce_unit=True
+    Ms_0 = me._entity.from_compatible(
+        "SpontaneousMagnetization", "A / m", Ms_0=Ms_0, enforce_unit=True
     )
     Tc = me._entity.from_compatible("CurieTemperature", "K", Tc=Tc, enforce_unit=True)
     T = me._entity.from_compatible(
         "ThermodynamicTemperature", "K", T=T, enforce_unit=True
     )
 
-    M_0_value = np.asarray(M_0.value, dtype=np.float64)
-    if M_0_value.size != 1:
-        raise ValueError("Argument M_0 must be a scalar spontaneous magnetization.")
-    M_0_value = M_0_value.item()
+    Ms_0_value = np.asarray(Ms_0.value, dtype=np.float64)
+    if Ms_0_value.size != 1:
+        raise ValueError("Argument Ms_0 must be a scalar spontaneous magnetization.")
+    Ms_0_value = Ms_0_value.item()
 
     Tc_value = np.asarray(Tc.value, dtype=np.float64)
     if Tc_value.size != 1:
@@ -323,7 +323,7 @@ def kuzmin_formula(
     out = np.zeros_like(base, dtype=np.float64)  # array of zeros
     np.cbrt(base, out=out, where=Tc > T)  # compute cubic root of base
 
-    return M_0_value * out
+    return Ms_0_value * out
 
 
 class _A_function_of_temperature:
