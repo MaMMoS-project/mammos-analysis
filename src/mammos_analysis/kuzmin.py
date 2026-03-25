@@ -131,7 +131,7 @@ def kuzmin_properties(
         ValueError: If K1_0 has incorrect unit.
     """
     Ms = me._entity.from_compatible(
-        "SpontaneousMagnetization", "A/m", Ms=Ms, enforce_unit=True
+        "SpontaneousMagnetization", "A / m", Ms=Ms, enforce_unit=True
     )
     T = me._entity.from_compatible(
         "ThermodynamicTemperature", "K", T=T, enforce_unit=True
@@ -161,7 +161,7 @@ def kuzmin_properties(
         )
     if Ms_0 is not None:
         Ms_0 = me._entity.from_compatible(
-            "SpontaneousMagnetization", "A/m", Ms_0=Ms_0, enforce_unit=True
+            "SpontaneousMagnetization", "A / m", Ms_0=Ms_0, enforce_unit=True
         )
 
     # We initialize initial guess and bounds for s.
