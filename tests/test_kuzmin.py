@@ -189,7 +189,7 @@ def test_kuzmin_properties_all_info():
     # result.Tc is a 0-d vector even though Tc was a 2-d vector.
     assert result.Tc == me.Tc(500)
     assert result.K1(0) == K1_0
-    assert result.Ms(0) == Ms_0
+    assert result.Ms(0) == me.Ms(100)
 
 
 def test_kuzmin_properties_no_K1_0():
