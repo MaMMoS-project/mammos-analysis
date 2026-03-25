@@ -257,7 +257,7 @@ def kuzmin_properties(
 def kuzmin_formula(
     T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
-    Tc: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+    T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
     s: numbers.Real,
 ):
     r"""Compute spontaneous magnetization at temperature T using Kuz'min formula.
@@ -281,7 +281,7 @@ def kuzmin_formula(
             If no unit is provided, values are interpreted as 'K'.
         Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
             If no unit is provided, values are interpreted as 'A / m'.
-        Tc: Curie temperature :entity:`CurieTemperature`.
+        T_c: Curie temperature :entity:`CurieTemperature`.
             If no unit is provided, values are interpreted as 'K'.
         s: Kuzmin exponent parameter.
         
@@ -291,7 +291,9 @@ def kuzmin_formula(
     Ms_0 = me._entity.from_compatible(
         "SpontaneousMagnetization", "A / m", Ms_0=Ms_0, enforce_unit=True
     )
-    Tc = me._entity.from_compatible("CurieTemperature", "K", Tc=Tc, enforce_unit=True)
+    T_c = me._entity.from_compatible(
+        "CurieTemperature", "K", T_c=T_c, enforce_unit=True
+    )
     T = me._entity.from_compatible(
         "ThermodynamicTemperature", "K", T=T, enforce_unit=True
     )
@@ -301,10 +303,10 @@ def kuzmin_formula(
         raise ValueError("Argument Ms_0 must be a scalar spontaneous magnetization.")
     Ms_0_value = Ms_0_value.item()
 
-    Tc_value = np.asarray(Tc.value, dtype=np.float64)
-    if Tc_value.size != 1:
+    T_c_value = np.asarray(T_c.value, dtype=np.float64)
+    if T_c_value.size != 1:
         raise ValueError("Argument Tc must be a scalar Curie temperature.")
-    Tc_value = Tc_value.item()
+    T_c_value = T_c_value.item()
 
     if not np.isscalar(s):
         raise ValueError("Argument s must be a scalar.")
@@ -312,7 +314,7 @@ def kuzmin_formula(
 
     T_value = np.asarray(T.value, dtype=np.float64)
 
-    reduced_temperature = T_value / Tc_value
+    reduced_temperature = T_value / T_c_value
     base = (
         1
         - s_value * reduced_temperature**1.5
@@ -321,7 +323,7 @@ def kuzmin_formula(
     base = np.array(base)  # we make sure that it is a numpy.ndarray
 
     out = np.zeros_like(base, dtype=np.float64)  # array of zeros
-    np.cbrt(base, out=out, where=Tc_value > T_value)  # compute cubic root of base
+    np.cbrt(base, out=out, where=T_c_value > T_value)  # compute cubic root of base
 
     return Ms_0_value * out
 
