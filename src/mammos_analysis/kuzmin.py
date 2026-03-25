@@ -20,6 +20,7 @@ from scipy.optimize import curve_fit
 if TYPE_CHECKING:
     import astropy.units
     import mammos_entity
+    import mammos_units
     import matplotlib
     import numpy
 
@@ -41,7 +42,7 @@ class KuzminResult:
 
     def plot(
         self,
-        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
         celsius: bool = False,
     ) -> matplotlib.axes.Axes:
         """Create a plot for Ms, A, and K1 as a function of temperature.
@@ -64,20 +65,20 @@ class KuzminResult:
 
 
 def kuzmin_properties(
-    Ms: mammos_entity.Entity,
-    T: mammos_entity.Entity,
-    Tc: mammos_entity.Entity | None = None,
-    Ms_0: mammos_entity.Entity | None = None,
-    K1_0: mammos_entity.Entity | None = None,
+    Ms: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    Tc: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
+    Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
+    K1_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
     Tc_initial_guess: mammos_entity.Entity
+    | mammos_units.Quantity
     | numbers.Real
-    | astropy.units.Quantity
     | None = None,
     Ms_0_initial_guess: mammos_entity.Entity
+    | mammos_units.Quantity
     | numbers.Real
-    | astropy.units.Quantity
     | None = None,
-    s_initial_guess: mammos_entity.Entity | numbers.Real | astropy.units.Quantity = 0.5,
+    s_initial_guess: numbers.Real = 0.5,
 ) -> KuzminResult:
     """Evaluate intrinsic micromagnetic properties using Kuz’min model.
 
@@ -103,13 +104,22 @@ def kuzmin_properties(
     higher than 0.1 * max(Ms).
 
     Args:
-        Ms: Spontaneous magnetization data points as a me.Entity.
-        T: Temperature data points as a me.Entity.
-        K1_0: Magnetocrystalline anisotropy at 0 K as a me.Entity.
-        Tc: Curie temperature.
-        Ms_0: Spontaneous magnetization at T=0.
-        Tc_initial_guess: Initial guess for Tc (if optimized).
-        Ms_0_initial_guess: Initial guess for Ms_0 (if optimized).
+        Ms: :entity:`SpontaneousMagnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
+        T: :entity:`ThermodynamicTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
+        K1_0: :entity:`UniaxialAnisotropyConstant` at T = 0 K.
+            If no unit is provided, values are interpreted as 'J / m^3'.
+        Tc: :entity:`CurieTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
+        Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
+            If no unit is provided, values are interpreted as 'A / m'.
+        Tc_initial_guess: Initial guess for Tc
+            :entity:`CurieTemperature` (if optimized).
+            If no unit is provided, values are interpreted as 'K'.
+        Ms_0_initial_guess: Initial guess for Ms_0
+            :entity:`SpontaneousMagnetization` (if optimized).
+            If no unit is provided, values are interpreted as 'A / m'.
         s_initial_guess: Initial guess for the parameter `s` appearing in the
             Kuz'min fit.
 
@@ -121,18 +131,39 @@ def kuzmin_properties(
         ValueError: Value of Ms at zero temperature is not given.
         ValueError: If K1_0 has incorrect unit.
     """
-    Ms = me.Ms(Ms, unit=u.A / u.m)
-    T = me.T(T, unit=u.K)
+    Ms = me._entity.from_compatible(
+        "SpontaneousMagnetization", "A / m", Ms=Ms, enforce_unit=True
+    )
+    T = me._entity.from_compatible(
+        "ThermodynamicTemperature", "K", T=T, enforce_unit=True
+    )
+
     if K1_0 is not None:
-        K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
+        K1_0 = me._entity.from_compatible(
+            "UniaxialAnisotropyConstant", "J / m^3", K1_0=K1_0, enforce_unit=True
+        )
     if Tc is not None:
-        Tc = me.Tc(Tc, unit=u.K)
+        Tc = me._entity.from_compatible(
+            "CurieTemperature", "K", Tc=Tc, enforce_unit=True
+        )
     if Ms_0_initial_guess is not None:
-        Ms_0_initial_guess = me.Ms(Ms_0_initial_guess, unit=u.A / u.m)
+        Ms_0_initial_guess = me._entity.from_compatible(
+            "SpontaneousMagnetization",
+            "A/m",
+            Ms_0_initial_guess=Ms_0_initial_guess,
+            enforce_unit=True,
+        )
     if Tc_initial_guess is not None:
-        Tc_initial_guess = me.Tc(Tc_initial_guess, u.K)
+        Tc_initial_guess = me._entity.from_compatible(
+            "CurieTemperature",
+            "K",
+            Tc_initial_guess=Tc_initial_guess,
+            enforce_unit=True,
+        )
     if Ms_0 is not None:
-        Ms_0 = me.Ms(Ms_0, unit=u.A / u.m)
+        Ms_0 = me._entity.from_compatible(
+            "SpontaneousMagnetization", "A / m", Ms_0=Ms_0, enforce_unit=True
+        )
 
     # We initialize initial guess and bounds for s.
     # If Ms_0 and Tc needs to be optimized, too,
@@ -189,7 +220,7 @@ def kuzmin_properties(
         s_ = params[0]
         Ms_0_ = params[1] if optimize_Ms_0 else Ms_0.value
         Tc_ = params[-1] if optimize_Tc else Tc.value
-        return kuzmin_formula(Ms_0_, Tc_, s_, T_)
+        return kuzmin_formula(T_, Ms_0_, Tc_, s_)
 
     results = curve_fit(
         F, T.value, Ms.value, p0=initial_guess, bounds=bounds, jac="3-point"
@@ -224,10 +255,15 @@ def kuzmin_properties(
     )
 
 
-def kuzmin_formula(Ms_0, T_c, s, T):
+def kuzmin_formula(
+    T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+    T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+    s: numbers.Real,
+):
     r"""Compute spontaneous magnetization at temperature T using Kuz'min formula.
 
-    The formula approximate spontaneous magnetization :math:`M_s(T)` for
+    The formula approximates the spontaneous magnetization :math:`M_s(T)` for
     :math:`0 < T < T_c` as
 
     .. math::
@@ -235,41 +271,71 @@ def kuzmin_formula(Ms_0, T_c, s, T):
       M_s(T) = M_0 \left[ 1 - s \left( \frac{T}{T_c} \right)^{3/2} \\
       - (1-s) \left( \frac{T}{T_c} \right)^{5/2} \right]^{1/3}
 
-    where :math:`M_0` is the saturation magnetization, :math:`T_c` is the Curie
-    temperature, and :math:`s` is an adjustable parameter.
+    where :math:`M_0` is the spontaneous magnetization at T = 0 K, :math:`T_c` 
+    is the Curie temperature, and :math:`s` is an adjustable parameter.
 
     Kuz’min, M.D., Skokov, K.P., Diop, L.B. et al. Exchange stiffness of ferromagnets.
     Eur. Phys. J. Plus 135, 301 (2020). https://doi.org/10.1140/epjp/s13360-020-00294-y
 
     Args:
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        T: Temperature(s) for evaluation :entity:`ThermodynamicTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
+        Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
+            If no unit is provided, values are interpreted as 'A / m'.
+        T_c: Curie temperature :entity:`CurieTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
         s: Kuzmin exponent parameter.
-        T: Temperature(s) for evaluation.
-
+        
     Returns:
         Spontaneous magnetization at temperature T as an array.
     """
-    if isinstance(Ms_0, me.Entity):
-        Ms_0 = Ms_0.value
-    if isinstance(T_c, me.Entity):
-        T_c = T_c.value.flatten()[0] if T_c.value.ndim > 0 else T_c.value
-    if isinstance(T, me.Entity):
-        T = T.value
-    base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
+    Ms_0 = me._entity.from_compatible(
+        "SpontaneousMagnetization", "A / m", Ms_0=Ms_0, enforce_unit=True
+    )
+    T_c = me._entity.from_compatible(
+        "CurieTemperature", "K", T_c=T_c, enforce_unit=True
+    )
+    T = me._entity.from_compatible(
+        "ThermodynamicTemperature", "K", T=T, enforce_unit=True
+    )
+
+    Ms_0_value = np.asarray(Ms_0.value, dtype=np.float64)
+    if Ms_0_value.size != 1:
+        raise ValueError("Argument Ms_0 must be a scalar spontaneous magnetization.")
+    Ms_0_value = Ms_0_value.item()
+
+    T_c_value = np.asarray(T_c.value, dtype=np.float64)
+    if T_c_value.size != 1:
+        raise ValueError("Argument Tc must be a scalar Curie temperature.")
+    T_c_value = T_c_value.item()
+
+    if not np.isscalar(s):
+        raise ValueError("Argument s must be a scalar.")
+    s_value = float(s)
+
+    T_value = np.asarray(T.value, dtype=np.float64)
+
+    reduced_temperature = T_value / T_c_value
+    base = (
+        1
+        - s_value * reduced_temperature**1.5
+        - (1 - s_value) * reduced_temperature**2.5
+    )
     base = np.array(base)  # we make sure that it is a numpy.ndarray
-    out = np.zeros_like(base, dtype=np.float64)
-    np.cbrt(base, out=out, where=T_c > T)
-    return Ms_0 * out
+
+    out = np.zeros_like(base, dtype=np.float64)  # array of zeros
+    np.cbrt(base, out=out, where=T_c_value > T_value)  # compute cubic root of base
+
+    return Ms_0_value * out
 
 
 class _A_function_of_temperature:
     """Callable for temperature-dependent exchange stiffness A(T).
 
     Attributes:
-        A_0: Exchange stiffness at 0 K.
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        A_0: Exchange stiffness at 0 K :entity:`ExchangeStiffnessConstant`.
+        Ms_0: Spontaneous magnetization at 0 K :entity:`SpontaneousMagnetization`.
+        T_c: Curie temperature :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
 
     Call:
@@ -291,7 +357,7 @@ class _A_function_of_temperature:
             T = T.to(u.K).value
         return me.A(
             self.A_0.q
-            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 2
+            * (kuzmin_formula(T, self.Ms_0, self.T_c, self.s) / self.Ms_0) ** 2
         )
 
     def plot(
@@ -335,9 +401,9 @@ class _K1_function_of_temperature:
     """Callable for temperature-dependent uniaxial anisotropy K1(T).
 
     Attributes:
-        K1_0: Anisotropy constant at 0 K.
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        K1_0: Anisotropy constant at 0 K :entity:`UniaxialAnisotropyConstant`.
+        Ms_0: Spontaneous magnetization at 0 K :entity:`SpontaneousMagnetization`.
+        T_c: Curie temperature :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
 
     Call:
@@ -359,7 +425,7 @@ class _K1_function_of_temperature:
             T = T.to(u.K).value
         return me.Ku(
             self.K1_0.q
-            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 3
+            * (kuzmin_formula(T, self.Ms_0, self.T_c, self.s) / self.Ms_0) ** 3
         )
 
     def plot(
@@ -403,8 +469,8 @@ class _Ms_function_of_temperature:
     """Callable for temperature-dependent spontaneous magnetization Ms(T).
 
     Attributes:
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        Ms_0: :entity:`SpontaneousMagnetization` at 0 K.
+        T_c: :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
 
     Call:
@@ -429,7 +495,7 @@ class _Ms_function_of_temperature:
     def __call__(self, T: numbers.Real | u.Quantity):
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
-        Ms_quant = kuzmin_formula(self.Ms_0, self.T_c, self.s, T) * u.A / u.m
+        Ms_quant = kuzmin_formula(T, self.Ms_0, self.T_c, self.s) * u.A / u.m
         return me.Ms(Ms_quant.to("kA/m"))
 
     def plot(
