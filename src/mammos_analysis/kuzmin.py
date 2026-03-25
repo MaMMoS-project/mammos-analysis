@@ -111,6 +111,7 @@ def kuzmin_properties(
         K1_0: :entity:`UniaxialAnisotropyConstant` at T = 0 K.
             If no unit is provided, values are interpreted as 'J / m^3'.
         Tc: :entity:`CurieTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
         Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
             If no unit is provided, values are interpreted as 'A / m'.
         Tc_initial_guess: Initial guess for Tc

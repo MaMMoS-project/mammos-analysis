@@ -180,7 +180,7 @@ def test_kuzmin_properties_all_info():
     # result.Tc is a 0-d vector even though Tc was a 1-d vector.
     assert result.Tc == me.Tc(500)
     assert result.K1(0) == K1_0
-    assert result.Ms(0) == Ms_0
+    assert result.Ms(0) == me.Ms(100)
     Tc = me.Tc(value=[[500]], unit="K")
     K1_0 = me.Ku([[1e5]], unit=u.J / u.m**3)
     # Ms_0 = me.Ms([[100]]) # TODO: fix in future PR
