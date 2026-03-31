@@ -220,7 +220,7 @@ def kuzmin_properties(
         s_ = params[0]
         Ms_0_ = params[1] if optimize_Ms_0 else Ms_0.value
         Tc_ = params[-1] if optimize_Tc else Tc.value
-        return kuzmin_formula(T_, Ms_0_, Tc_, s_)
+        return kuzmin_formula(T_, Ms_0_, Tc_, s_).value
 
     results = curve_fit(
         F, T.value, Ms.value, p0=initial_guess, bounds=bounds, jac="3-point"
@@ -260,7 +260,7 @@ def kuzmin_formula(
     Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
     T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
     s: numbers.Real,
-):
+) -> mammos_entity.Entity:
     r"""Compute spontaneous magnetization at temperature T using Kuz'min formula.
 
     The formula approximates the spontaneous magnetization :math:`M_s(T)` for
@@ -268,10 +268,10 @@ def kuzmin_formula(
 
     .. math::
 
-      M_s(T) = M_0 \left[ 1 - s \left( \frac{T}{T_c} \right)^{3/2} \\
-      - (1-s) \left( \frac{T}{T_c} \right)^{5/2} \right]^{1/3}
+       M_s(T) = M_{s}(0) \left[ 1 - s \left( \frac{T}{T_c} \right)^{3/2}
+       - (1-s) \left( \frac{T}{T_c} \right)^{5/2} \right]^{1/3}
 
-    where :math:`M_0` is the spontaneous magnetization at T = 0 K, :math:`T_c` 
+    where :math:`M_{s}(0)` is the spontaneous magnetization at T = 0 K, :math:`T_c`
     is the Curie temperature, and :math:`s` is an adjustable parameter.
 
     Kuz’min, M.D., Skokov, K.P., Diop, L.B. et al. Exchange stiffness of ferromagnets.
@@ -282,16 +282,14 @@ def kuzmin_formula(
             If no unit is provided, values are interpreted as 'K'.
         Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
             If no unit is provided, values are interpreted as 'A / m'.
-        T_c: Curie temperature :entity:`CurieTemperature`.
+        T_c: :entity:`CurieTemperature`.
             If no unit is provided, values are interpreted as 'K'.
-        s: Kuzmin exponent parameter.
-        
+        s: Kuz’min exponent parameter.
+
     Returns:
-        Spontaneous magnetization at temperature T as an array.
+        :entity:`SpontaneousMagnetization` at temperature(s) T.
     """
-    Ms_0 = me._entity.from_compatible(
-        "SpontaneousMagnetization", "A / m", Ms_0=Ms_0, enforce_unit=True
-    )
+    Ms_0 = me._entity.from_compatible("SpontaneousMagnetization", "A / m", Ms_0=Ms_0)
     T_c = me._entity.from_compatible(
         "CurieTemperature", "K", T_c=T_c, enforce_unit=True
     )
@@ -299,34 +297,21 @@ def kuzmin_formula(
         "ThermodynamicTemperature", "K", T=T, enforce_unit=True
     )
 
-    Ms_0_value = np.asarray(Ms_0.value, dtype=np.float64)
-    if Ms_0_value.size != 1:
+    if not np.isscalar(Ms_0.value):
         raise ValueError("Argument Ms_0 must be a scalar spontaneous magnetization.")
-    Ms_0_value = Ms_0_value.item()
 
-    T_c_value = np.asarray(T_c.value, dtype=np.float64)
-    if T_c_value.size != 1:
+    if not np.isscalar(T_c.value):
         raise ValueError("Argument Tc must be a scalar Curie temperature.")
-    T_c_value = T_c_value.item()
 
     if not np.isscalar(s):
         raise ValueError("Argument s must be a scalar.")
-    s_value = float(s)
 
-    T_value = np.asarray(T.value, dtype=np.float64)
+    base = 1 - s * (T.q / T_c.q) ** 1.5 - (1 - s) * (T.q / T_c.q) ** 2.5
 
-    reduced_temperature = T_value / T_c_value
-    base = (
-        1
-        - s_value * reduced_temperature**1.5
-        - (1 - s_value) * reduced_temperature**2.5
-    )
-    base = np.array(base)  # we make sure that it is a numpy.ndarray
+    out = np.zeros_like(base, dtype=np.float64)
+    np.cbrt(base, out=out, where=T_c.q > T.q)  # compute cubic root of base
 
-    out = np.zeros_like(base, dtype=np.float64)  # array of zeros
-    np.cbrt(base, out=out, where=T_c_value > T_value)  # compute cubic root of base
-
-    return Ms_0_value * out
+    return me.Ms((Ms_0.q * out).reshape(T.q.shape))
 
 
 class _A_function_of_temperature:
@@ -357,7 +342,8 @@ class _A_function_of_temperature:
             T = T.to(u.K).value
         return me.A(
             self.A_0.q
-            * (kuzmin_formula(T, self.Ms_0, self.T_c, self.s) / self.Ms_0) ** 2
+            * (kuzmin_formula(T, self.Ms_0, self.T_c, self.s).q / self.Ms_0) ** 2,
+            self.A_0.unit,
         )
 
     def plot(
@@ -430,7 +416,7 @@ class _K1_function_of_temperature:
 
     def plot(
         self,
-        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         celsius: bool = False,
         **kwargs,
@@ -481,7 +467,7 @@ class _Ms_function_of_temperature:
         self,
         Ms_0: mammos_entity.Entity,
         T_c: mammos_entity.Entity,
-        s: astropy.units.Quantity,
+        s: mammos_units.Quantity,
         T: mammos_entity.Entity,
     ):
         self.Ms_0 = Ms_0
@@ -500,7 +486,7 @@ class _Ms_function_of_temperature:
 
     def plot(
         self,
-        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         celsius: bool = False,
         **kwargs,

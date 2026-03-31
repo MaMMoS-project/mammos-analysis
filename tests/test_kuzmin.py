@@ -27,8 +27,8 @@ def test_kuzmin_formula_below_Tc():
         (1 - s * (T / Tc) ** 1.5 - (1 - s) * (T / Tc) ** 2.5) ** (1.0 / 3)
     )
     result = kuzmin_formula(T, Ms0, Tc, s)
-    assert isinstance(result, np.ndarray)
-    assert np.allclose(result, expected)
+    assert isinstance(result.value, np.ndarray)
+    assert np.allclose(result.value, expected)
 
 
 def test_kuzmin_formula_above_Tc():
@@ -38,8 +38,8 @@ def test_kuzmin_formula_above_Tc():
     s = 0.5
     T = np.array([300.0, 400.0])
     result = kuzmin_formula(T, Ms0, Tc, s)
-    assert isinstance(result, np.ndarray)
-    assert np.allclose(result, 0.0)
+    assert isinstance(result.value, np.ndarray)
+    assert np.allclose(result.value, 0.0)
 
 
 def test_kuzmin_formula_full_range():
@@ -49,7 +49,7 @@ def test_kuzmin_formula_full_range():
     s = 0.5
     T = np.array([0.0, 150.0, 300.0, 450.0])
     result = kuzmin_formula(T, Ms0, Tc, s)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result.value, np.ndarray)
 
 
 def test_kuzmin_formula_ints():
@@ -59,7 +59,7 @@ def test_kuzmin_formula_ints():
     s = 0.5
     T = np.array([0, 150, 300, 450])
     result = kuzmin_formula(T, Ms0, Tc, s)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result.value, np.ndarray)
 
 
 def test_Ms_function_of_temperature():
