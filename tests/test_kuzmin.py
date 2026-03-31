@@ -174,17 +174,17 @@ def test_kuzmin_properties_all_info():
         / (4 * u.constants.muB)
     )
     assert result.A(0) == A_0
-    Tc = me.Tc(value=[500], unit="K")
-    K1_0 = me.Ku([1e5], unit=u.J / u.m**3)
-    Ms_0 = me.Ms([100])
-    Ms_data = me.Ms(kuzmin_formula(T=T_data, Ms_0=Ms_0, T_c=Tc, s=0.75))
+    Tc = me.Tc(value=500, unit="K")
+    K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
+    Ms_0 = me.Ms(100)
+    Ms_data = kuzmin_formula(T=T_data, Ms_0=Ms_0, T_c=Tc, s=0.75)
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
     # result.Tc is a 0-d vector even though Tc was a 1-d vector.
     assert result.Tc == me.Tc(500)
     assert result.K1(0) == K1_0
     assert result.Ms(0) == me.Ms(100)
-    Tc = me.Tc(value=[[500]], unit="K")
-    K1_0 = me.Ku([[1e5]], unit=u.J / u.m**3)
+    Tc = me.Tc(value=500, unit="K")
+    K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
     # Ms_0 = me.Ms([[100]]) # TODO: fix in future PR
     Ms_data = me.Ms(kuzmin_formula(T=T_data, Ms_0=Ms_0, T_c=Tc, s=0.75))
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
