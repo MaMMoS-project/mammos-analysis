@@ -328,11 +328,15 @@ class _A_function_of_temperature:
     """
 
     def __init__(self, A_0, Ms_0, T_c, s, T):
-        self.A_0 = A_0
-        self.Ms_0 = Ms_0
-        self.T_c = T_c
+        self.Ms_0 = me._entity.from_compatible(
+            "SpontaneousMagnetization", "A / m", Ms_0=Ms_0
+        )
+        self.T_c = T_c = me._entity.from_compatible("CurieTemperature", "K", T_c=T_c)
+        self._T = T = me._entity.from_compatible("ThermodynamicTemperature", "K", T=T)
+        self.A_0 = A_0 = me._entity.from_compatible(
+            "ExchangeStiffnessConstant", "J/m", A=A_0
+        )
         self.s = s
-        self._T = T
 
     def __repr__(self):
         return "A(T)"
