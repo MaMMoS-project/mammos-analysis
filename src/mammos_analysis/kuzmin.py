@@ -411,7 +411,7 @@ class _K1_function_of_temperature:
             T = T.to(u.K).value
         return me.Ku(
             self.K1_0.q
-            * (kuzmin_formula(T, self.Ms_0, self.T_c, self.s) / self.Ms_0) ** 3
+            * (kuzmin_formula(T, self.Ms_0, self.T_c, self.s).q / self.Ms_0) ** 3
         )
 
     def plot(
