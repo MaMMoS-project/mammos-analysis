@@ -481,8 +481,7 @@ class _Ms_function_of_temperature:
     def __call__(self, T: numbers.Real | u.Quantity):
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
-        Ms_quant = kuzmin_formula(T, self.Ms_0, self.T_c, self.s) * u.A / u.m
-        return me.Ms(Ms_quant.to("kA/m"))
+        return me.Ms(kuzmin_formula(T, self.Ms_0, self.T_c, self.s).q.to("kA/m"))
 
     def plot(
         self,
