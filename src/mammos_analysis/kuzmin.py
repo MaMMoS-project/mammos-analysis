@@ -333,7 +333,9 @@ class _A_function_of_temperature:
         )
         self.T_c = me._entity.from_compatible("CurieTemperature", "K", T_c=T_c)
         self._T = me._entity.from_compatible("ThermodynamicTemperature", "K", T=T)
-        self.A_0 = me._entity.from_compatible("ExchangeStiffnessConstant", "J/m", A=A_0)
+        self.A_0 = me._entity.from_compatible(
+            "ExchangeStiffnessConstant", "J/m", A_0=A_0
+        )
         self.s = s
 
     def __repr__(self):
@@ -399,11 +401,20 @@ class _K1_function_of_temperature:
     """
 
     def __init__(self, K1_0, Ms_0, T_c, s, T):
-        self.K1_0 = K1_0
-        self.Ms_0 = Ms_0
-        self.T_c = T_c
+        self.Ms_0 = me._entity.from_compatible(
+            "SpontaneousMagnetization", "A / m", Ms_0=Ms_0
+        )
+        self.T_c = me._entity.from_compatible("CurieTemperature", "K", T_c=T_c)
+        self._T = me._entity.from_compatible("ThermodynamicTemperature", "K", T=T)
+        self.K1_0 = me._entity.from_compatible(
+            "UniaxialAnisotropyConstant", "J/m^3", K1_0=K1_0
+        )
         self.s = s
-        self._T = T
+        # self.K1_0 = K1_0
+        # self.Ms_0 = Ms_0
+        # self.T_c = T_c
+        self.s = s
+        # self._T = T
 
     def __repr__(self):
         return "K1(T)"

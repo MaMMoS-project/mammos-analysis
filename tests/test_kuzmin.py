@@ -125,7 +125,9 @@ def test_K1_function_of_temperature():
     # numeric input
     k1 = k1_func(100.0)
     assert isinstance(k1, me.Entity)
-    expected_k1 = me.Ku(K1_0.q * (kuzmin_formula(100.0, Ms_0, T_c, s) / Ms_0) ** 3)
+    expected_k1 = me.Ku(
+        K1_0.q * (kuzmin_formula(100.0, Ms_0, T_c, s).value / Ms_0) ** 3
+    )
     assert k1 == expected_k1
     # quantity input
     Tq = 100.0 * u.K
