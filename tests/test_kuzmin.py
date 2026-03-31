@@ -74,7 +74,7 @@ def test_Ms_function_of_temperature():
     # numeric input
     m = ms_func(100.0)
     assert isinstance(m, me.Entity)
-    assert u.allclose(m.q, kuzmin_formula(100.0, Ms0, Tc, s) * u.A / u.m)
+    assert u.allclose(m.q, kuzmin_formula(100.0, Ms0, Tc, s).q)
     # quantity input
     Tq = 100.0 * u.K
     m_q = ms_func(Tq)
