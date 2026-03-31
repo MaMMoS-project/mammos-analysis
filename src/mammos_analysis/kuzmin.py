@@ -327,7 +327,14 @@ class _A_function_of_temperature:
         Returns A(T) as a me.Entity for given temperature T.
     """
 
-    def __init__(self, A_0, Ms_0, T_c, s, T):
+    def __init__(
+        self,
+        A_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        s: numbers.Real,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    ):
         self.Ms_0 = me._entity.from_compatible(
             "SpontaneousMagnetization", "A / m", Ms_0=Ms_0
         )
@@ -417,11 +424,6 @@ class _K1_function_of_temperature:
             "UniaxialAnisotropyConstant", "J/m^3", K1_0=K1_0
         )
         self.s = s
-        # self.K1_0 = K1_0
-        # self.Ms_0 = Ms_0
-        # self.T_c = T_c
-        self.s = s
-        # self._T = T
 
     def __repr__(self):
         return "K1(T)"
@@ -485,15 +487,18 @@ class _Ms_function_of_temperature:
 
     def __init__(
         self,
-        Ms_0: mammos_entity.Entity,
-        T_c: mammos_entity.Entity,
+        Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
         s: mammos_units.Quantity,
-        T: mammos_entity.Entity,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     ):
-        self.Ms_0 = Ms_0
-        self.T_c = T_c
+
+        self.Ms_0 = me._entity.from_compatible(
+            "SpontaneousMagnetization", "A / m", Ms_0=Ms_0
+        )
+        self.T_c = me._entity.from_compatible("CurieTemperature", "K", T_c=T_c)
+        self._T = me._entity.from_compatible("ThermodynamicTemperature", "K", T=T)
         self.s = s
-        self._T = T
 
     def __repr__(self):
         return "Ms(T)"
