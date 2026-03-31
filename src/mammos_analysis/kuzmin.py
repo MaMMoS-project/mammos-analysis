@@ -400,7 +400,14 @@ class _K1_function_of_temperature:
         Returns K1(T) as a me.Entity for given temperature T.
     """
 
-    def __init__(self, K1_0, Ms_0, T_c, s, T):
+    def __init__(
+        self,
+        K1_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        s: numbers.Real,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    ):
         self.Ms_0 = me._entity.from_compatible(
             "SpontaneousMagnetization", "A / m", Ms_0=Ms_0
         )
