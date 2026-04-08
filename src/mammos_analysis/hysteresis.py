@@ -106,7 +106,7 @@ def _check_monotonicity(arr: numpy.ndarray, direction=None) -> None:
 
 
 def _unit_processing(
-    i: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | numbers.Number,
+    i: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     unit: mammos_units.Unit,
     return_quantity: bool = True,
 ) -> numpy.ndarray:
@@ -145,14 +145,14 @@ def _unit_processing(
 
 
 def extract_coercive_field(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
 ) -> mammos_entity.Entity:
     """Extract the coercive field from a hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Magnetization.
+        H: External magnetic field :entity:`ExternalMagneticField`.
+        M: Magnetization :entity:`Magnetization`.
 
     Returns:
         Coercive field in the same format as H.
@@ -193,14 +193,14 @@ def extract_coercive_field(
 
 
 def extract_remanent_magnetization(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
 ) -> mammos_entity.Entity:
     """Extract the remanent magnetization from a hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Magnetization.
+        H: External magnetic field :entity:`ExternalMagneticField`.
+        M: Magnetization :entity:`Magnetization`.
 
     Returns:
         Remanent magnetization in the same format as M.
@@ -248,15 +248,15 @@ def extract_remanent_magnetization(
 
 
 def extract_B_curve(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     demagnetization_coefficient: float,
 ) -> mammos_entity.Entity:
     """Compute the B–H curve from a hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Magnetization.
+        H: External magnetic field :entity:`ExternalMagneticField`.
+        M: Magnetization :entity:`Magnetization`.
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
@@ -294,8 +294,8 @@ def extract_B_curve(
 
 
 def extract_maximum_energy_product(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    B: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    B: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
 ) -> MaximumEnergyProductProperties:
     """Function may retire, see issue 54.
 
@@ -315,8 +315,8 @@ def extract_maximum_energy_product(
 
 
 def extract_BHmax(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     demagnetization_coefficient: float,
 ) -> MaximumEnergyProductProperties:
     """Determine the maximum energy product from a hysteresis loop.
@@ -326,8 +326,8 @@ def extract_BHmax(
     for a half-hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Magnetization.
+        H: External magnetic field :entity:`ExternalMagneticField`.
+        M: Magnetization :entity:`Magnetization`.
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
@@ -392,15 +392,15 @@ def extract_BHmax(
 
 
 def extrinsic_properties(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     demagnetization_coefficient: float | None = None,
 ) -> ExtrinsicProperties:
     """Compute extrinsic properties of a hysteresis loop.
 
     Args:
-        H: External magnetic field.
-        M: Magnetization.
+        H: External magnetic field :entity:`ExternalMagneticField`.
+        M: Magnetization :entity:``Magnetization.
         demagnetization_coefficient: Demagnetization coefficient for BHmax.
 
     Returns:
@@ -425,9 +425,9 @@ def extrinsic_properties(
 
 
 def find_linear_segment(
-    H: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    M: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
-    margin: mammos_entity.Entity | astropy.units.Quantity | numbers.Number,
+    H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    margin: mammos_entity.Entity | mammos_units.Quantity | numbers.Number,
     method: str = "maxdev",
     min_points: int = 5,
 ) -> LinearSegmentProperties:
