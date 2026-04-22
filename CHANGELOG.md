@@ -6,6 +6,14 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-analysis 0.6.0](https://github.com/MaMMoS-project/mammos-analysis/tree/0.6.0) – 2026-04-22
+
+### Added
+
+- Added `mammos_analysis.demag.demag_cuboid` to provide a function for calculating
+  the demagnetizing factors of a rectangular prism. ([#70](https://github.com/MaMMoS-project/mammos-analysis/pull/70))
+
+
 ## [mammos-analysis 0.5.1](https://github.com/MaMMoS-project/mammos-analysis/tree/0.5.1) – 2026-03-10
 
 ### Changed
