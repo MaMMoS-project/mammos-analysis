@@ -111,7 +111,8 @@ def kuzmin_properties(
             If no unit is provided, values are interpreted as 'A / m'.
         T: :entity:`ThermodynamicTemperature`.
             If no unit is provided, values are interpreted as 'K'.
-        K1_0: :entity:`UniaxialAnisotropyConstant` at T = 0 K.
+        K1_0: :entity:`UniaxialAnisotropyConstant` or
+              :entity:`MagnetocrystallineAnisotropyConstantK1` at T = 0 K.
             If no unit is provided, values are interpreted as 'J / m^3'.
         Tc: :entity:`CurieTemperature`.
             If no unit is provided, values are interpreted as 'K'.
