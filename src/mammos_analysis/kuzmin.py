@@ -42,7 +42,10 @@ class KuzminResult:
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity
+        | mammos_units.Quantity
+        | numpy.typing.ArrayLike
+        | None = None,
         celsius: bool = False,
     ) -> matplotlib.axes.Axes:
         """Create a plot for Ms, A, and K1 as a function of temperature.
@@ -318,9 +321,12 @@ class _A_function_of_temperature:
     """Callable for temperature-dependent exchange stiffness A(T).
 
     Attributes:
-        A_0: Exchange stiffness at 0 K :entity:`ExchangeStiffnessConstant`.
+        A_0: :entity:`ExchangeStiffnessConstant` at 0 K.
+            If no unit is provided, values are interpreted as 'J/m'.
         Ms_0: Spontaneous magnetization at 0 K :entity:`SpontaneousMagnetization`.
-        T_c: Curie temperature :entity:`CurieTemperature`.
+            If no unit is provided, values are interpreted as 'A/m'.
+        T_c: :entity:`CurieTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
         s: Kuzmin exponent parameter.
 
     Call:
