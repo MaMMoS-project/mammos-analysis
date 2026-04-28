@@ -151,8 +151,8 @@ def extract_coercive_field(
     """Extract the coercive field from a hysteresis loop.
 
     Args:
-        H: External magnetic field :entity:`ExternalMagneticField`.
-        M: Magnetization :entity:`Magnetization`.
+        H: :entity:`ExternalMagneticField`.
+        M: :entity:`Magnetization`.
 
     Returns:
         Coercive field in the same format as H.
@@ -199,8 +199,8 @@ def extract_remanent_magnetization(
     """Extract the remanent magnetization from a hysteresis loop.
 
     Args:
-        H: External magnetic field :entity:`ExternalMagneticField`.
-        M: Magnetization :entity:`Magnetization`.
+        H: :entity:`ExternalMagneticField`.
+        M: :entity:`Magnetization`.
 
     Returns:
         Remanent magnetization in the same format as M.
@@ -326,8 +326,8 @@ def extract_BHmax(
     for a half-hysteresis loop.
 
     Args:
-        H: External magnetic field :entity:`ExternalMagneticField`.
-        M: Magnetization :entity:`Magnetization`.
+        H: :entity:`ExternalMagneticField`.
+        M: :entity:`Magnetization`.
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
@@ -399,8 +399,8 @@ def extrinsic_properties(
     """Compute extrinsic properties of a hysteresis loop.
 
     Args:
-        H: External magnetic field :entity:`ExternalMagneticField`.
-        M: Magnetization :entity:``Magnetization.
+        H: :entity:`ExternalMagneticField`.
+        M: :entity:``Magnetization.
         demagnetization_coefficient: Demagnetization coefficient for BHmax.
 
     Returns:
