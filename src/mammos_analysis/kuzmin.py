@@ -360,7 +360,7 @@ class _A_function_of_temperature:
         return "A(T)"
 
     def __call__(self, T: numbers.Real | mammos_units.Quantity):
-        if isinstance(T, mammos_units.Quantity):
+        if isinstance(T, u.Quantity):
             T = T.to(u.K).value
         return me.A(
             self.A_0.q
@@ -445,7 +445,7 @@ class _K1_function_of_temperature:
         return "K1(T)"
 
     def __call__(self, T: numbers.Real | mammos_units.Quantity) -> me.Entity:
-        if isinstance(T, mammos_units.Quantity):
+        if isinstance(T, u.Quantity):
             T = T.to(u.K).value
         return me.K1(
             self.K1_0.q
@@ -520,7 +520,7 @@ class _Ms_function_of_temperature:
         return "Ms(T)"
 
     def __call__(self, T: numbers.Real | mammos_units.Quantity):
-        if isinstance(T, mammos_units.Quantity):
+        if isinstance(T, u.Quantity):
             T = T.to(u.K).value
         return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q.to("kA/m"))
 
