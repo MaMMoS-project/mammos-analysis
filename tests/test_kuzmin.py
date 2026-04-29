@@ -175,7 +175,7 @@ def test_kuzmin_properties_all_info():
     )
     assert result.A(0) == A_0
     Tc = me.Tc(value=500, unit="K")
-    K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
+    K1_0 = me.K1(1e5, unit=u.J / u.m**3)
     Ms_0 = me.Ms(100)
     Ms_data = kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=0.75, T=T_data)
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
@@ -184,7 +184,7 @@ def test_kuzmin_properties_all_info():
     assert result.K1(0) == K1_0
     assert result.Ms(0) == me.Ms(100)
     Tc = me.Tc(value=500, unit="K")
-    K1_0 = me.Ku(1e5, unit=u.J / u.m**3)
+    K1_0 = me.K1(1e5, unit=u.J / u.m**3)
     # Ms_0 = me.Ms([[100]]) # TODO: fix in future PR
     Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=0.75, T=T_data))
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
