@@ -146,10 +146,7 @@ def kuzmin_properties(
         K1_0 = me._entity.from_compatible(
             "MagnetocrystallineAnisotropyConstantK1",
             "J / m^3",
-            compatible_entities=(
-                "MagnetocrystallineAnisotropyConstantK1",
-                "UniaxialAnisotropyConstant",
-            ),
+            compatible_entities=("UniaxialAnisotropyConstant",),
             K1_0=K1_0,
             enforce_unit=True,
         )
