@@ -20,7 +20,6 @@ from scipy.optimize import curve_fit
 if TYPE_CHECKING:
     import astropy.units
     import mammos_entity
-    import mammos_units
     import matplotlib
     import numpy
 
@@ -29,23 +28,20 @@ if TYPE_CHECKING:
 class KuzminResult:
     """Result of Kuz'min magnetic properties estimation."""
 
-    Ms: Callable[[numbers.Real | mammos_units.Quantity], me.Entity]
+    Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
     """Callable returning temperature-dependent :entity:`SpontaneousMagnetization`."""
-    A: Callable[[numbers.Real | mammos_units.Quantity], me.Entity]
+    A: Callable[[numbers.Real | u.Quantity], me.Entity]
     """Callable returning temperature-dependent :entity:`ExchangeStiffnessConstant`."""
     Tc: me.Entity
     """:entity:`CurieTemperature`."""
-    s: mammos_units.Quantity
+    s: u.Quantity
     """Kuzmin parameter."""
-    K1: Callable[[numbers.Real | mammos_units.Quantity], me.Entity] | None = None
+    K1: Callable[[numbers.Real | u.Quantity], me.Entity] | None = None
     """Callable returning temperature-dependent uniaxial anisotropy."""
 
     def plot(
         self,
-        T: mammos_entity.Entity
-        | mammos_units.Quantity
-        | numpy.typing.ArrayLike
-        | None = None,
+        T: mammos_entity.Entity | u.Quantity | numpy.typing.ArrayLike | None = None,
         celsius: bool = False,
     ) -> matplotlib.axes.Axes:
         """Create a plot for Ms, A, and K1 as a function of temperature.
@@ -68,19 +64,13 @@ class KuzminResult:
 
 
 def kuzmin_properties(
-    Ms: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
-    T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
-    Tc: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
-    Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
-    K1_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
-    Tc_initial_guess: mammos_entity.Entity
-    | mammos_units.Quantity
-    | numbers.Real
-    | None = None,
-    Ms_0_initial_guess: mammos_entity.Entity
-    | mammos_units.Quantity
-    | numbers.Real
-    | None = None,
+    Ms: mammos_entity.Entity | u.Quantity | numpy.typing.ArrayLike,
+    T: mammos_entity.Entity | u.Quantity | numpy.typing.ArrayLike,
+    Tc: mammos_entity.Entity | u.Quantity | numbers.Real | None = None,
+    Ms_0: mammos_entity.Entity | u.Quantity | numbers.Real | None = None,
+    K1_0: mammos_entity.Entity | u.Quantity | numbers.Real | None = None,
+    Tc_initial_guess: mammos_entity.Entity | u.Quantity | numbers.Real | None = None,
+    Ms_0_initial_guess: mammos_entity.Entity | u.Quantity | numbers.Real | None = None,
     s_initial_guess: numbers.Real = 0.5,
 ) -> KuzminResult:
     """Evaluate intrinsic micromagnetic properties using Kuz’min model.
@@ -264,10 +254,10 @@ def kuzmin_properties(
 
 
 def kuzmin_formula(
-    Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
-    T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+    Ms_0: mammos_entity.Entity | u.Quantity | numbers.Real,
+    T_c: mammos_entity.Entity | u.Quantity | numbers.Real,
     s: numbers.Real,
-    T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    T: mammos_entity.Entity | u.Quantity | numpy.typing.ArrayLike,
 ) -> mammos_entity.Entity:
     r"""Compute spontaneous magnetization at temperature T using Kuz'min formula.
 
@@ -340,11 +330,11 @@ class _A_function_of_temperature:
 
     def __init__(
         self,
-        A_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
-        Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
-        T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        A_0: mammos_entity.Entity | u.Quantity | numbers.Real,
+        Ms_0: mammos_entity.Entity | u.Quantity | numbers.Real,
+        T_c: mammos_entity.Entity | u.Quantity | numbers.Real,
         s: numbers.Real,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+        T: mammos_entity.Entity | u.Quantity | numpy.typing.ArrayLike,
     ):
         self.Ms_0 = me._entity.from_compatible(
             "SpontaneousMagnetization", "A / m", Ms_0=Ms_0
@@ -359,7 +349,7 @@ class _A_function_of_temperature:
     def __repr__(self):
         return "A(T)"
 
-    def __call__(self, T: numbers.Real | mammos_units.Quantity):
+    def __call__(self, T: numbers.Real | u.Quantity):
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
         return me.A(
@@ -422,11 +412,11 @@ class _K1_function_of_temperature:
 
     def __init__(
         self,
-        K1_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
-        Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
-        T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        K1_0: mammos_entity.Entity | u.Quantity | numbers.Real,
+        Ms_0: mammos_entity.Entity | u.Quantity | numbers.Real,
+        T_c: mammos_entity.Entity | u.Quantity | numbers.Real,
         s: numbers.Real,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+        T: mammos_entity.Entity | u.Quantity | numpy.typing.ArrayLike,
     ):
         self.Ms_0 = me._entity.from_compatible(
             "SpontaneousMagnetization", "A / m", Ms_0=Ms_0
@@ -444,7 +434,7 @@ class _K1_function_of_temperature:
     def __repr__(self):
         return "K1(T)"
 
-    def __call__(self, T: numbers.Real | mammos_units.Quantity) -> me.Entity:
+    def __call__(self, T: numbers.Real | u.Quantity) -> me.Entity:
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
         return me.K1(
@@ -454,7 +444,7 @@ class _K1_function_of_temperature:
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | u.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         celsius: bool = False,
         **kwargs,
@@ -503,10 +493,10 @@ class _Ms_function_of_temperature:
 
     def __init__(
         self,
-        Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
-        T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        Ms_0: mammos_entity.Entity | u.Quantity | numbers.Real,
+        T_c: mammos_entity.Entity | u.Quantity | numbers.Real,
         s: numbers.Real,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+        T: mammos_entity.Entity | u.Quantity | numpy.typing.ArrayLike,
     ):
 
         self.Ms_0 = me._entity.from_compatible(
@@ -519,14 +509,14 @@ class _Ms_function_of_temperature:
     def __repr__(self):
         return "Ms(T)"
 
-    def __call__(self, T: numbers.Real | mammos_units.Quantity):
+    def __call__(self, T: numbers.Real | u.Quantity):
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
         return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q.to("kA/m"))
 
     def plot(
         self,
-        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | u.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         celsius: bool = False,
         **kwargs,
