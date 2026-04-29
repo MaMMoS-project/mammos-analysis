@@ -13,8 +13,6 @@ import mammos_units as u
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import figaspect
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
 from scipy.optimize import curve_fit
 
 if TYPE_CHECKING:
@@ -24,20 +22,56 @@ if TYPE_CHECKING:
     import numpy
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
-class KuzminResult:
-    """Result of Kuz'min magnetic properties estimation."""
+@me._entity_collection.frozen_collection
+class KuzminResult(me.EntityCollection):
+    """Result of Kuz'min magnetic properties estimation.
 
-    Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
-    """Callable returning temperature-dependent spontaneous magnetization."""
-    A: Callable[[numbers.Real | u.Quantity], me.Entity]
-    """Callable returning temperature-dependent exchange stiffness."""
-    Tc: me.Entity
-    """Curie temperature."""
-    s: u.Quantity
-    """Kuzmin parameter."""
-    K1: Callable[[numbers.Real | u.Quantity], me.Entity] | None = None
-    """Callable returning temperature-dependent uniaxial anisotropy."""
+    Stores the fitted Kuz'min parameters and provides callable objects for
+    temperature-dependent micromagnetic properties (Ms, A, K1).
+    """
+
+    def __init__(
+        self,
+        Ms: Callable[[numbers.Real | u.Quantity], mammos_entity.Entity],
+        A: Callable[[numbers.Real | u.Quantity], mammos_entity.Entity],
+        Tc: mammos_entity.Entity,
+        s: astropy.units.Quantity,
+        K1: Callable[[numbers.Real | u.Quantity], mammos_entity.Entity] | None = None,
+        description: str = "",
+    ) -> None:
+        """Initialize KuzminResult.
+
+        Args:
+            Ms: Callable returning temperature-dependent spontaneous magnetization.
+            A: Callable returning temperature-dependent exchange stiffness.
+            Tc: Curie temperature as :entity:`CurieTemperature`.
+            s: Kuzmin parameter as a dimensionless quantity.
+            K1: Callable returning temperature-dependent uniaxial anisotropy.
+                If ``None``, K1 is not available.
+            description: Description of the collection.
+        """
+        me._entity.ensure_entity("CurieTemperature", Tc=Tc)
+        super().__init__(description=description, Tc=Tc, s=s)
+        self._Ms = Ms
+        self._A = A
+        self._K1 = K1
+
+    @property
+    def Ms(self) -> Callable[[numbers.Real | u.Quantity], mammos_entity.Entity]:
+        """Callable returning temperature-dependent spontaneous magnetization."""
+        return self._Ms
+
+    @property
+    def A(self) -> Callable[[numbers.Real | u.Quantity], mammos_entity.Entity]:
+        """Callable returning temperature-dependent exchange stiffness."""
+        return self._A
+
+    @property
+    def K1(
+        self,
+    ) -> Callable[[numbers.Real | u.Quantity], mammos_entity.Entity] | None:
+        """Callable returning temperature-dependent uniaxial anisotropy."""
+        return self._K1
 
     def plot(
         self,
