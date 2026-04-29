@@ -165,10 +165,13 @@ def extract_coercive_field(
     # Extract values for computation
     # h_val = _unit_processing(H, u.A / u.m)
     # m_val = _unit_processing(M, u.A / u.m)
-    h_val = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
-    m_val = me._entity.from_compatible(
+    H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    M = me._entity.from_compatible(
         "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
     )
+
+    h_val = H.q
+    m_val = M.q
 
     # Check monotonicity on the values
     _check_monotonicity(h_val)
@@ -219,10 +222,13 @@ def extract_remanent_magnetization(
     # Determine input types
     # h_val = _unit_processing(H, u.A / u.m)
     # m_val = _unit_processing(M, u.A / u.m)
-    h_val = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
-    m_val = me._entity.from_compatible(
+    H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    M = me._entity.from_compatible(
         "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
     )
+
+    h_val = H.q
+    m_val = M.q
 
     # Check monotonicity on the values
     _check_monotonicity(h_val)
@@ -365,6 +371,9 @@ def extract_BHmax(
     M = me._entity.from_compatible(
         "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
     )
+
+    H = H.q
+    M = M.q
 
     # processing will not work for full hysteresis loop
     _check_monotonicity(H.value)
