@@ -30,11 +30,11 @@ class KuzminResult:
     """Result of Kuz'min magnetic properties estimation."""
 
     Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
-    """Callable returning temperature-dependent spontaneous magnetization."""
+    """Callable returning temperature-dependent :entity:`SpontaneousMagnetization`."""
     A: Callable[[numbers.Real | u.Quantity], me.Entity]
-    """Callable returning temperature-dependent exchange stiffness."""
+    """Callable returning temperature-dependent :entity:`ExchangeStiffnessConstant`."""
     Tc: me.Entity
-    """Curie temperature."""
+    """:entity:`CurieTemperature`."""
     s: u.Quantity
     """Kuzmin parameter."""
     K1: Callable[[numbers.Real | u.Quantity], me.Entity] | None = None
@@ -144,9 +144,12 @@ def kuzmin_properties(
 
     if K1_0 is not None:
         K1_0 = me._entity.from_compatible(
-            "UniaxialAnisotropyConstant",
+            "MagnetocrystallineAnisotropyConstantK1",
             "J / m^3",
-            compatible_entities=("MagnetocrystallineAnisotropyConstantK1",),
+            compatible_entities=(
+                "MagnetocrystallineAnisotropyConstantK1",
+                "UniaxialAnisotropyConstant",
+            ),
             K1_0=K1_0,
             enforce_unit=True,
         )
@@ -309,7 +312,7 @@ def kuzmin_formula(
         raise ValueError("Argument Ms_0 must be a scalar spontaneous magnetization.")
 
     if not np.isscalar(T_c.value):
-        raise ValueError("Argument Tc must be a scalar Curie temperature.")
+        raise ValueError("Argument T_c must be a scalar Curie temperature.")
 
     if not np.isscalar(s):
         raise ValueError("Argument s must be a scalar.")
