@@ -144,9 +144,9 @@ def kuzmin_properties(
 
     if K1_0 is not None:
         K1_0 = me._entity.from_compatible(
-            "UniaxialAnisotropyConstant",
+            "MagnetocrystallineAnisotropyConstantK1",
             "J / m^3",
-            compatible_entities=("MagnetocrystallineAnisotropyConstantK1",),
+            compatible_entities=("UniaxialAnisotropyConstant",),
             K1_0=K1_0,
             enforce_unit=True,
         )
@@ -432,7 +432,10 @@ class _K1_function_of_temperature:
         self.T_c = me._entity.from_compatible("CurieTemperature", "K", T_c=T_c)
         self._T = me._entity.from_compatible("ThermodynamicTemperature", "K", T=T)
         self.K1_0 = me._entity.from_compatible(
-            "UniaxialAnisotropyConstant", "J/m^3", K1_0=K1_0
+            "MagnetocrystallineAnisotropyConstantK1",
+            "J/m^3",
+            compatible_entities=("UniaxialAnisotropyConstant",),
+            K1_0=K1_0,
         )
         self.s = s
 
