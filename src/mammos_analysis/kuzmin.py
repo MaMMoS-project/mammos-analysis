@@ -9,8 +9,10 @@ from warnings import warn
 
 import mammos_entity
 import mammos_entity as me
+import mammos_units
 import mammos_units as u
 import matplotlib.pyplot as plt
+import numpy
 import numpy as np
 from matplotlib.figure import figaspect
 from pydantic import ConfigDict
@@ -18,8 +20,8 @@ from pydantic.dataclasses import dataclass
 from scipy.optimize import curve_fit
 
 if TYPE_CHECKING:
-    import astropy.units
     import mammos_entity
+    import mammos_units
     import matplotlib
     import numpy
 
@@ -28,20 +30,39 @@ if TYPE_CHECKING:
 class KuzminResult:
     """Result of Kuz'min magnetic properties estimation."""
 
-    Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
-    """Callable returning temperature-dependent spontaneous magnetization."""
-    A: Callable[[numbers.Real | u.Quantity], me.Entity]
-    """Callable returning temperature-dependent exchange stiffness."""
+    Ms: Callable[
+        [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
+        me.Entity,
+    ]
+    """Callable returning temperature-dependent :entity:`SpontaneousMagnetization`."""
+
+    A: Callable[
+        [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
+        me.Entity,
+    ]
+    """Callable returning temperature-dependent :entity:`ExchangeStiffnessConstant`."""
+
     Tc: me.Entity
-    """Curie temperature."""
-    s: u.Quantity
+    """:entity:`CurieTemperature`."""
+
+    s: mammos_units.Quantity
     """Kuzmin parameter."""
-    K1: Callable[[numbers.Real | u.Quantity], me.Entity] | None = None
+
+    K1: (
+        Callable[
+            [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
+            me.Entity,
+        ]
+        | None
+    ) = None
     """Callable returning temperature-dependent uniaxial anisotropy."""
 
     def plot(
         self,
-        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity
+        | mammos_units.Quantity
+        | numpy.typing.ArrayLike
+        | None = None,
         celsius: bool = False,
     ) -> matplotlib.axes.Axes:
         """Create a plot for Ms, A, and K1 as a function of temperature.
@@ -64,20 +85,20 @@ class KuzminResult:
 
 
 def kuzmin_properties(
-    Ms: mammos_entity.Entity,
-    T: mammos_entity.Entity,
-    Tc: mammos_entity.Entity | None = None,
-    Ms_0: mammos_entity.Entity | None = None,
-    K1_0: mammos_entity.Entity | None = None,
+    Ms: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    Tc: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
+    Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
+    K1_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real | None = None,
     Tc_initial_guess: mammos_entity.Entity
+    | mammos_units.Quantity
     | numbers.Real
-    | astropy.units.Quantity
     | None = None,
     Ms_0_initial_guess: mammos_entity.Entity
+    | mammos_units.Quantity
     | numbers.Real
-    | astropy.units.Quantity
     | None = None,
-    s_initial_guess: mammos_entity.Entity | numbers.Real | astropy.units.Quantity = 0.5,
+    s_initial_guess: numbers.Real = 0.5,
 ) -> KuzminResult:
     """Evaluate intrinsic micromagnetic properties using Kuz’min model.
 
@@ -103,13 +124,23 @@ def kuzmin_properties(
     higher than 0.1 * max(Ms).
 
     Args:
-        Ms: Spontaneous magnetization data points as a me.Entity.
-        T: Temperature data points as a me.Entity.
-        K1_0: Magnetocrystalline anisotropy at 0 K as a me.Entity.
-        Tc: Curie temperature.
-        Ms_0: Spontaneous magnetization at T=0.
-        Tc_initial_guess: Initial guess for Tc (if optimized).
-        Ms_0_initial_guess: Initial guess for Ms_0 (if optimized).
+        Ms: :entity:`SpontaneousMagnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
+        T: :entity:`ThermodynamicTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
+        K1_0: :entity:`MagnetocrystallineAnisotropyConstantK1` or
+            :entity:`UniaxialAnisotropyConstant` at T = 0 K.
+            If no unit is provided, values are interpreted as 'J / m^3'.
+        Tc: :entity:`CurieTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
+        Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
+            If no unit is provided, values are interpreted as 'A / m'.
+        Tc_initial_guess: Initial guess for Tc
+            :entity:`CurieTemperature` (if optimized).
+            If no unit is provided, values are interpreted as 'K'.
+        Ms_0_initial_guess: Initial guess for Ms_0
+            :entity:`SpontaneousMagnetization` (if optimized).
+            If no unit is provided, values are interpreted as 'A / m'.
         s_initial_guess: Initial guess for the parameter `s` appearing in the
             Kuz'min fit.
 
@@ -121,18 +152,43 @@ def kuzmin_properties(
         ValueError: Value of Ms at zero temperature is not given.
         ValueError: If K1_0 has incorrect unit.
     """
-    Ms = me.Ms(Ms, unit=u.A / u.m)
-    T = me.T(T, unit=u.K)
+    Ms = me._entity.from_compatible(
+        "SpontaneousMagnetization", "A / m", Ms=Ms, enforce_unit=True
+    )
+    T = me._entity.from_compatible(
+        "ThermodynamicTemperature", "K", T=T, enforce_unit=True
+    )
+
     if K1_0 is not None:
-        K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
+        K1_0 = me._entity.from_compatible(
+            "MagnetocrystallineAnisotropyConstantK1",
+            "J / m^3",
+            compatible_entities=("UniaxialAnisotropyConstant",),
+            K1_0=K1_0,
+            enforce_unit=True,
+        )
     if Tc is not None:
-        Tc = me.Tc(Tc, unit=u.K)
+        Tc = me._entity.from_compatible(
+            "CurieTemperature", "K", Tc=Tc, enforce_unit=True
+        )
     if Ms_0_initial_guess is not None:
-        Ms_0_initial_guess = me.Ms(Ms_0_initial_guess, unit=u.A / u.m)
+        Ms_0_initial_guess = me._entity.from_compatible(
+            "SpontaneousMagnetization",
+            "A/m",
+            Ms_0_initial_guess=Ms_0_initial_guess,
+            enforce_unit=True,
+        )
     if Tc_initial_guess is not None:
-        Tc_initial_guess = me.Tc(Tc_initial_guess, u.K)
+        Tc_initial_guess = me._entity.from_compatible(
+            "CurieTemperature",
+            "K",
+            Tc_initial_guess=Tc_initial_guess,
+            enforce_unit=True,
+        )
     if Ms_0 is not None:
-        Ms_0 = me.Ms(Ms_0, unit=u.A / u.m)
+        Ms_0 = me._entity.from_compatible(
+            "SpontaneousMagnetization", "A / m", Ms_0=Ms_0, enforce_unit=True
+        )
 
     # We initialize initial guess and bounds for s.
     # If Ms_0 and Tc needs to be optimized, too,
@@ -189,7 +245,7 @@ def kuzmin_properties(
         s_ = params[0]
         Ms_0_ = params[1] if optimize_Ms_0 else Ms_0.value
         Tc_ = params[-1] if optimize_Tc else Tc.value
-        return kuzmin_formula(Ms_0_, Tc_, s_, T_)
+        return kuzmin_formula(Ms_0_, Tc_, s_, T_).value
 
     results = curve_fit(
         F, T.value, Ms.value, p0=initial_guess, bounds=bounds, jac="3-point"
@@ -224,79 +280,114 @@ def kuzmin_properties(
     )
 
 
-def kuzmin_formula(Ms_0, T_c, s, T):
+def kuzmin_formula(
+    Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+    T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+    s: numbers.Real,
+    T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+) -> mammos_entity.Entity:
     r"""Compute spontaneous magnetization at temperature T using Kuz'min formula.
 
-    The formula approximate spontaneous magnetization :math:`M_s(T)` for
+    The formula approximates the spontaneous magnetization :math:`M_s(T)` for
     :math:`0 < T < T_c` as
 
     .. math::
 
-      M_s(T) = M_0 \left[ 1 - s \left( \frac{T}{T_c} \right)^{3/2} \\
-      - (1-s) \left( \frac{T}{T_c} \right)^{5/2} \right]^{1/3}
+       M_s(T) = M_{s}(0) \left[ 1 - s \left( \frac{T}{T_c} \right)^{3/2}
+       - (1-s) \left( \frac{T}{T_c} \right)^{5/2} \right]^{1/3}
 
-    where :math:`M_0` is the saturation magnetization, :math:`T_c` is the Curie
-    temperature, and :math:`s` is an adjustable parameter.
+    where :math:`M_{s}(0)` is the spontaneous magnetization at T = 0 K, :math:`T_c`
+    is the Curie temperature, and :math:`s` is an adjustable parameter.
 
     Kuz’min, M.D., Skokov, K.P., Diop, L.B. et al. Exchange stiffness of ferromagnets.
     Eur. Phys. J. Plus 135, 301 (2020). https://doi.org/10.1140/epjp/s13360-020-00294-y
 
     Args:
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
-        s: Kuzmin exponent parameter.
-        T: Temperature(s) for evaluation.
+        T: Temperature(s) for evaluation :entity:`ThermodynamicTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
+        Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
+            If no unit is provided, values are interpreted as 'A / m'.
+        T_c: :entity:`CurieTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
+        s: Kuz’min exponent parameter.
 
     Returns:
-        Spontaneous magnetization at temperature T as an array.
+        :entity:`SpontaneousMagnetization` at temperature(s) T.
     """
-    if isinstance(Ms_0, me.Entity):
-        Ms_0 = Ms_0.value
-    if isinstance(T_c, me.Entity):
-        T_c = T_c.value.flatten()[0] if T_c.value.ndim > 0 else T_c.value
-    if isinstance(T, me.Entity):
-        T = T.value
-    base = 1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5
-    base = np.array(base)  # we make sure that it is a numpy.ndarray
+    Ms_0 = me._entity.from_compatible("SpontaneousMagnetization", "A / m", Ms_0=Ms_0)
+    T_c = me._entity.from_compatible(
+        "CurieTemperature", "K", T_c=T_c, enforce_unit=True
+    )
+    T = me._entity.from_compatible(
+        "ThermodynamicTemperature", "K", T=T, enforce_unit=True
+    )
+
+    if not np.isscalar(Ms_0.value):
+        raise ValueError("Argument Ms_0 must be a scalar spontaneous magnetization.")
+
+    if not np.isscalar(T_c.value):
+        raise ValueError("Argument T_c must be a scalar Curie temperature.")
+
+    if not np.isscalar(s):
+        raise ValueError("Argument s must be a scalar.")
+
+    base = 1 - s * (T.q / T_c.q) ** 1.5 - (1 - s) * (T.q / T_c.q) ** 2.5
+
     out = np.zeros_like(base, dtype=np.float64)
-    np.cbrt(base, out=out, where=T_c > T)
-    return Ms_0 * out
+    np.cbrt(base, out=out, where=T_c.q > T.q)  # compute cubic root of base
+
+    return me.Ms((Ms_0.q * out).reshape(T.q.shape))
 
 
 class _A_function_of_temperature:
     """Callable for temperature-dependent exchange stiffness A(T).
 
     Attributes:
-        A_0: Exchange stiffness at 0 K.
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        A_0: :entity:`ExchangeStiffnessConstant` at 0 K.
+            If no unit is provided, values are interpreted as 'J/m'.
+        Ms_0: :entity:`SpontaneousMagnetization` at 0 K.
+            If no unit is provided, values are interpreted as 'A/m'.
+        T_c: :entity:`CurieTemperature`.
+            If no unit is provided, values are interpreted as 'K'.
         s: Kuzmin exponent parameter.
 
     Call:
         Returns A(T) as a me.Entity for given temperature T.
     """
 
-    def __init__(self, A_0, Ms_0, T_c, s, T):
-        self.A_0 = A_0
-        self.Ms_0 = Ms_0
-        self.T_c = T_c
+    def __init__(
+        self,
+        A_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        s: numbers.Real,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    ):
+        self.Ms_0 = me._entity.from_compatible(
+            "SpontaneousMagnetization", "A / m", Ms_0=Ms_0
+        )
+        self.T_c = me._entity.from_compatible("CurieTemperature", "K", T_c=T_c)
+        self._T = me._entity.from_compatible("ThermodynamicTemperature", "K", T=T)
+        self.A_0 = me._entity.from_compatible(
+            "ExchangeStiffnessConstant", "J/m", A_0=A_0
+        )
         self.s = s
-        self._T = T
 
     def __repr__(self):
         return "A(T)"
 
-    def __call__(self, T: numbers.Real | u.Quantity):
+    def __call__(self, T: numbers.Real | mammos_units.Quantity):
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
         return me.A(
             self.A_0.q
-            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 2
+            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0) ** 2,
+            self.A_0.unit,
         )
 
     def plot(
         self,
-        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         celsius: bool = False,
         **kwargs,
@@ -304,7 +395,8 @@ class _A_function_of_temperature:
         """Plot A as a function of temperature using Kuzmin formula.
 
         Args:
-            T: If specified, the exchange stiffnedd is plotted against this array.
+            T: If :entity:`ThermodynamicTemperature` is specified, the
+                :entity:`ExchangeStiffnessConstant` is plotted against this array.
                 Otherwise, a uniform array of 100 points is generated between the
                 minimum and the maximum available data.
             ax: optional matplotlib ``Axes`` instance to plot on an existing subplot.
@@ -335,36 +427,51 @@ class _K1_function_of_temperature:
     """Callable for temperature-dependent uniaxial anisotropy K1(T).
 
     Attributes:
-        K1_0: Anisotropy constant at 0 K.
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        K1_0: :entity:`MagnetocrystallineAnisotropyConstantK1` at 0 K.
+        Ms_0: :entity:`SpontaneousMagnetization` at 0 K.
+        T_c: :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
 
     Call:
-        Returns K1(T) as a me.Entity for given temperature T.
+        Returns :entity:`MagnetocrystallineAnisotropyConstantK1`
+            for given temperature T.
     """
 
-    def __init__(self, K1_0, Ms_0, T_c, s, T):
-        self.K1_0 = K1_0
-        self.Ms_0 = Ms_0
-        self.T_c = T_c
+    def __init__(
+        self,
+        K1_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        s: numbers.Real,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
+    ):
+        self.Ms_0 = me._entity.from_compatible(
+            "SpontaneousMagnetization", "A / m", Ms_0=Ms_0
+        )
+        self.T_c = me._entity.from_compatible("CurieTemperature", "K", T_c=T_c)
+        self._T = me._entity.from_compatible("ThermodynamicTemperature", "K", T=T)
+        self.K1_0 = me._entity.from_compatible(
+            "MagnetocrystallineAnisotropyConstantK1",
+            "J/m^3",
+            compatible_entities=("UniaxialAnisotropyConstant",),
+            K1_0=K1_0,
+        )
         self.s = s
-        self._T = T
 
     def __repr__(self):
         return "K1(T)"
 
-    def __call__(self, T: numbers.Real | u.Quantity) -> me.Entity:
+    def __call__(self, T: numbers.Real | mammos_units.Quantity) -> me.Entity:
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
-        return me.Ku(
+        return me.K1(
             self.K1_0.q
-            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 3
+            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0) ** 3
         )
 
     def plot(
         self,
-        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         celsius: bool = False,
         **kwargs,
@@ -403,8 +510,8 @@ class _Ms_function_of_temperature:
     """Callable for temperature-dependent spontaneous magnetization Ms(T).
 
     Attributes:
-        Ms_0: Spontaneous magnetization at 0 K.
-        T_c: Curie temperature.
+        Ms_0: :entity:`SpontaneousMagnetization` at 0 K.
+        T_c: :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
 
     Call:
@@ -413,28 +520,30 @@ class _Ms_function_of_temperature:
 
     def __init__(
         self,
-        Ms_0: mammos_entity.Entity,
-        T_c: mammos_entity.Entity,
-        s: astropy.units.Quantity,
-        T: mammos_entity.Entity,
+        Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
+        s: numbers.Real,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     ):
-        self.Ms_0 = Ms_0
-        self.T_c = T_c
+
+        self.Ms_0 = me._entity.from_compatible(
+            "SpontaneousMagnetization", "A / m", Ms_0=Ms_0
+        )
+        self.T_c = me._entity.from_compatible("CurieTemperature", "K", T_c=T_c)
+        self._T = me._entity.from_compatible("ThermodynamicTemperature", "K", T=T)
         self.s = s
-        self._T = T
 
     def __repr__(self):
         return "Ms(T)"
 
-    def __call__(self, T: numbers.Real | u.Quantity):
+    def __call__(self, T: numbers.Real | mammos_units.Quantity):
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
-        Ms_quant = kuzmin_formula(self.Ms_0, self.T_c, self.s, T) * u.A / u.m
-        return me.Ms(Ms_quant.to("kA/m"))
+        return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q.to("kA/m"))
 
     def plot(
         self,
-        T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
+        T: mammos_entity.Entity | mammos_units.Quantity | numpy.ndarray | None = None,
         ax: matplotlib.axes.Axes | None = None,
         celsius: bool = False,
         **kwargs,

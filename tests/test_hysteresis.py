@@ -13,7 +13,6 @@ from mammos_analysis.hysteresis import (
     LinearSegmentProperties,
     MaximumEnergyProductProperties,
     _check_monotonicity,
-    _unit_processing,
     extract_B_curve,
     extract_BHmax,
     extract_coercive_field,
@@ -551,110 +550,6 @@ def test_extrinsic_properties2():
     assert np.isclose(
         result.BHmax.value, expected["BHmax"], atol=0.1, rtol=1e-8
     )  # "BHmax": 416124.72892616026
-
-
-def test_unit_processing():
-    """Test the unit processing."""
-    # Test correct unit processing with Entity
-    assert np.isclose(
-        _unit_processing(me.H(1 * u.A / u.m), u.A / u.m, return_quantity=False), 1
-    )
-    assert np.isclose(
-        _unit_processing(me.H(1 * u.kA / u.m), u.A / u.m, return_quantity=False), 1000
-    )
-    assert u.isclose(
-        _unit_processing(me.H(1 * u.A / u.m), u.A / u.m, return_quantity=True),
-        1 * u.A / u.m,
-    )
-    assert u.isclose(
-        _unit_processing(me.H(1 * u.kA / u.m), u.A / u.m, return_quantity=True),
-        1000 * u.A / u.m,
-    )
-
-    # Test correct unit processing with Quantity
-    assert np.isclose(
-        _unit_processing(1 * u.A / u.m, u.A / u.m, return_quantity=False), 1
-    )
-    assert np.isclose(
-        _unit_processing(1 * u.kA / u.m, u.A / u.m, return_quantity=False), 1000
-    )
-    assert u.isclose(
-        _unit_processing(1 * u.A / u.m, u.A / u.m, return_quantity=True), 1 * u.A / u.m
-    )
-    assert u.isclose(
-        _unit_processing(1 * u.kA / u.m, u.A / u.m, return_quantity=True),
-        1000 * u.A / u.m,
-    )
-
-    # Test correct unit processing with Numpy Array
-    assert np.isclose(_unit_processing(1, u.A / u.m, return_quantity=False), 1)
-    assert np.isclose(_unit_processing(1000, u.A / u.m, return_quantity=False), 1000)
-    assert u.isclose(
-        _unit_processing(1 * u.A / u.m, u.A / u.m, return_quantity=True), 1 * u.A / u.m
-    )
-    assert u.isclose(
-        _unit_processing(1000 * u.A / u.m, u.A / u.m, return_quantity=True),
-        1000 * u.A / u.m,
-    )
-
-    # Test with arrays of each type
-    assert np.allclose(
-        _unit_processing(
-            me.H(np.array([1, 2, 3]) * u.A / u.m), u.A / u.m, return_quantity=False
-        ),
-        [1, 2, 3],
-    )
-    assert np.allclose(
-        _unit_processing(
-            me.H(np.array([1, 2, 3]) * u.kA / u.m), u.A / u.m, return_quantity=False
-        ),
-        [1000, 2000, 3000],
-    )
-    assert np.allclose(
-        _unit_processing(
-            np.array([1, 2, 3]) * u.A / u.m, u.A / u.m, return_quantity=False
-        ),
-        [1, 2, 3],
-    )
-    assert np.allclose(
-        _unit_processing(
-            np.array([1, 2, 3]) * u.kA / u.m, u.A / u.m, return_quantity=False
-        ),
-        [1000, 2000, 3000],
-    )
-
-    assert u.allclose(
-        _unit_processing(
-            me.H(np.array([1, 2, 3]) * u.A / u.m), u.A / u.m, return_quantity=True
-        ),
-        np.array([1, 2, 3]) * u.A / u.m,
-    )
-    assert u.allclose(
-        _unit_processing(
-            me.H(np.array([1, 2, 3]) * u.kA / u.m), u.A / u.m, return_quantity=True
-        ),
-        np.array([1000, 2000, 3000]) * u.A / u.m,
-    )
-    assert u.allclose(
-        _unit_processing(
-            np.array([1, 2, 3]) * u.A / u.m, u.A / u.m, return_quantity=True
-        ),
-        np.array([1, 2, 3]) * u.A / u.m,
-    )
-    assert u.allclose(
-        _unit_processing(
-            np.array([1, 2, 3]) * u.kA / u.m, u.A / u.m, return_quantity=True
-        ),
-        np.array([1000, 2000, 3000]) * u.A / u.m,
-    )
-
-    # Test with invalid inputs
-    with pytest.raises(TypeError):
-        _unit_processing("invalid", u.A / u.m)
-    with pytest.raises(ValueError):
-        _unit_processing(1 * u.T, u.A / u.m)
-    with pytest.raises(ValueError):
-        _unit_processing(np.array([1, 2, 3]) * u.m, u.A / u.m)
 
 
 @pytest.mark.parametrize("method", ["maxdev", "rms"])
