@@ -206,7 +206,7 @@ def test_kuzmin_properties_no_K1_0():
     assert isinstance(result.A, _A_function_of_temperature)
     assert result.K1 is None
     assert isinstance(result.Tc, me.Entity)
-    assert isinstance(result.s, u.Quantity)
+    assert isinstance(result.s, UnicodeDecodeError.Quantity)
     assert result.Ms(0) == Ms_0
 
 

@@ -29,15 +29,15 @@ if TYPE_CHECKING:
 class KuzminResult:
     """Result of Kuz'min magnetic properties estimation."""
 
-    Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
+    Ms: Callable[[numbers.Real | mammos_units.Quantity], me.Entity]
     """Callable returning temperature-dependent :entity:`SpontaneousMagnetization`."""
-    A: Callable[[numbers.Real | u.Quantity], me.Entity]
+    A: Callable[[numbers.Real | mammos_units.Quantity], me.Entity]
     """Callable returning temperature-dependent :entity:`ExchangeStiffnessConstant`."""
     Tc: me.Entity
     """:entity:`CurieTemperature`."""
-    s: u.Quantity
+    s: mammos_units.Quantity
     """Kuzmin parameter."""
-    K1: Callable[[numbers.Real | u.Quantity], me.Entity] | None = None
+    K1: Callable[[numbers.Real | mammos_units.Quantity], me.Entity] | None = None
     """Callable returning temperature-dependent uniaxial anisotropy."""
 
     def plot(
@@ -359,8 +359,8 @@ class _A_function_of_temperature:
     def __repr__(self):
         return "A(T)"
 
-    def __call__(self, T: numbers.Real | u.Quantity):
-        if isinstance(T, u.Quantity):
+    def __call__(self, T: numbers.Real | mammos_units.Quantity):
+        if isinstance(T, mammos_units.Quantity):
             T = T.to(u.K).value
         return me.A(
             self.A_0.q
@@ -444,8 +444,8 @@ class _K1_function_of_temperature:
     def __repr__(self):
         return "K1(T)"
 
-    def __call__(self, T: numbers.Real | u.Quantity) -> me.Entity:
-        if isinstance(T, u.Quantity):
+    def __call__(self, T: numbers.Real | mammos_units.Quantity) -> me.Entity:
+        if isinstance(T, mammos_units.Quantity):
             T = T.to(u.K).value
         return me.K1(
             self.K1_0.q
@@ -519,8 +519,8 @@ class _Ms_function_of_temperature:
     def __repr__(self):
         return "Ms(T)"
 
-    def __call__(self, T: numbers.Real | u.Quantity):
-        if isinstance(T, u.Quantity):
+    def __call__(self, T: numbers.Real | mammos_units.Quantity):
+        if isinstance(T, mammos_units.Quantity):
             T = T.to(u.K).value
         return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q.to("kA/m"))
 
