@@ -111,8 +111,8 @@ def kuzmin_properties(
             If no unit is provided, values are interpreted as 'A / m'.
         T: :entity:`ThermodynamicTemperature`.
             If no unit is provided, values are interpreted as 'K'.
-        K1_0: :entity:`UniaxialAnisotropyConstant` or
-              :entity:`MagnetocrystallineAnisotropyConstantK1` at T = 0 K.
+        K1_0: :entity:`MagnetocrystallineAnisotropyConstantK1` or
+            :entity:`UniaxialAnisotropyConstant` at T = 0 K.
             If no unit is provided, values are interpreted as 'J / m^3'.
         Tc: :entity:`CurieTemperature`.
             If no unit is provided, values are interpreted as 'K'.
@@ -378,7 +378,8 @@ class _A_function_of_temperature:
         """Plot A as a function of temperature using Kuzmin formula.
 
         Args:
-            T: If specified, the exchange stiffnedd is plotted against this array.
+            T: If :entity:`ThermodynamicTemperature` is specified, the
+                :entity:`ExchangeStiffnessConstant` is plotted against this array.
                 Otherwise, a uniform array of 100 points is generated between the
                 minimum and the maximum available data.
             ax: optional matplotlib ``Axes`` instance to plot on an existing subplot.
@@ -409,9 +410,9 @@ class _K1_function_of_temperature:
     """Callable for temperature-dependent uniaxial anisotropy K1(T).
 
     Attributes:
-        K1_0: Anisotropy constant at 0 K :entity:`UniaxialAnisotropyConstant`.
-        Ms_0: Spontaneous magnetization at 0 K :entity:`SpontaneousMagnetization`.
-        T_c: Curie temperature :entity:`CurieTemperature`.
+        K1_0: :entity:`MagnetocrystallineAnisotropyConstantK1` at 0 K.
+        Ms_0: :entity:`SpontaneousMagnetization` at 0 K.
+        T_c: :entity:`CurieTemperature`.
         s: Kuzmin exponent parameter.
 
     Call:
@@ -445,7 +446,7 @@ class _K1_function_of_temperature:
     def __call__(self, T: numbers.Real | u.Quantity) -> me.Entity:
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
-        return me.Ku(
+        return me.K1(
             self.K1_0.q
             * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0) ** 3
         )
