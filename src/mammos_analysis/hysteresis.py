@@ -165,9 +165,15 @@ def extract_coercive_field(
     # Extract values for computation
     # h_val = _unit_processing(H, u.A / u.m)
     # m_val = _unit_processing(M, u.A / u.m)
-    H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    H = me._entity.from_compatible(
+        "ExternalMagneticField", "A / m", H=H, enforce_unit=True
+    )
     M = me._entity.from_compatible(
-        "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
+        "Magnetization",
+        "A / m",
+        compatible_entities=("SpontaneousMagnetization",),
+        M=M,
+        enforce_unit=True,
     )
 
     h_val = H.q
@@ -222,9 +228,15 @@ def extract_remanent_magnetization(
     # Determine input types
     # h_val = _unit_processing(H, u.A / u.m)
     # m_val = _unit_processing(M, u.A / u.m)
-    H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    H = me._entity.from_compatible(
+        "ExternalMagneticField", "A / m", H=H, enforce_unit=True
+    )
     M = me._entity.from_compatible(
-        "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
+        "Magnetization",
+        "A / m",
+        compatible_entities=("SpontaneousMagnetization",),
+        M=M,
+        enforce_unit=True,
     )
 
     h_val = H.q
@@ -303,9 +315,15 @@ def extract_B_curve(
     else:
         raise ValueError("Demagnetization coefficient must be a float or int.")
 
-    H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    H = me._entity.from_compatible(
+        "ExternalMagneticField", "A / m", H=H, enforce_unit=True
+    )
     M = me._entity.from_compatible(
-        "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
+        "Magnetization",
+        "A / m",
+        compatible_entities=("SpontaneousMagnetization",),
+        M=M,
+        enforce_unit=True,
     )
 
     H = H.q
@@ -370,9 +388,15 @@ def extract_BHmax(
             on this is welcome - is 3 a good number?)
 
     """
-    H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    H = me._entity.from_compatible(
+        "ExternalMagneticField", "A / m", H=H, enforce_unit=True
+    )
     M = me._entity.from_compatible(
-        "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
+        "Magnetization",
+        "A / m",
+        compatible_entities=("SpontaneousMagnetization",),
+        M=M,
+        enforce_unit=True,
     )
 
     H = H.q
@@ -550,11 +574,19 @@ def find_linear_segment(
     # M_arr = _unit_processing(M, u.A / u.m, return_quantity=False)
     # margin_val = _unit_processing(margin, u.A / u.m, return_quantity=False)
 
-    H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
-    M = me._entity.from_compatible(
-        "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
+    H = me._entity.from_compatible(
+        "ExternalMagneticField", "A / m", H=H, enforce_unit=True
     )
-    margin = me._entity.from_compatible("Magnetization", "A / m", margin=margin)
+    M = me._entity.from_compatible(
+        "Magnetization",
+        "A / m",
+        compatible_entities=("SpontaneousMagnetization",),
+        M=M,
+        enforce_unit=True,
+    )
+    margin = me._entity.from_compatible(
+        "Magnetization", "A / m", margin=margin, enforce_unit=True
+    )
 
     H_arr = H.value
     M_arr = M.value
