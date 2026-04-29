@@ -124,8 +124,6 @@ def extract_coercive_field(
         ValueError: If the coercive field cannot be calculated.
     """
     # Extract values for computation
-    # h_val = _unit_processing(H, u.A / u.m)
-    # m_val = _unit_processing(M, u.A / u.m)
     H = me._entity.from_compatible(
         "ExternalMagneticField", "A / m", H=H, enforce_unit=True
     )
@@ -187,8 +185,6 @@ def extract_remanent_magnetization(
         ValueError: If the field does not cross zero or calculation fails.
     """
     # Determine input types
-    # h_val = _unit_processing(H, u.A / u.m)
-    # m_val = _unit_processing(M, u.A / u.m)
     H = me._entity.from_compatible(
         "ExternalMagneticField", "A / m", H=H, enforce_unit=True
     )
@@ -531,10 +527,6 @@ def find_linear_segment(
 
     """
     # 1) Normalize inputs to unitless numpy arrays in A/m
-    # H_arr = _unit_processing(H, u.A / u.m, return_quantity=False)
-    # M_arr = _unit_processing(M, u.A / u.m, return_quantity=False)
-    # margin_val = _unit_processing(margin, u.A / u.m, return_quantity=False)
-
     H = me._entity.from_compatible(
         "ExternalMagneticField", "A / m", H=H, enforce_unit=True
     )
