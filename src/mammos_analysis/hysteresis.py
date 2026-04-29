@@ -7,12 +7,12 @@ import warnings
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import astropy.units
+    # import astropy.units
     import mammos_units
     import matplotlib
     import numpy
 
-import astropy.units
+# import astropy.units
 import mammos_entity
 import mammos_entity as me
 import mammos_units as u
@@ -54,7 +54,7 @@ class LinearSegmentProperties:
     """M(H=0) from linear segment fit."""
     Hmax: mammos_entity.Entity
     """Maximum field strength in the linear segment."""
-    gradient: astropy.units.Quantity
+    gradient: mammos_units.Quantity
     """Gradient of the linear segment."""
     _H: mammos_entity.Entity | None = None
     _M: mammos_entity.Entity | None = None
