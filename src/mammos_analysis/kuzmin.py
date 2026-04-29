@@ -228,7 +228,7 @@ def kuzmin_properties(
         s_ = params[0]
         Ms_0_ = params[1] if optimize_Ms_0 else Ms_0.value
         Tc_ = params[-1] if optimize_Tc else Tc.value
-        return kuzmin_formula(T_, Ms_0_, Tc_, s_).value
+        return kuzmin_formula(Ms_0_, Tc_, s_, T_).value
 
     results = curve_fit(
         F, T.value, Ms.value, p0=initial_guess, bounds=bounds, jac="3-point"
@@ -264,10 +264,10 @@ def kuzmin_properties(
 
 
 def kuzmin_formula(
-    T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
     T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
     s: numbers.Real,
+    T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
 ) -> mammos_entity.Entity:
     r"""Compute spontaneous magnetization at temperature T using Kuz'min formula.
 
@@ -364,7 +364,7 @@ class _A_function_of_temperature:
             T = T.to(u.K).value
         return me.A(
             self.A_0.q
-            * (kuzmin_formula(T, self.Ms_0, self.T_c, self.s).q / self.Ms_0) ** 2,
+            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0) ** 2,
             self.A_0.unit,
         )
 
@@ -444,7 +444,7 @@ class _K1_function_of_temperature:
             T = T.to(u.K).value
         return me.Ku(
             self.K1_0.q
-            * (kuzmin_formula(T, self.Ms_0, self.T_c, self.s).q / self.Ms_0) ** 3
+            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0) ** 3
         )
 
     def plot(
@@ -517,7 +517,7 @@ class _Ms_function_of_temperature:
     def __call__(self, T: numbers.Real | u.Quantity):
         if isinstance(T, u.Quantity):
             T = T.to(u.K).value
-        return me.Ms(kuzmin_formula(T, self.Ms_0, self.T_c, self.s).q.to("kA/m"))
+        return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q.to("kA/m"))
 
     def plot(
         self,
