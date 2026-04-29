@@ -12,6 +12,7 @@ import mammos_entity as me
 import mammos_units
 import mammos_units as u
 import matplotlib.pyplot as plt
+import numpy
 import numpy as np
 from matplotlib.figure import figaspect
 from pydantic import ConfigDict
