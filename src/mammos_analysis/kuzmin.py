@@ -29,15 +29,31 @@ if TYPE_CHECKING:
 class KuzminResult:
     """Result of Kuz'min magnetic properties estimation."""
 
-    Ms: Callable[[numbers.Real | mammos_units.Quantity], me.Entity]
+    Ms: Callable[
+        [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
+        me.Entity,
+    ]
     """Callable returning temperature-dependent :entity:`SpontaneousMagnetization`."""
-    A: Callable[[numbers.Real | mammos_units.Quantity], me.Entity]
+
+    A: Callable[
+        [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
+        me.Entity,
+    ]
     """Callable returning temperature-dependent :entity:`ExchangeStiffnessConstant`."""
+
     Tc: me.Entity
     """:entity:`CurieTemperature`."""
+
     s: mammos_units.Quantity
     """Kuzmin parameter."""
-    K1: Callable[[numbers.Real | mammos_units.Quantity], me.Entity] | None = None
+
+    K1: (
+        Callable[
+            [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
+            me.Entity,
+        ]
+        | None
+    ) = None
     """Callable returning temperature-dependent uniaxial anisotropy."""
 
     def plot(

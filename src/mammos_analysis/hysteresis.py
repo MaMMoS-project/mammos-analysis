@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 # import astropy.units
 import mammos_entity
 import mammos_entity as me
+import mammos_units
 import mammos_units as u
 import matplotlib.pyplot as plt
 import numpy as np
