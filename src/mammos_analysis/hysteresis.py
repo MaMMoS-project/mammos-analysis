@@ -308,6 +308,9 @@ def extract_B_curve(
         "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
     )
 
+    H = H.q
+    M = M.q
+
     # Calculate internal field and flux density
     H_internal = H - demagnetization_coefficient * M
     B_internal = (H_internal + M) * u.constants.mu0
