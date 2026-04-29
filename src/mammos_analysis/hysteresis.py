@@ -105,45 +105,6 @@ def _check_monotonicity(arr: numpy.ndarray, direction=None) -> None:
             raise ValueError("Array is not monotonic.")
 
 
-def _unit_processing(
-    i: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
-    unit: mammos_units.Unit,
-    return_quantity: bool = True,
-) -> numpy.ndarray:
-    """Convert input data to a consistent unit for calculations.
-
-    Args:
-        i: Input data as an Entity, Quantity, array, or number.
-        unit: Target unit for conversion.
-        return_quantity: If True, return a Quantity object.
-
-    Returns:
-        Data in the specified unit as a Quantity or numpy array.
-
-    Raises:
-        ValueError: If units are incompatible.
-        TypeError: If input type is unsupported.
-    """
-    if isinstance(i, me.Entity | u.Quantity) and not unit.is_equivalent(i.unit):
-        raise ValueError(f"Input unit {i.unit} is not equivalent to {unit}.")
-
-    if isinstance(i, me.Entity):
-        value = i.q.to(unit).value
-    elif isinstance(i, u.Quantity):
-        value = i.to(unit).value
-    elif isinstance(i, np.ndarray | numbers.Number):
-        value = i
-    else:
-        raise TypeError(
-            f"Input must be an Entity, Quantity, or numpy array, not {type(i)}."
-        )
-
-    if return_quantity:
-        return u.Quantity(value, unit)
-    else:
-        return value
-
-
 def extract_coercive_field(
     H: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
