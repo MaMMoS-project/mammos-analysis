@@ -118,7 +118,7 @@ def extract_coercive_field(
             If no unit is provided, values are interpreted as 'A / m'.
 
     Returns:
-        Coercive field in the same format as H.
+        :entity:`CoercivityHcExternal` in the same format as H.
 
     Raises:
         ValueError: If the coercive field cannot be calculated.
@@ -179,7 +179,7 @@ def extract_remanent_magnetization(
             If no unit is provided, values are interpreted as 'A / m'.
 
     Returns:
-        Remanent magnetization in the same format as M.
+        :entity:`Remanence` in the same format as M.
 
     Raises:
         ValueError: If the field does not cross zero or calculation fails.
@@ -249,7 +249,7 @@ def extract_B_curve(
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
-        Magnetic flux density as an Entity.
+        :entity:`MagneticFluxDensity` as an Entity.
 
     Raises:
         ValueError: If the coefficient is out of range.
@@ -413,7 +413,7 @@ def extrinsic_properties(
 
     Args:
         H: :entity:`ExternalMagneticField`.
-        M: :entity:``Magnetization.
+        M: :entity:`Magnetization`.
         demagnetization_coefficient: Demagnetization coefficient for BHmax.
 
     Returns:
