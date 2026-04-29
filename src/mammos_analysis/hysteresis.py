@@ -166,7 +166,9 @@ def extract_coercive_field(
     # h_val = _unit_processing(H, u.A / u.m)
     # m_val = _unit_processing(M, u.A / u.m)
     h_val = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
-    m_val = me._entity.from_compatible("Magnetization", "A / m", M=M)
+    m_val = me._entity.from_compatible(
+        "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
+    )
 
     # Check monotonicity on the values
     _check_monotonicity(h_val)
@@ -218,7 +220,9 @@ def extract_remanent_magnetization(
     # h_val = _unit_processing(H, u.A / u.m)
     # m_val = _unit_processing(M, u.A / u.m)
     h_val = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
-    m_val = me._entity.from_compatible("Magnetization", "A / m", M=M)
+    m_val = me._entity.from_compatible(
+        "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
+    )
 
     # Check monotonicity on the values
     _check_monotonicity(h_val)
@@ -294,7 +298,9 @@ def extract_B_curve(
         raise ValueError("Demagnetization coefficient must be a float or int.")
 
     H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
-    M = me._entity.from_compatible("Magnetization", "A / m", M=M)
+    M = me._entity.from_compatible(
+        "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
+    )
 
     # Calculate internal field and flux density
     H_internal = H - demagnetization_coefficient * M
@@ -356,7 +362,9 @@ def extract_BHmax(
 
     """
     H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
-    M = me._entity.from_compatible("Magnetization", "A / m", M=M)
+    M = me._entity.from_compatible(
+        "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
+    )
 
     # processing will not work for full hysteresis loop
     _check_monotonicity(H.value)
@@ -531,7 +539,9 @@ def find_linear_segment(
     # margin_val = _unit_processing(margin, u.A / u.m, return_quantity=False)
 
     H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
-    M = me._entity.from_compatible("Magnetization", "A / m", M=M)
+    M = me._entity.from_compatible(
+        "Magnetization", "A / m", compatible_entities=("SpontaneousMagnetization",), M=M
+    )
     margin = me._entity.from_compatible("Magnetization", "A / m", margin=margin)
 
     H_arr = H.value
