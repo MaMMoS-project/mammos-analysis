@@ -331,7 +331,7 @@ class _A_function_of_temperature:
     Attributes:
         A_0: :entity:`ExchangeStiffnessConstant` at 0 K.
             If no unit is provided, values are interpreted as 'J/m'.
-        Ms_0: Spontaneous magnetization at 0 K :entity:`SpontaneousMagnetization`.
+        Ms_0: :entity:`SpontaneousMagnetization` at 0 K.
             If no unit is provided, values are interpreted as 'A/m'.
         T_c: :entity:`CurieTemperature`.
             If no unit is provided, values are interpreted as 'K'.
