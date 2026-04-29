@@ -416,7 +416,8 @@ class _K1_function_of_temperature:
         s: Kuzmin exponent parameter.
 
     Call:
-        Returns K1(T) as a me.Entity for given temperature T.
+        Returns :entity:`MagnetocrystallineAnisotropyConstantK1`
+            for given temperature T.
     """
 
     def __init__(
@@ -504,7 +505,7 @@ class _Ms_function_of_temperature:
         self,
         Ms_0: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
         T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
-        s: mammos_units.Quantity,
+        s: numbers.Real,
         T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     ):
 
