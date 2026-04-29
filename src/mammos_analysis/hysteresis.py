@@ -152,7 +152,9 @@ def extract_coercive_field(
 
     Args:
         H: :entity:`ExternalMagneticField`.
+            If no unit is provided, values are interpreted as 'A / m'.
         M: :entity:`Magnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
 
     Returns:
         Coercive field in the same format as H.
@@ -161,8 +163,10 @@ def extract_coercive_field(
         ValueError: If the coercive field cannot be calculated.
     """
     # Extract values for computation
-    h_val = _unit_processing(H, u.A / u.m)
-    m_val = _unit_processing(M, u.A / u.m)
+    # h_val = _unit_processing(H, u.A / u.m)
+    # m_val = _unit_processing(M, u.A / u.m)
+    h_val = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    m_val = me._entity.from_compatible("Magnetization", "A / m", M=M)
 
     # Check monotonicity on the values
     _check_monotonicity(h_val)
@@ -200,7 +204,9 @@ def extract_remanent_magnetization(
 
     Args:
         H: :entity:`ExternalMagneticField`.
+            If no unit is provided, values are interpreted as 'A / m'.
         M: :entity:`Magnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
 
     Returns:
         Remanent magnetization in the same format as M.
@@ -209,8 +215,10 @@ def extract_remanent_magnetization(
         ValueError: If the field does not cross zero or calculation fails.
     """
     # Determine input types
-    h_val = _unit_processing(H, u.A / u.m)
-    m_val = _unit_processing(M, u.A / u.m)
+    # h_val = _unit_processing(H, u.A / u.m)
+    # m_val = _unit_processing(M, u.A / u.m)
+    h_val = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    m_val = me._entity.from_compatible("Magnetization", "A / m", M=M)
 
     # Check monotonicity on the values
     _check_monotonicity(h_val)
@@ -256,7 +264,9 @@ def extract_B_curve(
 
     Args:
         H: External magnetic field :entity:`ExternalMagneticField`.
+            If no unit is provided, values are interpreted as 'A / m'.
         M: Magnetization :entity:`Magnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
@@ -283,8 +293,8 @@ def extract_B_curve(
     else:
         raise ValueError("Demagnetization coefficient must be a float or int.")
 
-    H = _unit_processing(H, u.A / u.m)
-    M = _unit_processing(M, u.A / u.m)
+    H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    M = me._entity.from_compatible("Magnetization", "A / m", M=M)
 
     # Calculate internal field and flux density
     H_internal = H - demagnetization_coefficient * M
@@ -327,7 +337,9 @@ def extract_BHmax(
 
     Args:
         H: :entity:`ExternalMagneticField`.
+            If no unit is provided, values are interpreted as 'A / m'.
         M: :entity:`Magnetization`.
+            If no unit is provided, values are interpreted as 'A / m'.
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
@@ -343,8 +355,8 @@ def extract_BHmax(
             on this is welcome - is 3 a good number?)
 
     """
-    H = _unit_processing(H, u.A / u.m)
-    M = _unit_processing(M, u.A / u.m)
+    H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    M = me._entity.from_compatible("Magnetization", "A / m", M=M)
 
     # processing will not work for full hysteresis loop
     _check_monotonicity(H.value)
@@ -514,9 +526,17 @@ def find_linear_segment(
 
     """
     # 1) Normalize inputs to unitless numpy arrays in A/m
-    H_arr = _unit_processing(H, u.A / u.m, return_quantity=False)
-    M_arr = _unit_processing(M, u.A / u.m, return_quantity=False)
-    margin_val = _unit_processing(margin, u.A / u.m, return_quantity=False)
+    # H_arr = _unit_processing(H, u.A / u.m, return_quantity=False)
+    # M_arr = _unit_processing(M, u.A / u.m, return_quantity=False)
+    # margin_val = _unit_processing(margin, u.A / u.m, return_quantity=False)
+
+    H = me._entity.from_compatible("ExternalMagneticField", "A / m", H=H)
+    M = me._entity.from_compatible("Magnetization", "A / m", M=M)
+    margin = me._entity.from_compatible("Magnetization", "A / m", margin=margin)
+
+    H_arr = H.value
+    M_arr = M.value
+    margin_val = margin.value
 
     # 2) Basic sanity checks
     if H_arr.shape != M_arr.shape:
