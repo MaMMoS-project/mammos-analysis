@@ -276,7 +276,7 @@ def kuzmin_properties(
         A=_A_function_of_temperature(A_0, Ms_0.value, Tc.value, s, T),
         K1=K1,
         Tc=Tc,
-        s=s * u.dimensionless_unscaled,
+        s=s,
     )
 
 
