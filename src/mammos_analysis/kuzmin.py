@@ -376,9 +376,7 @@ class _A_function_of_temperature:
     def __repr__(self):
         return "A(T)"
 
-    def __call__(self, T: numbers.Real | mammos_units.Quantity):
-        if isinstance(T, u.Quantity):
-            T = T.to(u.K).value
+    def __call__(self, T: mammos_entity.Entity | mammos_units.Quantity | numbers.Real):
         return me.A(
             self.A_0.q
             * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0) ** 2,
@@ -461,9 +459,9 @@ class _K1_function_of_temperature:
     def __repr__(self):
         return "K1(T)"
 
-    def __call__(self, T: numbers.Real | mammos_units.Quantity) -> me.Entity:
-        if isinstance(T, u.Quantity):
-            T = T.to(u.K).value
+    def __call__(
+        self, T: mammos_entity.Entity | mammos_units.Quantity | numbers.Real
+    ) -> me.Entity:
         return me.K1(
             self.K1_0.q
             * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0) ** 3
@@ -536,9 +534,7 @@ class _Ms_function_of_temperature:
     def __repr__(self):
         return "Ms(T)"
 
-    def __call__(self, T: numbers.Real | mammos_units.Quantity):
-        if isinstance(T, u.Quantity):
-            T = T.to(u.K).value
+    def __call__(self, T: mammos_entity.Entity | mammos_units.Quantity | numbers.Real):
         return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q.to("kA/m"))
 
     def plot(
