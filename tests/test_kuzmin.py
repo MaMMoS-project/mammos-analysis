@@ -1,6 +1,7 @@
 """Tests for Kuzmin functions."""
 
 import math
+import numbers
 
 import mammos_entity as me
 import mammos_units as u
@@ -159,7 +160,7 @@ def test_kuzmin_properties_all_info():
     assert isinstance(result.A, _A_function_of_temperature)
     assert isinstance(result.K1, _K1_function_of_temperature)
     assert isinstance(result.Tc, me.Entity)
-    assert isinstance(result.s, u.Quantity)
+    assert isinstance(result.s, numbers.Real)
     assert result.Tc == Tc
     assert result.K1(0) == K1_0
     assert math.isclose(result.s, 0.75, rel_tol=1e-02)
@@ -206,7 +207,7 @@ def test_kuzmin_properties_no_K1_0():
     assert isinstance(result.A, _A_function_of_temperature)
     assert result.K1 is None
     assert isinstance(result.Tc, me.Entity)
-    assert isinstance(result.s, u.Quantity)
+    assert isinstance(result.s, numbers.Real)
     assert result.Ms(0) == Ms_0
 
 
@@ -227,7 +228,7 @@ def test_kuzmin_properties_no_Tc():
     assert isinstance(result.A, _A_function_of_temperature)
     assert isinstance(result.K1, _K1_function_of_temperature)
     assert isinstance(result.Tc, me.Entity)
-    assert isinstance(result.s, u.Quantity)
+    assert isinstance(result.s, numbers.Real)
     assert result.Tc == Tc
     assert result.K1(0) == K1_0
     assert math.isclose(result.s, 0.75, rel_tol=1e-02)
@@ -253,7 +254,7 @@ def test_kuzmin_properties_no_Ms_0():
     assert isinstance(result.A, _A_function_of_temperature)
     assert isinstance(result.K1, _K1_function_of_temperature)
     assert isinstance(result.Tc, me.Entity)
-    assert isinstance(result.s, u.Quantity)
+    assert isinstance(result.s, numbers.Real)
     assert result.Tc == Tc
     assert math.isclose(result.s, 0.75, rel_tol=1e-02)
     assert result.Ms(T_data) == Ms_data
@@ -269,7 +270,7 @@ def test_kuzmin_properties_no_Ms_0():
     assert isinstance(result.A, _A_function_of_temperature)
     assert isinstance(result.K1, _K1_function_of_temperature)
     assert isinstance(result.Tc, me.Entity)
-    assert isinstance(result.s, u.Quantity)
+    assert isinstance(result.s, numbers.Real)
     assert result.Tc == Tc
     assert result.K1(0) == K1_0
     assert result.Ms(T_data) == Ms_data
@@ -291,7 +292,7 @@ def test_kuzmin_properties_no_Ms_0_no_Tc():
     assert isinstance(result.A, _A_function_of_temperature)
     assert isinstance(result.K1, _K1_function_of_temperature)
     assert isinstance(result.Tc, me.Entity)
-    assert isinstance(result.s, u.Quantity)
+    assert isinstance(result.s, numbers.Real)
     assert result.Tc == Tc
     assert math.isclose(result.s, 0.75, rel_tol=1e-02)
     assert result.Ms(T_data) == Ms_data
@@ -333,7 +334,7 @@ def test_kuzmin_kA_m():
     assert isinstance(result.Ms, _Ms_function_of_temperature)
     assert isinstance(result.A, _A_function_of_temperature)
     assert isinstance(result.Tc, me.Entity)
-    assert isinstance(result.s, u.Quantity)
+    assert isinstance(result.s, numbers.Real)
     assert result.Tc == Tc
     assert math.isclose(result.s, 0.75, rel_tol=1e-02)
     assert result.Ms(T_data) == Ms_data
