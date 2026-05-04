@@ -248,7 +248,7 @@ def extract_B_curve(
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
     Returns:
-        :entity:`MagneticFluxDensity` as an Entity.
+        :entity:`MagneticFluxDensity`.
 
     Raises:
         ValueError: If the coefficient is out of range.
