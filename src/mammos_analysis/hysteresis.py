@@ -243,9 +243,9 @@ def extract_B_curve(
     """Compute the B–H curve from a hysteresis loop.
 
     Args:
-        H: External magnetic field :entity:`ExternalMagneticField`.
+        H: :entity:`ExternalMagneticField`.
             If no unit is provided, values are interpreted as 'A / m'.
-        M: Magnetization :entity:`Magnetization`.
+        M: :entity:`Magnetization`.
             If no unit is provided, values are interpreted as 'A / m'.
         demagnetization_coefficient: Demagnetization coefficient (0 to 1).
 
