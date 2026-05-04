@@ -327,7 +327,7 @@ def test_kuzmin_kA_m():
     Tc = me.Tc(value=500, unit="K")
     T_data = me.Entity("ThermodynamicTemperature", value=[100, 200, 300, 400, 500])
     Ms_0 = me.Ms(100)
-    Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data).q.to("kA/m"))
+    Ms_data = me.Ms(kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data), unit="kA/m")
     result = kuzmin_properties(Ms=Ms_data, T=T_data)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
