@@ -7,12 +7,10 @@ import warnings
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    # import astropy.units
     import mammos_units
     import matplotlib
     import numpy
 
-# import astropy.units
 import mammos_entity
 import mammos_entity as me
 import mammos_units
