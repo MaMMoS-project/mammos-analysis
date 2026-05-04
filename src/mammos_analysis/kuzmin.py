@@ -45,7 +45,7 @@ class KuzminResult:
     Tc: me.Entity
     """:entity:`CurieTemperature`."""
 
-    s: mammos_units.Quantity
+    s: numbers.Real
     """Kuzmin parameter."""
 
     K1: (
