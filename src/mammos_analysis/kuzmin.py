@@ -379,8 +379,7 @@ class _A_function_of_temperature:
     def __call__(self, T: mammos_entity.Entity | mammos_units.Quantity | numbers.Real):
         return me.A(
             self.A_0.q
-            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0) ** 2,
-            self.A_0.unit,
+            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0) ** 2
         )
 
     def plot(
