@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mammos-analysis"
-version = "0.6.0"
+version = "0.7.0"
 description = "Analysis functionality package."
 readme = "README.md"
 authors = [
@@ -29,7 +29,6 @@ dependencies = [
   "mammos_entity >=0.8.0",
   "mammos_units",
   "numpy",
-  "pydantic",
   "scipy",
   "matplotlib",
 ]

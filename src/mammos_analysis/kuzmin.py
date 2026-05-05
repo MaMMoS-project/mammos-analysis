@@ -7,43 +7,85 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 from warnings import warn
 
-import mammos_entity
 import mammos_entity as me
 import mammos_units as u
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import figaspect
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
-from scipy.optimize import curve_fit
 
 if TYPE_CHECKING:
     import astropy.units
     import mammos_entity
-    import matplotlib
+    import matplotlib.axes
     import numpy
+    import numpy.typing
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
-class KuzminResult:
-    """Result of Kuz'min magnetic properties estimation."""
+class KuzminResult(me.EntityCollection):
+    """Result of Kuz'min magnetic properties estimation.
 
-    Ms: Callable[[numbers.Real | u.Quantity], me.Entity]
-    """Callable returning temperature-dependent spontaneous magnetization."""
-    A: Callable[[numbers.Real | u.Quantity], me.Entity]
-    """Callable returning temperature-dependent exchange stiffness."""
-    Tc: me.Entity
-    """Curie temperature."""
-    s: u.Quantity
-    """Kuzmin parameter."""
-    K1: Callable[[numbers.Real | u.Quantity], me.Entity] | None = None
-    """Callable returning temperature-dependent uniaxial anisotropy."""
+    The fitted Curie temperature ``Tc`` and the dimensionless Kuz'min parameter ``s``
+    are stored as entity-like members of the collection (accessible via attribute or
+    dict-style access, and included in serialisation to CSV/YAML/HDF5).
+
+    The temperature-dependent callables ``Ms(T)``, ``A(T)``, and ``K1(T)`` are exposed
+    as read-only properties. They are not entity-like and therefore not part of the
+    collection's serialised data.
+    """
+
+    def __init__(
+        self,
+        Ms: Callable[..., mammos_entity.Entity],
+        A: Callable[..., mammos_entity.Entity],
+        Tc: mammos_entity.Entity,
+        s: astropy.units.Quantity,
+        K1: Callable[..., mammos_entity.Entity] | None = None,
+        description: str = "",
+    ) -> None:
+        """Create a new KuzminResult.
+
+        Args:
+            Ms: Callable returning temperature-dependent spontaneous magnetization
+                as :entity:`SpontaneousMagnetization`.
+            A: Callable returning temperature-dependent exchange stiffness
+                as :entity:`ExchangeStiffnessConstant`.
+            Tc: Fitted Curie temperature as :entity:`CurieTemperature`.
+            s: Dimensionless Kuz'min parameter as an ``astropy.units.Quantity``.
+            K1: Callable returning temperature-dependent uniaxial anisotropy
+                as :entity:`UniaxialAnisotropyConstant`, or ``None`` if ``K1_0`` was
+                not provided to :func:`kuzmin_properties`.
+            description: Description of the collection.
+        """
+        me._entity.ensure_entity("CurieTemperature", Tc=Tc)
+        if not isinstance(s, u.Quantity):
+            raise TypeError(
+                f"Argument s: expected astropy.units.Quantity, got {type(s).__name__}."
+            )
+        super().__init__(description=description, Tc=Tc, s=s)
+        self._Ms = Ms
+        self._A = A
+        self._K1 = K1
+
+    @property
+    def Ms(self) -> Callable[..., mammos_entity.Entity]:
+        """Temperature-dependent spontaneous magnetization callable."""
+        return self._Ms
+
+    @property
+    def A(self) -> Callable[..., mammos_entity.Entity]:
+        """Temperature-dependent exchange stiffness callable."""
+        return self._A
+
+    @property
+    def K1(self) -> Callable[..., mammos_entity.Entity] | None:
+        """Temperature-dependent uniaxial anisotropy callable, or ``None``."""
+        return self._K1
 
     def plot(
         self,
         T: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray | None = None,
         celsius: bool = False,
-    ) -> matplotlib.axes.Axes:
+    ) -> numpy.ndarray:
         """Create a plot for Ms, A, and K1 as a function of temperature.
 
         Args:
@@ -51,6 +93,9 @@ class KuzminResult:
                 uniform array of 100 points is generated between the minimum and the
                 maximum available data.
             celsius: If True, plots the temperature in degree Celsius.
+
+        Returns:
+            Array of ``matplotlib.axes.Axes`` used for the subplots.
         """
         ncols = 2 if self.K1 is None else 3
         w, h = figaspect(1 / ncols)
@@ -79,9 +124,9 @@ def kuzmin_properties(
     | None = None,
     s_initial_guess: mammos_entity.Entity | numbers.Real | astropy.units.Quantity = 0.5,
 ) -> KuzminResult:
-    """Evaluate intrinsic micromagnetic properties using Kuz’min model.
+    """Evaluate intrinsic micromagnetic properties using Kuz'min model.
 
-    Computes Ms, A, and K1 as function of temperature by fitting the Kuz’min equation
+    Computes Ms, A, and K1 as function of temperature by fitting the Kuz'min equation
     to Ms vs T. The attributes Ms, A and K1 in the returned object can be called to get
     values at arbitrary temperatures.
 
@@ -191,6 +236,8 @@ def kuzmin_properties(
         Tc_ = params[-1] if optimize_Tc else Tc.value
         return kuzmin_formula(Ms_0_, Tc_, s_, T_)
 
+    from scipy.optimize import curve_fit
+
     results = curve_fit(
         F, T.value, Ms.value, p0=initial_guess, bounds=bounds, jac="3-point"
     )
@@ -238,7 +285,7 @@ def kuzmin_formula(Ms_0, T_c, s, T):
     where :math:`M_0` is the saturation magnetization, :math:`T_c` is the Curie
     temperature, and :math:`s` is an adjustable parameter.
 
-    Kuz’min, M.D., Skokov, K.P., Diop, L.B. et al. Exchange stiffness of ferromagnets.
+    Kuz'min, M.D., Skokov, K.P., Diop, L.B. et al. Exchange stiffness of ferromagnets.
     Eur. Phys. J. Plus 135, 301 (2020). https://doi.org/10.1140/epjp/s13360-020-00294-y
 
     Args:
@@ -304,12 +351,15 @@ class _A_function_of_temperature:
         """Plot A as a function of temperature using Kuzmin formula.
 
         Args:
-            T: If specified, the exchange stiffnedd is plotted against this array.
+            T: If specified, the exchange stiffness is plotted against this array.
                 Otherwise, a uniform array of 100 points is generated between the
                 minimum and the maximum available data.
             ax: optional matplotlib ``Axes`` instance to plot on an existing subplot.
             celsius: If True, plots the temperature in degree Celsius.
             **kwargs: Additional plotting arguments.
+
+        Returns:
+            The ``Axes`` used for the plot.
         """
         if not ax:
             _, ax = plt.subplots()
@@ -378,6 +428,9 @@ class _K1_function_of_temperature:
             ax: optional matplotlib ``Axes`` instance to plot on an existing subplot.
             celsius: If True, plots the temperature in degree Celsius.
             **kwargs: Additional plotting arguments.
+
+        Returns:
+            The ``Axes`` used for the plot.
         """
         if not ax:
             _, ax = plt.subplots()
@@ -448,6 +501,9 @@ class _Ms_function_of_temperature:
             ax: optional matplotlib ``Axes`` instance to plot on an existing subplot.
             celsius: If True, plots the temperature in degree Celsius.
             **kwargs: Additional plotting arguments.
+
+        Returns:
+            The ``Axes`` used for the plot.
         """
         if not ax:
             _, ax = plt.subplots()
