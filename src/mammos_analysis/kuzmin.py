@@ -313,6 +313,11 @@ def kuzmin_formula(
 
     Returns:
         :entity:`SpontaneousMagnetization` at temperature(s) T.
+
+    Raises:
+        ValueError: If input argument Ms_0 is not a scalar.
+        ValueError: If input argument T_c is not a scalar.
+        ValueError: If input argument s is not a scalar.
     """
     Ms_0 = me._entity.from_compatible("SpontaneousMagnetization", "A / m", Ms_0=Ms_0)
     T_c = me._entity.from_compatible(
