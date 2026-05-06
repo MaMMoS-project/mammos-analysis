@@ -348,36 +348,141 @@ def test_extract_BHmax_non_monotonic():
 
 
 def test_extract_BHmax_square_loop():
-    """Test the maximum energy product extraction from a square loop."""
+    """Test the maximum energy product extraction from a square loop.
+
+    For a square loop (constant M = M₀), the analytical result is:
+        BHmax = μ₀ * M₀² / 4
+    This is independent of the demagnetization coefficient N because
+    the optimal internal field point shifts to compensate.
+    """
     mu0 = u.constants.mu0
 
-    # Polarisation of 1.61T
-    Ms = me.Ms(me.J(1.61).quantity / mu0)  # about  <Quantity 1281197.2911923 A / m>
+    Ms = me.Ms(me.J(1.61).quantity / mu0)
     Ms = me.Ms(1_281_197, "A/m")
 
     # Create square loop
     H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 1000)
-    M = np.ones(shape=1000) * Ms.value  # 1000 values of H
-    M[-1] = -M[0]  # magnetisation switches for last data point
+    M = np.ones(shape=1000) * Ms.value
+    M[-1] = -M[0]
 
-    # assumption: we have a cube
-    BHmax = extract_BHmax(H=H, M=M, demagnetization_coefficient=1 / 3)
+    N = 1 / 3
+    BHmax = extract_BHmax(H=H, M=M, demagnetization_coefficient=N)
 
-    # analytical result (J**2/(4mu0))
-    BHmax_analytic = mu0**2 * Ms.quantity**2 / (4 * mu0)
+    BHmax_analytic = mu0 * Ms.quantity**2 / 4
 
-    # debug output
-    np.isclose(BHmax.quantity, BHmax_analytic, atol=3, rtol=1e-6)
+    assert np.isclose(BHmax.quantity, BHmax_analytic, atol=1000, rtol=1e-6)
 
     # Test fourth quadrant
     H_inv = -H
     M_inv = -np.ones(shape=1000) * Ms.value
     M_inv[-1] = -M_inv[0]
 
-    BHmax_inv = extract_BHmax(H_inv, M_inv, demagnetization_coefficient=1 / 3)
+    BHmax_inv = extract_BHmax(H_inv, M_inv, demagnetization_coefficient=N)
 
-    np.isclose(BHmax_inv.q, BHmax.q)
-    np.isclose(BHmax_inv.q, BHmax_analytic, atol=3, rtol=1e-6)
+    assert np.isclose(BHmax_inv.q, BHmax.q)
+    assert np.isclose(BHmax_inv.q, BHmax_analytic, atol=1000, rtol=1e-6)
+
+
+@pytest.mark.parametrize(
+    "N, M0",
+    [
+        (0, 1_000_000),
+        (1 / 3, 1_000_000),
+        (0.5, 1_000_000),
+    ],
+)
+def test_extract_BHmax_analytical_constant_M(N, M0):
+    """Test BHmax for a square loop with known analytical result.
+
+    For a square loop where M = M₀ (constant), the internal fields are:
+
+        H_int = H - N·M₀
+        B_int = μ₀(H_int + M₀) = μ₀(H - N·M₀ + M₀) = μ₀(H + (1 - N)M₀)
+
+    The energy product in the second quadrant is:
+
+        P = -B_int · H_int = -μ₀(H + (1 - N)M₀)(H - N·M₀)
+
+    Substituting u = H_int = H - N·M₀ (so H = u + N·M₀):
+
+        B_int = μ₀(u + M₀)
+        P = -μ₀(u + M₀)·u = -μ₀(u² + M₀·u)
+
+    Maximizing with respect to u:
+
+        dP/du = -μ₀(2u + M₀) = 0  →  u_opt = -M₀/2
+
+    Substituting back:
+
+        BHmax = -μ₀((-M₀/2)² + M₀·(-M₀/2))
+              = -μ₀(M₀²/4 - M₀²/2)
+              = μ₀·M₀²/4
+
+    Remarkably, this is independent of the demagnetization coefficient N
+    because the optimal internal field point shifts to compensate.
+    """
+    mu0 = u.constants.mu0
+
+    H = np.linspace(2e6, -2e6, 2000)
+    M = np.full(2000, M0)
+    M[-1] = -M0
+
+    BHmax = extract_BHmax(H=H, M=M, demagnetization_coefficient=N)
+
+    expected = mu0 * M0**2 / 4 * (u.A / u.m) ** 2
+
+    assert np.isclose(BHmax.q, expected, atol=500, rtol=1e-4)
+
+
+@pytest.mark.parametrize(
+    "alpha, beta",
+    [
+        (0, 1_000_000),
+        (0.5, 1_000_000),
+    ],
+)
+def test_extract_BHmax_analytical_linear_M(alpha, beta):
+    """Test BHmax for linear M(H) = α·H + β with N = 0.
+
+    With N = 0, the internal field equals the external field:
+
+        H_int = H
+        M = α·H + β
+        B_int = μ₀(H_int + M) = μ₀(H + α·H + β) = μ₀((1 + α)H + β)
+
+    The energy product in the second quadrant (H < 0, B > 0) is:
+
+        P = -B_int · H_int = -μ₀((1 + α)H + β)·H
+          = -μ₀((1 + α)H² + β·H)
+
+    Maximizing with respect to H:
+
+        dP/dH = -μ₀(2(1 + α)H + β) = 0
+          →  H_opt = -β / (2(1 + α))
+
+    Substituting H_opt back into P:
+
+        BHmax = -μ₀((1 + α)·(-β/(2(1+α)))² + β·(-β/(2(1+α))))
+              = -μ₀((1 + α)·β²/(4(1+α)²) - β²/(2(1+α)))
+              = -μ₀(β²/(4(1+α)) - 2β²/(4(1+α)))
+              = -μ₀(-β²/(4(1+α)))
+              = μ₀·β² / (4(1 + α))
+
+    This reduces to the constant-M result (μ₀·β²/4) when α = 0.
+
+    Note: alpha must be >= 0 to satisfy the monotonicity requirement
+    that H and M change in the same direction.
+    """
+    mu0 = u.constants.mu0
+
+    H = np.linspace(2e6, -2e6, 2000)
+    M = alpha * H + beta
+
+    BHmax = extract_BHmax(H=H, M=M, demagnetization_coefficient=0)
+
+    expected = mu0 * beta**2 / (4 * (1 + alpha)) * (u.A / u.m) ** 2
+
+    assert np.isclose(BHmax.q, expected, atol=500, rtol=1e-4)
 
 
 def test_extract_BHmax_few_values():
