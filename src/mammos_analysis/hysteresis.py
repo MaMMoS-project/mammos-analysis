@@ -282,14 +282,9 @@ def extract_B_curve(
         enforce_unit=True,
     )
 
-    H = H.q
-    M = M.q
-
     # Calculate internal field and flux density
-    H_internal = H - demagnetization_coefficient * M
-# Calculate internal field and flux density
-H_internal = H.q - demagnetization_coefficient * M.q
-B_internal = (H_internal + M.q) * u.constants.mu0
+    H_internal = H.q - demagnetization_coefficient * M.q
+    B_internal = (H_internal + M.q) * u.constants.mu0
 
     return me.Entity("MagneticFluxDensity", value=B_internal)
 
