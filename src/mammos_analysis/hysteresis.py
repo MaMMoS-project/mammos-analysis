@@ -472,8 +472,9 @@ def find_linear_segment(
          \bigl(M_i - (m\,H_i + b)\bigr)^2}
          \;\le\; \delta,
 
-       where :math:`n = i_{\max} - i_0 + 1`. Occasional points may exceed :math:`\delta`
-       provided the overall RMS error remains within :math:`\delta`.
+        where :math:`n = i_{\max} - i_0 + 1`. Occasional points may exceed
+        :math:`\delta` provided the overall RMS error remains
+        within :math:`\delta`.
 
     Parameters:
       H: Applied magnetic field values. Must be monotonic.
