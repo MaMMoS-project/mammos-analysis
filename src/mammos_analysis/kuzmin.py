@@ -135,7 +135,7 @@ def kuzmin_properties(
             If no unit is provided, values are interpreted as 'K'.
         Ms_0: :entity:`SpontaneousMagnetization` at T = 0 K.
             If no unit is provided, values are interpreted as 'A / m'.
-        Tc_initial_guess: Initial guess for Tc
+        Tc_initial_guess: Initial guess for the
             :entity:`CurieTemperature` (if optimized).
             If no unit is provided, values are interpreted as 'K'.
         Ms_0_initial_guess: Initial guess for Ms_0
