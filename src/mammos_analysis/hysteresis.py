@@ -330,14 +330,14 @@ def extract_BHmax(
     """
     H = me._entity.from_compatible(
         "ExternalMagneticField", "A / m", H=H, enforce_unit=True
-    )
+    ).q
     M = me._entity.from_compatible(
         "Magnetization",
         "A / m",
         compatible_entities=("SpontaneousMagnetization",),
         M=M,
         enforce_unit=True,
-    )
+    ).q
 
     # processing will not work for full hysteresis loop
     _check_monotonicity(H.value)
