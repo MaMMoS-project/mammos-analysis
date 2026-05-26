@@ -403,14 +403,14 @@ def test_extract_BHmax_analytical_constant_M(N, M0):
 
         P = -B_int · H_int = -μ₀(H + (1 - N)M₀)(H - N·M₀)
 
-    Substituting u = H_int = H - N·M₀ (so H = u + N·M₀):
+    Substituting H_int = H - N·M₀ (so H = H_int + N·M₀):
 
-        B_int = μ₀(u + M₀)
-        P = -μ₀(u + M₀)·u = -μ₀(u² + M₀·u)
+        B_int = μ₀(H_int + M₀)
+        P = -μ₀(H_int + M₀)·H_int = -μ₀(H_int² + M₀·H_int)
 
-    Maximizing with respect to u:
+    Maximizing with respect to H_int:
 
-        dP/du = -μ₀(2u + M₀) = 0  →  u_opt = -M₀/2
+        dP/dH_int = -μ₀(2·H_int + M₀) = 0  →  H_int_opt = -M₀/2
 
     Substituting back:
 
