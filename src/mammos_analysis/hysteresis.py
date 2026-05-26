@@ -341,7 +341,6 @@ def extract_BHmax(
 
     # processing will not work for full hysteresis loop
     _check_monotonicity(H.value)
-    _check_monotonicity(M.value)
 
     if len(H) != len(M):
         raise ValueError(
