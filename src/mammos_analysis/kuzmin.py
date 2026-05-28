@@ -245,7 +245,7 @@ def kuzmin_properties(
         s_ = params[0]
         Ms_0_ = params[1] if optimize_Ms_0 else Ms_0.value
         Tc_ = params[-1] if optimize_Tc else Tc.value
-        return np.squeeze(kuzmin_formula(Ms_0_, Tc_, s_, T_))
+        return np.squeeze(kuzmin_formula(Ms_0_, Tc_, s_, T_).value)
 
     results = curve_fit(
         F, T.value, Ms.value, p0=initial_guess, bounds=bounds, jac="3-point"
@@ -326,25 +326,24 @@ def kuzmin_formula(
         "ThermodynamicTemperature", "K", T=T, enforce_unit=True
     )
 
-    # if not np.isscalar(Ms_0.value):
-    #    raise ValueError("Argument Ms_0 must be a scalar spontaneous magnetization.")
+    if not np.isscalar(Ms_0.value):
+        raise ValueError("Argument Ms_0 must be a scalar spontaneous magnetization.")
 
-    # if not np.isscalar(T_c.value):
-    #    raise ValueError("Argument T_c must be a scalar Curie temperature.")
+    if not np.isscalar(T_c.value):
+        raise ValueError("Argument T_c must be a scalar Curie temperature.")
 
-    # if isinstance(s, u.Quantity):
-    #        s = s.value
+    if isinstance(s, u.Quantity):
+        s = s.value
 
-    # if not np.isscalar(s):
-    #    raise ValueError("Argument s must be a scalar.")
+    if not np.isscalar(s):
+        raise ValueError("Argument s must be a scalar.")
 
     base = 1 - s * (T.q / T_c.q) ** 1.5 - (1 - s) * (T.q / T_c.q) ** 2.5
 
     out = np.zeros_like(base, dtype=np.float64)
     np.cbrt(base, out=out, where=T_c.q > T.q)  # compute cubic root of base
 
-    # return me.Ms((Ms_0.q * out).reshape(T.q.shape))
-    return Ms_0.value * out.value
+    return me.Ms((Ms_0.q * out).reshape(T.q.shape))
 
 
 class _A_function_of_temperature:
@@ -382,7 +381,7 @@ class _A_function_of_temperature:
     ) -> mammos_entity.Entity:
         return me.A(
             self.A_0.q
-            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0.value) ** 2
+            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0.q) ** 2
         )
 
     def plot(
@@ -459,7 +458,7 @@ class _K1_function_of_temperature:
     ) -> mammos_entity.Entity:
         return me.K1(
             self.K1_0.q
-            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T) / self.Ms_0.value) ** 3
+            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0.q) ** 3
         )
 
     def plot(
@@ -529,7 +528,7 @@ class _Ms_function_of_temperature:
     def __call__(
         self, T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike
     ) -> mammos_entity.Entity:
-        return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T) * u.A / u.m, "kA/m")
+        return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q, "kA/m")
 
     def plot(
         self,
