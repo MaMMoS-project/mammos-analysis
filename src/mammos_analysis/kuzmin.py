@@ -330,8 +330,14 @@ def kuzmin_formula(
     if not np.isscalar(Ms_0.value):
         raise ValueError("Argument Ms_0 must be a scalar spontaneous magnetization.")
 
+    if Ms_0.value < 0:
+        raise ValueError("Argument Ms_0 must be non-negative.")
+
     if not np.isscalar(T_c.value):
         raise ValueError("Argument T_c must be a scalar Curie temperature.")
+
+    if T_c.value <= 0:
+        raise ValueError("Argument T_c must be positive.")
 
     if isinstance(s, u.Quantity):
         if not s.unit.is_equivalent(u.dimensionless_unscaled):
