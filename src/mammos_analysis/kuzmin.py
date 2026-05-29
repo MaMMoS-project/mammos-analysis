@@ -282,7 +282,7 @@ def kuzmin_formula(
     T_c: mammos_entity.Entity | mammos_units.Quantity | numbers.Real,
     s: mammos_units.Quantity | numbers.Real,
     T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
-) -> numpy.ndarray:
+) -> mammos_entity.Entity:
     r"""Compute spontaneous magnetization at temperature T using Kuz'min formula.
 
     The formula approximates the spontaneous magnetization :math:`M_s(T)` for
