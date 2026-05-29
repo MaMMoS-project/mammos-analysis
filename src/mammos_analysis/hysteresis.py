@@ -232,7 +232,12 @@ def extract_B_curve(
     M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     demagnetization_coefficient: float,
 ) -> mammos_entity.Entity:
-    """Compute the B–H curve from a hysteresis loop.
+    r"""Compute the B–H curve from a hysteresis loop.
+
+    The internal field and flux density are computed as
+    :math:`H_{int} = H - N_{dem} M` and
+    :math:`B_{int} = \mu_0 (H_{int} + M)`, where :math:`N_{dem}` is the
+    demagnetization coefficient.
 
     Args:
         H: :entity:`ExternalMagneticField`.
@@ -259,8 +264,10 @@ def extract_B_curve(
     # TODO the doctest should use the following line but that sometimes
     # fails on Mac and/or Windows
     # MagneticFluxDensity(value=..., unit=T)
-    if isinstance(demagnetization_coefficient, int | float):
-        if demagnetization_coefficient < 0 or demagnetization_coefficient > 1:
+
+    N_dem = demagnetization_coefficient
+    if isinstance(N_dem, int | float):
+        if N_dem < 0 or N_dem > 1:
             raise ValueError("Demagnetization coefficient must be between 0 and 1.")
     else:
         raise ValueError("Demagnetization coefficient must be a float or int.")
@@ -277,7 +284,7 @@ def extract_B_curve(
     )
 
     # Calculate internal field and flux density
-    H_internal = H.q - demagnetization_coefficient * M.q
+    H_internal = H.q - N_dem * M.q
     B_internal = (H_internal + M.q) * u.constants.mu0
 
     return me.Entity("MagneticFluxDensity", value=B_internal)
@@ -309,11 +316,16 @@ def extract_BHmax(
     M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     demagnetization_coefficient: float,
 ) -> mammos_entity.Entity:
-    """Determine the maximum energy product from a hysteresis loop.
+    r"""Determine the maximum energy product from a hysteresis loop.
 
-    Computes internal fields H_int and B_int from H and M using
-    the demagnetization_coefficient. H and M provide array data
-    for a half-hysteresis loop.
+    Computes internal fields H_int and B_int from H and M using the
+    demagnetization_coefficient. H and M provide array data for a
+    half-hysteresis loop.
+
+    The internal field and flux density are computed as
+    :math:`H_{int} = H - N_{dem} M` and
+    :math:`B_{int} = \mu_0 (H_{int} + M)`, where :math:`N_{dem}` is the
+    demagnetization coefficient.
 
     Args:
         H: :entity:`ExternalMagneticField`.
@@ -351,6 +363,7 @@ def extract_BHmax(
 
     H = H.q
     M = M.q
+    N_dem = demagnetization_coefficient
 
     assert len(H) == len(M)
 
@@ -365,7 +378,7 @@ def extract_BHmax(
         M = M[::-1]
 
     # Calculate internal field and flux density
-    H_internal = H - demagnetization_coefficient * M
+    H_internal = H - N_dem * M
     B_internal = (H_internal + M) * u.constants.mu0
 
     # only consider values in 2nd quadrant
@@ -416,11 +429,9 @@ def extrinsic_properties(
     """
     Hc = extract_coercive_field(H, M)
     Mr = extract_remanent_magnetization(H, M)
+    N_dem = demagnetization_coefficient
 
-    if demagnetization_coefficient is None:
-        BHmax = me.BHmax(np.nan)
-    else:
-        BHmax = extract_BHmax(H, M, demagnetization_coefficient)
+    BHmax = me.BHmax(np.nan) if N_dem is None else extract_BHmax(H, M, N_dem)
 
     return ExtrinsicProperties(
         Hc=me.Hc(Hc),
