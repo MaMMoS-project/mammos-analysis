@@ -318,7 +318,7 @@ def kuzmin_formula(
         ValueError: If input argument s is not a scalar.
     """
     Ms_0 = me._entity.from_compatible(
-        "SpontaneousMagnetization", "A / m", Ms_0=Ms_0, enforce_unit=True
+        "SpontaneousMagnetization", "A / m", Ms_0=Ms_0, enforce_unit=False
     )
     T_c = me._entity.from_compatible(
         "CurieTemperature", "K", T_c=T_c, enforce_unit=True
