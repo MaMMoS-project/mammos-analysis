@@ -66,6 +66,16 @@ def test_kuzmin_formula_preserves_Ms_0_unit():
     assert result.q.unit == u.kA / u.m
 
 
+def test_kuzmin_formula_preserves_T_shape():
+    """Test Kuzmin formula preserves the shape of T."""
+    scalar_result = kuzmin_formula(Ms_0=100, T_c=300, s=0.5, T=100)
+    assert scalar_result.value.shape == ()
+
+    T = np.array([0.0, 100.0, 200.0])
+    array_result = kuzmin_formula(Ms_0=100, T_c=300, s=0.5, T=T)
+    assert array_result.value.shape == T.shape
+
+
 def test_kuzmin_formula_rejects_non_dimensionless_s():
     """Test Kuzmin formula rejects non-dimensionless s."""
     with pytest.raises(ValueError, match="s must be dimensionless"):
