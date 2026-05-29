@@ -237,14 +237,14 @@ def extract_B_curve(
     The internal field and flux density are computed as
     :math:`H_{int} = H - N_{dem} M` and
     :math:`B_{int} = \mu_0 (H_{int} + M)`, where :math:`N_{dem}` is the
-    demagnetization coefficient.
+    demagnetizing factor.
 
     Args:
         H: :entity:`ExternalMagneticField`.
             If no unit is provided, values are interpreted as 'A / m'.
         M: :entity:`Magnetization`.
             If no unit is provided, values are interpreted as 'A / m'.
-        demagnetization_coefficient: Demagnetization coefficient (0 to 1).
+        demagnetization_coefficient: Demagnetizing factor (0 to 1).
 
     Returns:
         :entity:`MagneticFluxDensity`.
@@ -266,9 +266,9 @@ def extract_B_curve(
     # MagneticFluxDensity(value=..., unit=T)
     if isinstance(demagnetization_coefficient, int | float):
         if demagnetization_coefficient < 0 or demagnetization_coefficient > 1:
-            raise ValueError("Demagnetization coefficient must be between 0 and 1.")
+            raise ValueError("Demagnetizing factor must be between 0 and 1.")
     else:
-        raise ValueError("Demagnetization coefficient must be a float or int.")
+        raise ValueError("Demagnetizing factor must be a float or int.")
 
     H = me._entity.from_compatible(
         "ExternalMagneticField", "A / m", H=H, enforce_unit=True
@@ -317,20 +317,20 @@ def extract_BHmax(
     r"""Determine the maximum energy product from a hysteresis loop.
 
     Computes internal fields H_int and B_int from H and M using the
-    demagnetization_coefficient. H and M provide array data for a
+    demagnetizing factor. H and M provide array data for a
     half-hysteresis loop.
 
     The internal field and flux density are computed as
     :math:`H_{int} = H - N_{dem} M` and
     :math:`B_{int} = \mu_0 (H_{int} + M)`, where :math:`N_{dem}` is the
-    demagnetization coefficient.
+    demagnetizing factor.
 
     Args:
         H: :entity:`ExternalMagneticField`.
             If no unit is provided, values are interpreted as 'A / m'.
         M: :entity:`Magnetization`.
             If no unit is provided, values are interpreted as 'A / m'.
-        demagnetization_coefficient: Demagnetization coefficient (0 to 1).
+        demagnetization_coefficient: Demagnetizing factor (0 to 1).
 
     Returns:
         :entity:`MaximumEnergyProduct`.
@@ -416,7 +416,7 @@ def extrinsic_properties(
             If no unit is provided, values are interpreted as 'A / m'.
         M: :entity:`Magnetization`.
             If no unit is provided, values are interpreted as 'A / m'.
-        demagnetization_coefficient: Demagnetization coefficient for BHmax.
+        demagnetization_coefficient: Demagnetizing factor for BHmax.
 
     Returns:
         ExtrinsicProperties containing Hc, Mr, and BHmax.
