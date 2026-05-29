@@ -62,6 +62,12 @@ def test_kuzmin_formula_ints():
     assert isinstance(result, me.Entity)
 
 
+def test_kuzmin_formula_rejects_non_dimensionless_s():
+    """Test Kuzmin formula rejects non-dimensionless s."""
+    with pytest.raises(ValueError, match="s must be dimensionless"):
+        kuzmin_formula(Ms_0=100, T_c=300, s=0.5 * u.m, T=100)
+
+
 def test_Ms_function_of_temperature():
     """Test the Ms function of temperature."""
     T = me.Entity("ThermodynamicTemperature", value=[0, 100, 200], unit="K")

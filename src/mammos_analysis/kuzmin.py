@@ -314,6 +314,7 @@ def kuzmin_formula(
     Raises:
         ValueError: If input argument Ms_0 is not a scalar.
         ValueError: If input argument T_c is not a scalar.
+        ValueError: If input argument s is not dimensionless.
         ValueError: If input argument s is not a scalar.
     """
     Ms_0 = me._entity.from_compatible(
@@ -333,6 +334,8 @@ def kuzmin_formula(
         raise ValueError("Argument T_c must be a scalar Curie temperature.")
 
     if isinstance(s, u.Quantity):
+        if not s.unit.is_equivalent(u.dimensionless_unscaled):
+            raise ValueError("Argument s must be dimensionless.")
         s = s.value
 
     if not np.isscalar(s):
