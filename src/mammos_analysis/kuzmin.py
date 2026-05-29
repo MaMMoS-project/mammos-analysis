@@ -306,7 +306,7 @@ def kuzmin_formula(
             If no unit is provided, values are interpreted as 'A / m'.
         T_c: :entity:`CurieTemperature`.
             If no unit is provided, values are interpreted as 'K'.
-        s: Kuz’min exponent parameter.
+        s: Kuz’min exponent parameter (dimensionless).
 
     Returns:
         :entity:`SpontaneousMagnetization` at temperature(s) T.
