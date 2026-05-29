@@ -27,8 +27,7 @@ def test_kuzmin_formula_below_Tc():
         (1 - s * (T / Tc) ** 1.5 - (1 - s) * (T / Tc) ** 2.5) ** (1.0 / 3)
     )
     result = kuzmin_formula(Ms0, Tc, s, T)
-    assert isinstance(result, me.Entity)
-    assert np.allclose(result.value, expected)
+    assert result == me.Ms(expected)
 
 
 def test_kuzmin_formula_above_Tc():
@@ -38,8 +37,7 @@ def test_kuzmin_formula_above_Tc():
     s = 0.5
     T = np.array([300.0, 400.0])
     result = kuzmin_formula(Ms0, Tc, s, T)
-    assert isinstance(result, me.Entity)
-    assert np.allclose(result.value, 0.0)
+    assert result == me.Ms([0.0, 0.0])
 
 
 def test_kuzmin_formula_full_range():
@@ -49,7 +47,7 @@ def test_kuzmin_formula_full_range():
     s = 0.5
     T = np.array([0.0, 150.0, 300.0, 450.0])
     result = kuzmin_formula(Ms0, Tc, s, T)
-    assert isinstance(result, me.Entity)
+    assert result == me.Ms([100.0, 90.23948387, 0.0, 0.0])
 
 
 def test_kuzmin_formula_ints():
@@ -59,13 +57,22 @@ def test_kuzmin_formula_ints():
     s = 0.5
     T = np.array([0, 150, 300, 450])
     result = kuzmin_formula(Ms0, Tc, s, T)
-    assert isinstance(result, me.Entity)
+    assert result == me.Ms([100.0, 90.23948387, 0.0, 0.0])
 
 
 def test_kuzmin_formula_rejects_non_dimensionless_s():
     """Test Kuzmin formula rejects non-dimensionless s."""
     with pytest.raises(ValueError, match="s must be dimensionless"):
         kuzmin_formula(Ms_0=100, T_c=300, s=0.5 * u.m, T=100)
+
+
+def test_kuzmin_formula_ensures_scalar_values():
+    """Test Kuzmin formula rejects non-scalar values."""
+    with pytest.raises(ValueError, match="Ms_0 must be a scalar"):
+        kuzmin_formula(Ms_0=me.Ms([100]), T_c=300, s=0.75, T=100)
+
+    with pytest.raises(ValueError, match="T_c must be a scalar"):
+        kuzmin_formula(Ms_0=100, T_c=me.Tc([500]), s=0.75, T=100)
 
 
 def test_Ms_function_of_temperature():
@@ -79,8 +86,7 @@ def test_Ms_function_of_temperature():
     assert repr(ms_func) == "Ms(T)"
     # numeric input
     m = ms_func(100.0)
-    assert isinstance(m, me.Entity)
-    assert u.allclose(m.q, kuzmin_formula(Ms0, Tc, s, 100.0).q)
+    assert kuzmin_formula(Ms0, Tc, s, 100.0) == m
     # quantity input
     Tq = 100.0 * u.K
     m_q = ms_func(Tq)
@@ -178,10 +184,6 @@ def test_kuzmin_properties_all_info():
         / (4 * u.constants.muB)
     )
     assert result.A(0) == A_0
-    with pytest.raises(ValueError, match="Ms_0 must be a scalar"):
-        kuzmin_formula(Ms_0=me.Ms([100]), T_c=Tc, s=0.75, T=T_data)
-    with pytest.raises(ValueError, match="T_c must be a scalar"):
-        kuzmin_formula(Ms_0=Ms_0, T_c=me.Tc([500]), s=0.75, T=T_data)
 
 
 def test_kuzmin_properties_no_K1_0():
