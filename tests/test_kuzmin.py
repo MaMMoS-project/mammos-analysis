@@ -60,6 +60,12 @@ def test_kuzmin_formula_ints():
     assert result == me.Ms([100.0, 90.23948387, 0.0, 0.0])
 
 
+def test_kuzmin_formula_preserves_Ms_0_unit():
+    """Test Kuzmin formula preserves the unit of Ms_0."""
+    result = kuzmin_formula(Ms_0=me.Ms(100, unit="kA/m"), T_c=300, s=0.5, T=100)
+    assert result.q.unit == u.kA / u.m
+
+
 def test_kuzmin_formula_rejects_non_dimensionless_s():
     """Test Kuzmin formula rejects non-dimensionless s."""
     with pytest.raises(ValueError, match="s must be dimensionless"):
