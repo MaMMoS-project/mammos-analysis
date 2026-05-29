@@ -309,7 +309,7 @@ def kuzmin_formula(
         s: Kuz’min exponent parameter.
 
     Returns:
-        SpontaneousMagnetization at temperature(s) T.
+        :entity:`SpontaneousMagnetization` at temperature(s) T.
 
     Raises:
         ValueError: If input argument Ms_0 is not a scalar.
