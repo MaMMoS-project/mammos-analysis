@@ -264,10 +264,8 @@ def extract_B_curve(
     # TODO the doctest should use the following line but that sometimes
     # fails on Mac and/or Windows
     # MagneticFluxDensity(value=..., unit=T)
-
-    N_dem = demagnetization_coefficient
-    if isinstance(N_dem, int | float):
-        if N_dem < 0 or N_dem > 1:
+    if isinstance(demagnetization_coefficient, int | float):
+        if demagnetization_coefficient < 0 or demagnetization_coefficient > 1:
             raise ValueError("Demagnetization coefficient must be between 0 and 1.")
     else:
         raise ValueError("Demagnetization coefficient must be a float or int.")
@@ -284,7 +282,7 @@ def extract_B_curve(
     )
 
     # Calculate internal field and flux density
-    H_internal = H.q - N_dem * M.q
+    H_internal = H.q - demagnetization_coefficient * M.q
     B_internal = (H_internal + M.q) * u.constants.mu0
 
     return me.Entity("MagneticFluxDensity", value=B_internal)
@@ -363,7 +361,6 @@ def extract_BHmax(
 
     H = H.q
     M = M.q
-    N_dem = demagnetization_coefficient
 
     assert len(H) == len(M)
 
@@ -378,7 +375,7 @@ def extract_BHmax(
         M = M[::-1]
 
     # Calculate internal field and flux density
-    H_internal = H - N_dem * M
+    H_internal = H - demagnetization_coefficient * M
     B_internal = (H_internal + M) * u.constants.mu0
 
     # only consider values in 2nd quadrant
@@ -429,9 +426,12 @@ def extrinsic_properties(
     """
     Hc = extract_coercive_field(H, M)
     Mr = extract_remanent_magnetization(H, M)
-    N_dem = demagnetization_coefficient
 
-    BHmax = me.BHmax(np.nan) if N_dem is None else extract_BHmax(H, M, N_dem)
+    BHmax = (
+        me.BHmax(np.nan)
+        if demagnetization_coefficient is None
+        else extract_BHmax(H, M, demagnetization_coefficient)
+    )
 
     return ExtrinsicProperties(
         Hc=me.Hc(Hc),
