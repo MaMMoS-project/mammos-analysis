@@ -245,7 +245,7 @@ def kuzmin_properties(
         s_ = params[0]
         Ms_0_ = params[1] if optimize_Ms_0 else Ms_0.value
         Tc_ = params[-1] if optimize_Tc else Tc.value
-        return np.squeeze(kuzmin_formula(Ms_0_, Tc_, s_, T_).value)
+        return kuzmin_formula(Ms_0_, Tc_, s_, T_).value
 
     results = curve_fit(
         F, T.value, Ms.value, p0=initial_guess, bounds=bounds, jac="3-point"
