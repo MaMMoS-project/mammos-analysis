@@ -309,11 +309,16 @@ def kuzmin_formula(
         s: Kuz’min exponent parameter (dimensionless).
 
     Returns:
-        :entity:`SpontaneousMagnetization` at temperature(s) T.
+        :entity:`SpontaneousMagnetization` at temperature(s) T. The returned
+        entity keeps the unit of `Ms_0` and has the same shape as `T`.
+        Temperatures greater than or equal to `T_c` return zero spontaneous
+        magnetization.
 
     Raises:
         ValueError: If input argument Ms_0 is not a scalar.
+        ValueError: If input argument Ms_0 is negative.
         ValueError: If input argument T_c is not a scalar.
+        ValueError: If input argument T_c is not positive.
         ValueError: If input argument s is not dimensionless.
         ValueError: If input argument s is not a scalar.
     """
