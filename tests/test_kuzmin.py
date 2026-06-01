@@ -91,6 +91,29 @@ def test_kuzmin_formula_ensures_scalar_values():
         kuzmin_formula(Ms_0=100, T_c=me.Tc([500]), s=0.75, T=100)
 
 
+def test_kuzmin_formula_rejects_invalid_scalar_parameters():
+    """Test Kuzmin formula rejects invalid scalar parameters."""
+    with pytest.raises(ValueError, match="Ms_0 must be non-negative"):
+        kuzmin_formula(Ms_0=-100, T_c=300, s=0.75, T=100)
+
+    with pytest.raises(ValueError, match="T_c must be positive"):
+        kuzmin_formula(Ms_0=100, T_c=0, s=0.75, T=100)
+
+    with pytest.raises(ValueError, match="T_c must be positive"):
+        kuzmin_formula(Ms_0=100, T_c=-300, s=0.75, T=100)
+
+    with pytest.raises(ValueError, match="s must be a scalar"):
+        kuzmin_formula(Ms_0=100, T_c=300, s=[0.75], T=100)
+
+    with pytest.raises(ValueError, match="s must be a scalar"):
+        kuzmin_formula(
+            Ms_0=100,
+            T_c=300,
+            s=[0.75] * u.dimensionless_unscaled,
+            T=100,
+        )
+
+
 def test_Ms_function_of_temperature():
     """Test the Ms function of temperature."""
     T = me.Entity("ThermodynamicTemperature", value=[0, 100, 200], unit="K")
@@ -312,7 +335,6 @@ def test_kuzmin_properties_no_Ms_0():
     assert result.K1(0) == K1_0
     assert result.Ms(T_data) == Ms_data
     assert result.Ms(0) == me.Ms(200)
-    T_data = me.Entity("ThermodynamicTemperature", value=[50, 100], unit="K")
 
 
 def test_kuzmin_properties_no_Ms_0_no_Tc():
