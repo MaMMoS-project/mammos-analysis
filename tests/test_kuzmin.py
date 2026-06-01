@@ -218,6 +218,35 @@ def test_kuzmin_properties_no_K1_0():
     assert result.Ms(0) == Ms_0
 
 
+def test_kuzmin_properties_accepts_K1_and_Ku():
+    """Test kuzmin_properties accepts K1 and Ku as anisotropy input."""
+    s = 0.75
+    Tc = me.Tc(value=500, unit="K")
+    T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
+    Ms_0 = me.Ms(100)
+    Ms_data = kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data)
+
+    result_K1 = kuzmin_properties(
+        Ms=Ms_data,
+        T=T_data,
+        Tc=Tc,
+        Ms_0=Ms_0,
+        K1_0=me.K1(1e5, unit=u.J / u.m**3),
+    )
+    result_Ku = kuzmin_properties(
+        Ms=Ms_data,
+        T=T_data,
+        Tc=Tc,
+        Ms_0=Ms_0,
+        K1_0=me.Ku(1e5, unit=u.J / u.m**3),
+    )
+
+    assert isinstance(result_K1.K1, _K1_function_of_temperature)
+    assert isinstance(result_Ku.K1, _K1_function_of_temperature)
+    assert result_K1.K1(0) == result_Ku.K1(0)
+    assert result_K1.K1(T_data) == result_Ku.K1(T_data)
+
+
 def test_kuzmin_properties_no_Tc():
     """Test the kuzmin properties function without Tc.
 
