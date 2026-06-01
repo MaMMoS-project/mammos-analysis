@@ -232,14 +232,19 @@ def extract_B_curve(
     M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     demagnetization_coefficient: float,
 ) -> mammos_entity.Entity:
-    """Compute the B–H curve from a hysteresis loop.
+    r"""Compute the B–H curve from a hysteresis loop.
+
+    The internal field and flux density are computed as
+    :math:`H_{int} = H - N_{dem} M` and
+    :math:`B_{int} = \mu_0 (H_{int} + M)`, where :math:`N_{dem}` is the
+    demagnetizing factor.
 
     Args:
         H: :entity:`ExternalMagneticField`.
             If no unit is provided, values are interpreted as 'A / m'.
         M: :entity:`Magnetization`.
             If no unit is provided, values are interpreted as 'A / m'.
-        demagnetization_coefficient: Demagnetization coefficient (0 to 1).
+        demagnetization_coefficient: Demagnetizing factor (0 to 1).
 
     Returns:
         :entity:`MagneticFluxDensity`.
@@ -261,9 +266,9 @@ def extract_B_curve(
     # MagneticFluxDensity(value=..., unit=T)
     if isinstance(demagnetization_coefficient, int | float):
         if demagnetization_coefficient < 0 or demagnetization_coefficient > 1:
-            raise ValueError("Demagnetization coefficient must be between 0 and 1.")
+            raise ValueError("Demagnetizing factor must be between 0 and 1.")
     else:
-        raise ValueError("Demagnetization coefficient must be a float or int.")
+        raise ValueError("Demagnetizing factor must be a float or int.")
 
     H = me._entity.from_compatible(
         "ExternalMagneticField", "A / m", H=H, enforce_unit=True
@@ -309,18 +314,23 @@ def extract_BHmax(
     M: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike,
     demagnetization_coefficient: float,
 ) -> mammos_entity.Entity:
-    """Determine the maximum energy product from a hysteresis loop.
+    r"""Determine the maximum energy product from a hysteresis loop.
 
-    Computes internal fields H_int and B_int from H and M using
-    the demagnetization_coefficient. H and M provide array data
-    for a half-hysteresis loop.
+    Computes internal fields H_int and B_int from H and M using the
+    demagnetizing factor. H and M provide array data for a
+    half-hysteresis loop.
+
+    The internal field and flux density are computed as
+    :math:`H_{int} = H - N_{dem} M` and
+    :math:`B_{int} = \mu_0 (H_{int} + M)`, where :math:`N_{dem}` is the
+    demagnetizing factor.
 
     Args:
         H: :entity:`ExternalMagneticField`.
             If no unit is provided, values are interpreted as 'A / m'.
         M: :entity:`Magnetization`.
             If no unit is provided, values are interpreted as 'A / m'.
-        demagnetization_coefficient: Demagnetization coefficient (0 to 1).
+        demagnetization_coefficient: Demagnetizing factor (0 to 1).
 
     Returns:
         :entity:`MaximumEnergyProduct`.
@@ -406,7 +416,7 @@ def extrinsic_properties(
             If no unit is provided, values are interpreted as 'A / m'.
         M: :entity:`Magnetization`.
             If no unit is provided, values are interpreted as 'A / m'.
-        demagnetization_coefficient: Demagnetization coefficient for BHmax.
+        demagnetization_coefficient: Demagnetizing factor for BHmax.
 
     Returns:
         ExtrinsicProperties containing Hc, Mr, and BHmax.
@@ -417,10 +427,11 @@ def extrinsic_properties(
     Hc = extract_coercive_field(H, M)
     Mr = extract_remanent_magnetization(H, M)
 
-    if demagnetization_coefficient is None:
-        BHmax = me.BHmax(np.nan)
-    else:
-        BHmax = extract_BHmax(H, M, demagnetization_coefficient)
+    BHmax = (
+        me.BHmax(np.nan)
+        if demagnetization_coefficient is None
+        else extract_BHmax(H, M, demagnetization_coefficient)
+    )
 
     return ExtrinsicProperties(
         Hc=me.Hc(Hc),

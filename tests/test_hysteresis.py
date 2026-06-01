@@ -327,7 +327,7 @@ def test_B_curve_errors():
     H = me.H(h_values * u.A / u.m)
     M = me.Ms(m_values * u.A / u.m)
 
-    # Test with invalid demagnetization coefficient
+    # Test with invalid demagnetizing factor
     with pytest.raises(ValueError):
         extract_B_curve(H, M, demagnetization_coefficient=None)
     with pytest.raises(ValueError):

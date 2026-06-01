@@ -1,4 +1,4 @@
-"""Functions calculating demagnetization factors."""
+"""Functions calculating demagnetizing factors."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def demag_cuboid(
     x2: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
     x3: mammos_entity.Entity | astropy.units.Quantity | numpy.ndarray,
 ) -> mammos_entity.Entity:
-    """Calculate demagnetization factors of a rectangular cuboid.
+    """Calculate demagnetizing factors of a rectangular cuboid.
 
     Equation 1 from A. Aharoni, J. Appl. Phys. 83, 3422 (1998).
     https://doi.org/10.1063/1.367113
@@ -29,8 +29,8 @@ def demag_cuboid(
         x3: Full side length of rectangular cuboid in direction 3
 
     Returns:
-        Demagnetizing factors along each dimension. Order of dimensions is the
-        same as for input arguments.
+        :entity:`DemagnetizingFactor` along each dimension. Order of dimensions
+        is the same as for input arguments.
 
     Raises:
         ValueError: If arguments with and without unit are mixed.
