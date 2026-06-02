@@ -380,8 +380,8 @@ def extract_BHmax(
         )
     if n_values <= 3:
         warnings.warn(
-            f"Only {n_values} (H_internal, M_internal) values to "
-            "estimate of BHmax. It may be inaccurate.",
+            f"Only {n_values} (H_internal, B_internal) values to "
+            "estimate BHmax. It may be inaccurate.",
             stacklevel=1,
         )
 
