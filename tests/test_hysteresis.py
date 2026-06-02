@@ -338,9 +338,7 @@ def test_extract_BHmax_non_monotonic():
     """Test the maximum energy product extraction from non-monotonic data."""
     # Create a non-monotonic B(H) curve
     h_values = np.linspace(-100, 100, 101)
-    m_values = np.concatenate(
-        (np.linspace(0, 500000, 510000), np.linspace(500000, 0, 510000))
-    )
+    m_values = np.concatenate((np.linspace(0, 500000, 51), np.linspace(500000, 0, 50)))
 
     # Test with non-monotonic data
     with pytest.raises(ValueError):
