@@ -11,12 +11,10 @@ import pytest
 
 from mammos_analysis.hysteresis import (
     LinearSegmentProperties,
-    MaximumEnergyProductProperties,
     _check_monotonicity,
     extract_B_curve,
     extract_BHmax,
     extract_coercive_field,
-    extract_maximum_energy_product,
     extract_remanent_magnetization,
     extrinsic_properties,
     find_linear_segment,
@@ -336,137 +334,152 @@ def test_B_curve_errors():
         extract_B_curve(H, M, demagnetization_coefficient=-1)
 
 
-@pytest.mark.xfail(
-    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
-    strict=True,
-)
-@pytest.mark.parametrize(
-    "m, c",
-    [
-        (2.0, 5.0),  # positive slope, positive intercept
-        (1.5, -2.0),  # positive slope, negative intercept
-    ],
-)
-def test_extract_maximum_energy_product_linear(m, c):
-    """Tests the maximum energy product for a linear B(H) = m*H + c.
-
-    This uses the analytic derivation:
-        BH = H * (m*H + c) = mH^2 + cH
-        d(BH)/dH = 2mH + c = 0  ->  H_opt = -c/(2m)
-        BH_max = |m H_opt^2 + c H_opt| = |(-c^2)/(4m)| = c^2/(4|m|)
-
-    Args:
-        m (float): slope of the linear B(H) relationship.
-        c (float): intercept of the linear B(H) relationship.
-
-    Raises:
-        AssertionError: if the computed BHmax deviates from the analytic result.
-    """
-
-    def linear_B(H):
-        """Linear B(H) function."""
-        return m * H + c
-
-    H_opt = -c / (2 * m)
-    H = np.linspace(H_opt - 1.0, H_opt + 1.0, 500) * u.A / u.m
-    dh = H[1] - H[0]
-    B = linear_B(H.value) * u.T
-
-    # Analytic expected maximum energy product
-    expected_val_BHmax = (c**2 / (4 * abs(m))) * (u.A / u.m * u.T)
-    expected_val_Bd = linear_B(H_opt) * u.T
-
-    result = extract_maximum_energy_product(H, B)
-
-    assert isinstance(result, MaximumEnergyProductProperties)
-    assert isinstance(result.Hd, me.Entity)
-    assert isinstance(result.Bd, me.Entity)
-    assert isinstance(result.BHmax, me.Entity)
-
-    assert u.isclose(result.Hd.q, H_opt * u.A / u.m, atol=dh)
-    assert u.isclose(
-        result.Bd.q, expected_val_Bd, atol=(m * dh.value) * u.T
-    )  # B tolerance related to H discretization
-    assert u.isclose(
-        result.BHmax.q,
-        expected_val_BHmax,
-        atol=(2 * m * H_opt + c) * dh.value * (u.A / u.m * u.T),
-    )  # BHmax tolerance related to discretization
-
-
-@pytest.mark.xfail(
-    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
-    strict=True,
-)
-@pytest.mark.parametrize(
-    "m, c",
-    [
-        (-1.5, 2.0),  # negative slope, positive intercept
-        (-2.0, -5.0),  # negative slope, negative intercept
-    ],
-)
-def test_extract_maximum_energy_product_linear_error(m, c):
-    """Tests the maximum energy product for a linear B(H) = m*H + c.
-
-    This uses the analytic derivation:
-        BH = H * (m*H + c) = mH^2 + cH
-        d(BH)/dH = 2mH + c = 0  ->  H_opt = -c/(2m)
-        BH_max = |m H_opt^2 + c H_opt| = |(-c^2)/(4m)| = c^2/(4|m|)
-
-    Args:
-        m (float): slope of the linear B(H) relationship.
-        c (float): intercept of the linear B(H) relationship.
-
-    Raises:
-        AssertionError: if the computed BHmax deviates from the analytic result.
-    """
-    H_opt = -c / (2 * m)
-    H = np.linspace(H_opt - 1.0, H_opt + 1.0, 500) * u.A / u.m
-    B = (m * H.value + c) * u.T
-
-    with pytest.raises(ValueError):
-        extract_maximum_energy_product(H, B)
-
-
-@pytest.mark.xfail(
-    reason="Needs review, issue https://github.com/MaMMoS-project/mammos-analysis/issues/56",
-    strict=True,
-)
-def test_extract_maximum_energy_product_non_monotonic():
+def test_extract_BHmax_non_monotonic():
     """Test the maximum energy product extraction from non-monotonic data."""
     # Create a non-monotonic B(H) curve
     h_values = np.linspace(-100, 100, 101)
-    b_values = np.concatenate((np.linspace(0, 50, 51), np.linspace(50, 0, 51)))
+    m_values = np.concatenate((np.linspace(0, 500000, 51), np.linspace(500000, 0, 50)))
 
     # Test with non-monotonic data
     with pytest.raises(ValueError):
-        extract_maximum_energy_product(h_values, b_values)
+        extract_BHmax(h_values, m_values, 1 / 3)
 
 
 def test_extract_BHmax_square_loop():
-    """Test the maximum energy product extraction from a square loop."""
+    """Test the maximum energy product extraction from a square loop.
+
+    For a square loop (constant M = M₀), the analytical result is:
+        BHmax = μ₀ * M₀² / 4
+    This is independent of the demagnetization coefficient N because
+    the optimal internal field point shifts to compensate.
+    """
     mu0 = u.constants.mu0
 
-    # Polarisation of 1.61T
-    Ms = me.Ms(me.J(1.61).quantity / mu0)  # about  <Quantity 1281197.2911923 A / m>
     Ms = me.Ms(1_281_197, "A/m")
 
     # Create square loop
     H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 1000)
-    M = np.ones(shape=1000) * Ms.value  # 1000 values of H
-    M[-1] = -M[0]  # magnetisation switches for last data point
+    M = np.ones(shape=1000) * Ms.value
+    M[-1] = -M[0]
 
-    # assumption: we have a cube
-    BHmax = extract_BHmax(H=H, M=M, demagnetization_coefficient=1 / 3)
+    N = 1 / 3
+    BHmax = extract_BHmax(H=H, M=M, demagnetization_coefficient=N)
 
-    # analytical result (J**2/(4mu0))
-    BHmax_analytic = mu0**2 * Ms.quantity**2 / (4 * mu0)
+    BHmax_analytic = mu0 * Ms.quantity**2 / 4
 
-    # debug output
-    print(f"{BHmax     =}")
-    print(f"{BHmax_analytic=}")
-    print(f"{BHmax.quantity - BHmax_analytic=}")
-    np.isclose(BHmax.quantity, BHmax_analytic, atol=3, rtol=1e-6)
+    assert np.isclose(BHmax.quantity, BHmax_analytic, atol=1000, rtol=1e-6)
+
+    # Test fourth quadrant
+    H_inv = -H
+    M_inv = -np.ones(shape=1000) * Ms.value
+    M_inv[-1] = -M_inv[0]
+
+    BHmax_inv = extract_BHmax(H_inv, M_inv, demagnetization_coefficient=N)
+
+    assert np.isclose(BHmax_inv.q, BHmax.q)
+    assert np.isclose(BHmax_inv.q, BHmax_analytic, atol=1000, rtol=1e-6)
+
+
+@pytest.mark.parametrize(
+    "N, M0",
+    [
+        (0, 1_000_000),
+        (1 / 3, 1_000_000),
+        (0.5, 1_000_000),
+    ],
+)
+def test_extract_BHmax_analytical_constant_M(N, M0):
+    """Test BHmax for a square loop with known analytical result.
+
+    For a square loop where M = M₀ (constant), the internal fields are:
+
+        H_int = H - N·M₀
+        B_int = μ₀(H_int + M₀) = μ₀(H - N·M₀ + M₀) = μ₀(H + (1 - N)M₀)
+
+    The energy product in the second quadrant is:
+
+        P = -B_int · H_int = -μ₀(H + (1 - N)M₀)(H - N·M₀)
+
+    Substituting H_int = H - N·M₀ (so H = H_int + N·M₀):
+
+        B_int = μ₀(H_int + M₀)
+        P = -μ₀(H_int + M₀)·H_int = -μ₀(H_int² + M₀·H_int)
+
+    Maximizing with respect to H_int:
+
+        dP/dH_int = -μ₀(2·H_int + M₀) = 0  →  H_int_opt = -M₀/2
+
+    Substituting back:
+
+        BHmax = -μ₀((-M₀/2)² + M₀·(-M₀/2))
+              = -μ₀(M₀²/4 - M₀²/2)
+              = μ₀·M₀²/4
+
+    Remarkably, this is independent of the demagnetization coefficient N
+    because the optimal internal field point shifts to compensate.
+    """
+    mu0 = u.constants.mu0
+
+    H = np.linspace(2e6, -2e6, 2000)
+    M = np.full(2000, M0)
+    M[-1] = -M0
+
+    BHmax = extract_BHmax(H=H, M=M, demagnetization_coefficient=N)
+
+    expected = mu0 * M0**2 / 4 * (u.A / u.m) ** 2
+
+    assert np.isclose(BHmax.q, expected, atol=500, rtol=1e-4)
+
+
+@pytest.mark.parametrize(
+    "alpha, beta",
+    [
+        (0, 1_000_000),
+        (0.5, 1_000_000),
+    ],
+)
+def test_extract_BHmax_analytical_linear_M(alpha, beta):
+    """Test BHmax for linear M(H) = α·H + β with N = 0.
+
+    With N = 0, the internal field equals the external field:
+
+        H_int = H
+        M = α·H + β
+        B_int = μ₀(H_int + M) = μ₀(H + α·H + β) = μ₀((1 + α)H + β)
+
+    The energy product in the second quadrant (H < 0, B > 0) is:
+
+        P = -B_int · H_int = -μ₀((1 + α)H + β)·H
+          = -μ₀((1 + α)H² + β·H)
+
+    Maximizing with respect to H:
+
+        dP/dH = -μ₀(2(1 + α)H + β) = 0
+          →  H_opt = -β / (2(1 + α))
+
+    Substituting H_opt back into P:
+
+        BHmax = -μ₀((1 + α)·(-β/(2(1+α)))² + β·(-β/(2(1+α))))
+              = -μ₀((1 + α)·β²/(4(1+α)²) - β²/(2(1+α)))
+              = -μ₀(β²/(4(1+α)) - 2β²/(4(1+α)))
+              = -μ₀(-β²/(4(1+α)))
+              = μ₀·β² / (4(1 + α))
+
+    This reduces to the constant-M result (μ₀·β²/4) when α = 0.
+
+    Note: alpha must be >= 0 to satisfy the monotonicity requirement
+    that H and M change in the same direction.
+    """
+    mu0 = u.constants.mu0
+
+    H = np.linspace(2e6, -2e6, 2000)
+    M = alpha * H + beta
+
+    BHmax = extract_BHmax(H=H, M=M, demagnetization_coefficient=0)
+
+    expected = mu0 * beta**2 / (4 * (1 + alpha)) * (u.A / u.m) ** 2
+
+    assert np.isclose(BHmax.q, expected, atol=500, rtol=1e-4)
 
 
 def test_extract_BHmax_few_values():
@@ -478,8 +491,6 @@ def test_extract_BHmax_few_values():
     H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 10)
     M = np.ones(shape=10) * Ms.value  # 1000 values of H
     M[-5:] = -M[0]  # magnetisation switches while H>0
-    print(f"{H=}")
-    print(f"{M=}")
 
     with pytest.raises(ValueError):
         # use demagnetization_coefficient = 0 to avoid complication
@@ -540,7 +551,6 @@ def test_extrinsic_properties2():
     """Test the extraction of extrinsic properties from simulated hysteresis data."""
     H, M, expected = hysteresis_data_loop()
     result = extrinsic_properties(me.H(H), me.M(M), demagnetization_coefficient=1 / 3)
-    print(result)
     assert np.isclose(
         result.Hc.value, expected["Hc"], atol=0.1, rtol=1e-8
     )  # "Hc": 3049705.665855338,
