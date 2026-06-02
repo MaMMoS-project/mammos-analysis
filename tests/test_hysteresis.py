@@ -357,7 +357,6 @@ def test_extract_BHmax_square_loop():
     """
     mu0 = u.constants.mu0
 
-    Ms = me.Ms(me.J(1.61).quantity / mu0)
     Ms = me.Ms(1_281_197, "A/m")
 
     # Create square loop
