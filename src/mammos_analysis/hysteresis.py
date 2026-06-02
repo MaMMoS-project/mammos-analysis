@@ -324,8 +324,8 @@ def extract_BHmax(
 
     Warnings:
         UserWarning: warns if there are 3 or fewer data points in the
-            second quadrant based on which B*Hmax is computed. (User feedback
-            on this is welcome - is 3 a good number?)
+            selected second or fourth quadrant based on which B*Hmax is computed.
+            (User feedback on this is welcome - is 3 a good number?)
 
     """
     H = me._entity.from_compatible(
