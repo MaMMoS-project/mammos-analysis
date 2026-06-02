@@ -86,31 +86,31 @@ def test_kuzmin_formula_returns_spontaneous_magnetization_entity():
     assert result.value.shape == (3,)
 
 
-def test_kuzmin_formula_rejects_non_dimensionless_s():
-    """Test Kuzmin formula rejects non-dimensionless s."""
-    with pytest.raises(ValueError, match="s must be dimensionless"):
-        kuzmin_formula(Ms_0=100, T_c=300, s=0.5 * u.m, T=100)
-
-
-def test_kuzmin_formula_ensures_scalar_values():
-    """Test Kuzmin formula rejects non-scalar values."""
+def test_kuzmin_formula_argument_Ms_0():
+    """Test Kuzmin formula validates the Ms_0 argument."""
     with pytest.raises(ValueError, match="Ms_0 must be a scalar"):
         kuzmin_formula(Ms_0=me.Ms([100]), T_c=300, s=0.75, T=100)
 
-    with pytest.raises(ValueError, match="T_c must be a scalar"):
-        kuzmin_formula(Ms_0=100, T_c=me.Tc([500]), s=0.75, T=100)
-
-
-def test_kuzmin_formula_rejects_invalid_scalar_parameters():
-    """Test Kuzmin formula rejects invalid scalar parameters."""
     with pytest.raises(ValueError, match="Ms_0 must be non-negative"):
         kuzmin_formula(Ms_0=-100, T_c=300, s=0.75, T=100)
+
+
+def test_kuzmin_formula_argument_T_c():
+    """Test Kuzmin formula validates the T_c argument."""
+    with pytest.raises(ValueError, match="T_c must be a scalar"):
+        kuzmin_formula(Ms_0=100, T_c=me.Tc([500]), s=0.75, T=100)
 
     with pytest.raises(ValueError, match="T_c must be positive"):
         kuzmin_formula(Ms_0=100, T_c=0, s=0.75, T=100)
 
     with pytest.raises(ValueError, match="T_c must be positive"):
         kuzmin_formula(Ms_0=100, T_c=-300, s=0.75, T=100)
+
+
+def test_kuzmin_formula_argument_s():
+    """Test Kuzmin formula validates the s argument."""
+    with pytest.raises(ValueError, match="s must be dimensionless"):
+        kuzmin_formula(Ms_0=100, T_c=300, s=0.5 * u.m, T=100)
 
     with pytest.raises(ValueError, match="s must be a scalar"):
         kuzmin_formula(Ms_0=100, T_c=300, s=[0.75], T=100)
