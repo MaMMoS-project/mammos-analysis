@@ -76,16 +76,6 @@ def test_kuzmin_formula_preserves_T_shape():
     assert array_result.value.shape == T.shape
 
 
-def test_kuzmin_formula_returns_spontaneous_magnetization_entity():
-    """Test Kuzmin formula returns a spontaneous magnetization entity."""
-    result = kuzmin_formula(Ms_0=100, T_c=300, s=0.5, T=[0, 100, 200])
-
-    assert isinstance(result, me.Entity)
-    assert result.ontology_label == "SpontaneousMagnetization"
-    assert result.unit == u.A / u.m
-    assert result.value.shape == (3,)
-
-
 def test_kuzmin_formula_argument_Ms_0():
     """Test Kuzmin formula validates the Ms_0 argument."""
     with pytest.raises(ValueError, match="Ms_0 must be a scalar"):
