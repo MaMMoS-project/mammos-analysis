@@ -243,7 +243,8 @@ def test_kuzmin_properties_accepts_K1_and_Ku():
 
     assert isinstance(result_K1.K1, _K1_function_of_temperature)
     assert isinstance(result_Ku.K1, _K1_function_of_temperature)
-    assert result_K1.K1(0) == result_Ku.K1(0)
+    assert result_K1.K1(0) == me.K1(1e5, unit=u.J / u.m**3)
+    assert result_Ku.K1(0) == me.K1(1e5, unit=u.J / u.m**3)
     assert result_K1.K1(T_data) == result_Ku.K1(T_data)
 
 
