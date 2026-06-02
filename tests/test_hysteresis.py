@@ -316,6 +316,29 @@ def test_B_curve():
     assert B_curve.value.shape == (101,)
 
 
+def test_hysteresis_accepts_M_and_Ms_inputs():
+    """Test hysteresis functions accept M and Ms as magnetization-like inputs."""
+    H = me.H(np.linspace(-100, 100, 101), unit="A/m")
+    M_values = 0.5 * H.value + 10
+    M = me.M(M_values, unit="A/m")
+    Ms = me.Ms(M_values, unit="A/m")
+
+    assert extract_coercive_field(H, M) == extract_coercive_field(H, Ms)
+    assert extract_remanent_magnetization(H, M) == extract_remanent_magnetization(H, Ms)
+    assert extract_B_curve(H, M, demagnetization_coefficient=1 / 3) == extract_B_curve(
+        H, Ms, demagnetization_coefficient=1 / 3
+    )
+    assert extract_BHmax(H, M, demagnetization_coefficient=1 / 3) == extract_BHmax(
+        H, Ms, demagnetization_coefficient=1 / 3
+    )
+
+    linear_segment_M = find_linear_segment(H, M, margin=1 * u.A / u.m, min_points=3)
+    linear_segment_Ms = find_linear_segment(H, Ms, margin=1 * u.A / u.m, min_points=3)
+    assert linear_segment_M.Mr == linear_segment_Ms.Mr
+    assert linear_segment_M.Hmax == linear_segment_Ms.Hmax
+    assert u.isclose(linear_segment_M.gradient, linear_segment_Ms.gradient)
+
+
 def test_B_curve_errors():
     """Test the extraction of the B curve from hysteresis data."""
     # Create a simple linear hysteresis loop
