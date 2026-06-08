@@ -102,6 +102,9 @@ def test_kuzmin_formula_argument_s():
     with pytest.raises(ValueError, match="s must be a pure dimensionless parameter"):
         kuzmin_formula(Ms_0=100, T_c=300, s=0.5 * u.m, T=100)
 
+    with pytest.raises(ValueError, match="s must be a pure dimensionless parameter"):
+        kuzmin_formula(Ms_0=100, T_c=300, s=0.5 * u.km / u.m, T=100)
+
     with pytest.raises(ValueError, match="s must be a scalar"):
         kuzmin_formula(Ms_0=100, T_c=300, s=[0.75], T=100)
 
