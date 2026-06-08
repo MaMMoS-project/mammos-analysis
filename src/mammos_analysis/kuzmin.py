@@ -345,9 +345,9 @@ def kuzmin_formula(
         raise ValueError("Argument T_c must be positive.")
 
     if isinstance(s, u.Quantity):
-        if not s.unit == u.dimensionless_unscaled:
-            raise ValueError("Argument s must be a pure dimensionless parameter.")
-        s = s.value
+        if not s.unit.is_equivalent(u.dimensionless_unscaled):
+            raise ValueError("Argument s must be dimensionless.")
+        s = s.to_value(u.dimensionless_unscaled)
 
     if not np.isscalar(s):
         raise ValueError("Argument s must be a scalar.")
