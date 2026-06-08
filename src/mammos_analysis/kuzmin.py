@@ -347,7 +347,7 @@ def kuzmin_formula(
     if isinstance(s, u.Quantity):
         if not s.unit.is_equivalent(u.dimensionless_unscaled):
             raise ValueError("Argument s must be dimensionless.")
-        s = s.value
+        s = s.to_value(u.dimensionless_unscaled)
 
     if not np.isscalar(s):
         raise ValueError("Argument s must be a scalar.")

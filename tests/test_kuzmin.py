@@ -113,6 +113,10 @@ def test_kuzmin_formula_argument_s():
             T=100,
         )
 
+    Ms1 = kuzmin_formula(Ms_0=100, T_c=300, s=0.0005 * u.km / u.m, T=100)
+    Ms2 = kuzmin_formula(Ms_0=100, T_c=300, s=0.0005 * 1000, T=100)
+    assert Ms1 == Ms2
+
 
 def test_Ms_function_of_temperature():
     """Test the Ms function of temperature."""
