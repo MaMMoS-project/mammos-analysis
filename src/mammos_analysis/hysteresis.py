@@ -7,6 +7,7 @@ import warnings
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import mammos_entity as me
     import mammos_units
     import matplotlib
     import numpy
@@ -17,60 +18,111 @@ import mammos_units
 import mammos_units as u
 import matplotlib.pyplot as plt
 import numpy as np
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
-class ExtrinsicProperties:
+class ExtrinsicProperties(me.EntityCollection):
     """Extrinsic properties extracted from a hysteresis loop."""
 
-    Hc: mammos_entity.Entity
-    """Coercive field."""
-    Mr: mammos_entity.Entity
-    """Remanent magnetization."""
-    BHmax: mammos_entity.Entity
-    """Maximum energy product."""
+    def __init__(
+        self,
+        Hc: mammos_entity.Entity,
+        Mr: mammos_entity.Entity,
+        BHmax: mammos_entity.Entity,
+        description: str = "",
+    ) -> None:
+        """Create a new ExtrinsicProperties collection.
+
+        Args:
+            Hc: :entity:`CoercivityHcExternal`.
+            Mr: :entity:`Remanence`.
+            BHmax: :entity:`MaximumEnergyProduct`.
+            description: Description of the collection.
+        """
+        me._entity.ensure_entity("CoercivityHcExternal", Hc=Hc)
+        me._entity.ensure_entity("Remanence", Mr=Mr)
+        me._entity.ensure_entity("MaximumEnergyProduct", BHmax=BHmax)
+        super().__init__(description=description, Hc=Hc, Mr=Mr, BHmax=BHmax)
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
-class MaximumEnergyProductProperties:
+class MaximumEnergyProductProperties(me.EntityCollection):
     """Properties related to the maximum energy product in a hysteresis loop."""
 
-    Hd: mammos_entity.Entity
-    """Field strength at which BHmax occurs."""
-    Bd: mammos_entity.Entity
-    """Flux density at which BHmax occurs."""
-    BHmax: mammos_entity.Entity
-    """Maximum energy product value."""
+    def __init__(
+        self,
+        Hd: mammos_entity.Entity,
+        Bd: mammos_entity.Entity,
+        BHmax: mammos_entity.Entity,
+        description: str = "",
+    ) -> None:
+        """Create a new MaximumEnergyProductProperties collection.
+
+        Args:
+            Hd: :entity:`ExternalMagneticField` at which BHmax occurs.
+            Bd: :entity:`MagneticFluxDensity` at which BHmax occurs.
+            BHmax: :entity:`MaximumEnergyProduct`.
+            description: Description of the collection.
+        """
+        me._entity.ensure_entity("ExternalMagneticField", Hd=Hd)
+        me._entity.ensure_entity("MagneticFluxDensity", Bd=Bd)
+        me._entity.ensure_entity("MaximumEnergyProduct", BHmax=BHmax)
+        super().__init__(description=description, Hd=Hd, Bd=Bd, BHmax=BHmax)
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
-class LinearSegmentProperties:
+class LinearSegmentProperties(me.EntityCollection):
     """Linear segment properties extracted from a hysteresis loop."""
 
-    Mr: mammos_entity.Entity
-    """M(H=0) from linear segment fit."""
-    Hmax: mammos_entity.Entity
-    """Maximum field strength in the linear segment."""
-    gradient: mammos_units.Quantity
-    """Gradient of the linear segment."""
-    _H: mammos_entity.Entity | None = None
-    _M: mammos_entity.Entity | None = None
+    def __init__(
+        self,
+        Mr: mammos_entity.Entity,
+        Hmax: mammos_entity.Entity,
+        gradient: mammos_units.Quantity,
+        _H: mammos_entity.Entity | None = None,
+        _M: mammos_entity.Entity | None = None,
+        description: str = "",
+    ) -> None:
+        """Create a new LinearSegmentProperties collection.
+
+        Args:
+            Mr: :entity:`Remanence` — M(H=0) from the linear segment fit.
+            Hmax: :entity:`ExternalMagneticField` — largest field value in the linear
+                segment.
+            gradient: Slope of the linear fit (dimensionless).
+            _H: Original :entity:`ExternalMagneticField` data (used for plotting).
+            _M: Original :entity:`Magnetization` data (used for plotting).
+            description: Description of the collection.
+        """
+        me._entity.ensure_entity("Remanence", Mr=Mr)
+        me._entity.ensure_entity("ExternalMagneticField", Hmax=Hmax)
+        if not isinstance(gradient, u.Quantity):
+            raise TypeError(
+                f"Argument gradient: expected astropy.units.Quantity, "
+                f"got {type(gradient).__name__}."
+            )
+        super().__init__(description=description, Mr=Mr, Hmax=Hmax, gradient=gradient)
+
+        if _H is not None:
+            me._entity.ensure_entity("ExternalMagneticField", _H=_H)
+            self["_H"] = _H
+
+        if _M is not None:
+            me._entity.ensure_entity("Magnetization", _M=_M)
+            self["_M"] = _M
 
     def plot(self, ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
         """Plot the magnetization data-points."""
         if not ax:
             _, ax = plt.subplots()
-        ax.scatter(self._H.q, y=self._M.q, label="Data")
+        if "_H" in self and "_M" in self:
+            ax.scatter(self._H.q, y=self._M.q, label="Data")
         ax.axvline(self.Hmax.value, color="k", linestyle="--", label="Hmax")
 
         x = np.linspace(0, self.Hmax.value, 100)
         y = self.gradient.value * x + self.Mr.value
         plt.plot(x, y, linestyle="--", c="r", label="Linear fit")
         plt.legend()
-        ax.set_xlabel(self._H.axis_label)
-        ax.set_ylabel(self._M.axis_label)
+        if "_H" in self and "_M" in self:
+            ax.set_xlabel(self._H.axis_label)
+            ax.set_ylabel(self._M.axis_label)
         return ax
 
 
