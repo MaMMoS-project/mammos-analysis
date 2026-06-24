@@ -322,7 +322,7 @@ def extract_BHmax(
 
         ValueError: If one of H or M is increasing and other is decreasing.
 
-    Warnings:
+    Warns:
         UserWarning: warns if there are 3 or fewer data points in the
             selected second or fourth quadrant based on which B*Hmax is computed.
             (User feedback on this is welcome - is 3 a good number?)
