@@ -249,6 +249,82 @@ def test_kuzmin_properties_all_info():
     assert result.A(0) == A_0
 
 
+def test_kuzmin_result_inputs():
+    """Test input errors for `KuzminResult` class."""
+    good_Ms = lambda _: me.Ms()  # noqa: E731
+    good_A = lambda _: me.A()  # noqa: E731
+    good_K1 = lambda _: me.K1()  # noqa: E731
+    good_Tc = me.Tc()
+    good_s = 0 * u.dimensionless_unscaled
+    random_callable = lambda _: 1  # noqa: E731
+
+    # Test Ms to be a callable that gives SpontaneousMagnetization
+    with pytest.raises(
+        ValueError, match="`Ms` input of a `KuzminResult` object must be a callable"
+    ):
+        KuzminResult(Ms=me.Ms(), A=good_A, K1=good_K1, Tc=good_Tc, s=good_s)
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Callable `Ms` should return a `mammos_entity.Entity` "
+            "with label 'SpontaneousMagnetization'"
+        ),
+    ):
+        KuzminResult(Ms=random_callable, A=good_A, K1=good_K1, Tc=good_Tc, s=good_s)
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Callable `Ms` should return a `mammos_entity.Entity` "
+            "with label 'SpontaneousMagnetization'"
+        ),
+    ):
+        KuzminResult(Ms=good_A, A=good_A, K1=good_K1, Tc=good_Tc, s=good_s)
+
+    # Test A to be a callable that gives ExchangeStiffnessConstant
+    with pytest.raises(
+        ValueError, match="`A` input of a `KuzminResult` object must be a callable"
+    ):
+        KuzminResult(Ms=good_Ms, A=me.A(), K1=good_K1, Tc=good_Tc, s=good_s)
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Callable `A` should return a `mammos_entity.Entity` "
+            "with label 'ExchangeStiffnessConstant'"
+        ),
+    ):
+        KuzminResult(Ms=good_Ms, A=random_callable, K1=good_K1, Tc=good_Tc, s=good_s)
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Callable `A` should return a `mammos_entity.Entity` "
+            "with label 'ExchangeStiffnessConstant'"
+        ),
+    ):
+        KuzminResult(Ms=good_Ms, A=good_K1, K1=good_K1, Tc=good_Tc, s=good_s)
+
+    # Test K1 to be a callable that gives MagnetocrystallineAnisotropyConstantK1
+    with pytest.raises(
+        ValueError, match="`K1` input of a `KuzminResult` object must be a callable"
+    ):
+        KuzminResult(Ms=good_Ms, A=good_A, K1=me.K1(), Tc=good_Tc, s=good_s)
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Callable `K1` should return a `mammos_entity.Entity` "
+            "with label 'MagnetocrystallineAnisotropyConstantK1'"
+        ),
+    ):
+        KuzminResult(Ms=good_Ms, A=good_A, K1=random_callable, Tc=good_Tc, s=good_s)
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Callable `K1` should return a `mammos_entity.Entity` "
+            "with label 'MagnetocrystallineAnisotropyConstantK1'"
+        ),
+    ):
+        KuzminResult(Ms=good_Ms, A=good_A, K1=good_Ms, Tc=good_Tc, s=good_s)
+
+
 def test_kuzmin_properties_no_K1_0():
     """Test the kuzmin_properties function without K1_0."""
     Tc = me.Entity("CurieTemperature", value=500, unit="K")
