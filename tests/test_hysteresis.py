@@ -37,8 +37,8 @@ def linear_hysteresis_data(m, b):
     h_values = np.linspace(-100, 100, 101)
     m_values = m * h_values + b
 
-    H = me.H(h_values * u.A / u.m)
-    M = me.Ms(m_values * u.A / u.m)
+    H = me.Entity("ExternalMagneticField", h_values * u.A / u.m)
+    M = me.Entity("SpontaneousMagnetization", m_values * u.A / u.m)
 
     # Expected values for testing
     expected = {
@@ -84,9 +84,9 @@ def hysteresis_data_loop():
 
     results_hysteresis = mammos_mumag.hysteresis.run(
         mesh="mesh.fly",  # this is cube50_singlegrain_msize2
-        Ms=me.Ms(parameters["Ms"]),
-        A=me.A(parameters["A"]),
-        K1=me.Ku(parameters["K1"]),
+        Ms=me.Entity("SpontaneousMagnetization", parameters["Ms"]),
+        A=me.Entity("ExchangeStiffnessConstant", parameters["A"]),
+        K1=me.Entity("UniaxialAnisotropyConstant", parameters["K1"]),
         theta=0,
         phi=0,
         h_start=H_max,
@@ -246,8 +246,8 @@ def test_partial_Hc_errors():
     h_values = np.linspace(-100, 100, 21)
     m_values = np.linspace(80, 100, 21)
 
-    H = me.H(h_values * u.A / u.m)
-    M = me.Ms(m_values * u.A / u.m)
+    H = me.Entity("ExternalMagneticField", h_values * u.A / u.m)
+    M = me.Entity("SpontaneousMagnetization", m_values * u.A / u.m)
 
     with pytest.raises(ValueError):
         extract_coercive_field(H, M)
@@ -290,8 +290,8 @@ def test_partial_Mr_errors():
     h_values = np.linspace(1, 100, 21)  # All positive field values
     m_values = np.linspace(80, 100, 21)  # Magnetization crosses zero but field doesn't
 
-    H = me.H(h_values * u.A / u.m)
-    M = me.Ms(m_values * u.A / u.m)
+    H = me.Entity("ExternalMagneticField", h_values * u.A / u.m)
+    M = me.Entity("SpontaneousMagnetization", m_values * u.A / u.m)
 
     with pytest.raises(ValueError):
         extract_remanent_magnetization(H, M)
@@ -303,8 +303,8 @@ def test_B_curve():
     h_values = np.linspace(-100, 100, 101)
     m_values = 0.5 * h_values + 10
 
-    H = me.H(h_values * u.A / u.m)
-    M = me.Ms(m_values * u.A / u.m)
+    H = me.Entity("ExternalMagneticField", h_values * u.A / u.m)
+    M = me.Entity("SpontaneousMagnetization", m_values * u.A / u.m)
 
     # Extract the B curve
     B_curve = extract_B_curve(H, M, demagnetization_coefficient=1 / 3)
@@ -318,10 +318,10 @@ def test_B_curve():
 
 def test_hysteresis_accepts_M_and_Ms_inputs():
     """Test hysteresis functions accept M and Ms as magnetization-like inputs."""
-    H = me.H(np.linspace(-100, 100, 101), unit="A/m")
+    H = me.Entity("ExternalMagneticField", np.linspace(-100, 100, 101), unit="A/m")
     M_values = 0.5 * H.value + 10
-    M = me.M(M_values, unit="A/m")
-    Ms = me.Ms(M_values, unit="A/m")
+    M = me.Entity("Magnetization", M_values, unit="A/m")
+    Ms = me.Entity("SpontaneousMagnetization", M_values, unit="A/m")
 
     assert extract_coercive_field(H, M) == extract_coercive_field(H, Ms)
     assert extract_remanent_magnetization(H, M) == extract_remanent_magnetization(H, Ms)
@@ -345,8 +345,8 @@ def test_B_curve_errors():
     h_values = np.linspace(-100, 100, 101)
     m_values = 0.5 * h_values + 10
 
-    H = me.H(h_values * u.A / u.m)
-    M = me.Ms(m_values * u.A / u.m)
+    H = me.Entity("ExternalMagneticField", h_values * u.A / u.m)
+    M = me.Entity("SpontaneousMagnetization", m_values * u.A / u.m)
 
     # Test with invalid demagnetizing factor
     with pytest.raises(ValueError):
@@ -378,7 +378,7 @@ def test_extract_BHmax_square_loop():
     """
     mu0 = u.constants.mu0
 
-    Ms = me.Ms(1_281_197, "A/m")
+    Ms = me.Entity("SpontaneousMagnetization", 1_281_197, "A/m")
 
     # Create square loop
     H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 1000)
@@ -508,7 +508,7 @@ def test_extract_BHmax_analytical_linear_M(alpha, beta):
 def test_extract_BHmax_few_values():
     """Test warnings and failure of maximum energy product extraction."""
     mu0 = u.constants.mu0
-    Ms = me.Ms(1_281_197, "A/m")
+    Ms = me.Entity("SpontaneousMagnetization", 1_281_197, "A/m")
 
     # Create square loop with no values in second quadrant:
     H = np.linspace(10.0 / mu0.value, -10.0 / mu0.value, 10)
@@ -542,8 +542,8 @@ def test_extrinsic_properties():
     h_values = np.linspace(-100, 100, 101)
     m_values = 0.5 * h_values + 10
 
-    H = me.H(h_values * u.A / u.m)
-    M = me.Ms(m_values * u.A / u.m)
+    H = me.Entity("ExternalMagneticField", h_values * u.A / u.m)
+    M = me.Entity("SpontaneousMagnetization", m_values * u.A / u.m)
 
     # Extract the extrinsic properties
     ep = extrinsic_properties(H, M, demagnetization_coefficient=1 / 3)
@@ -573,7 +573,11 @@ def test_extrinsic_properties():
 def test_extrinsic_properties2():
     """Test the extraction of extrinsic properties from simulated hysteresis data."""
     H, M, expected = hysteresis_data_loop()
-    result = extrinsic_properties(me.H(H), me.M(M), demagnetization_coefficient=1 / 3)
+    result = extrinsic_properties(
+        me.Entity("ExternalMagneticField", H),
+        me.Entity("Magnetization", M),
+        demagnetization_coefficient=1 / 3,
+    )
     assert np.isclose(
         result.Hc.value, expected["Hc"], atol=0.1, rtol=1e-8
     )  # "Hc": 3049705.665855338,
