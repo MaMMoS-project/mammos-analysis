@@ -27,7 +27,7 @@ def test_kuzmin_formula_below_Tc():
         (1 - s * (T / Tc) ** 1.5 - (1 - s) * (T / Tc) ** 2.5) ** (1.0 / 3)
     )
     result = kuzmin_formula(Ms0, Tc, s, T)
-    assert result == me.Ms(expected)
+    assert result == me.Entity("SpontaneousMagnetization", expected)
 
 
 def test_kuzmin_formula_above_Tc():
@@ -37,7 +37,7 @@ def test_kuzmin_formula_above_Tc():
     s = 0.5
     T = np.array([300.0, 400.0])
     result = kuzmin_formula(Ms0, Tc, s, T)
-    assert result == me.Ms([0.0, 0.0])
+    assert result == me.Entity("SpontaneousMagnetization", [0.0, 0.0])
 
 
 def test_kuzmin_formula_full_range():
@@ -47,7 +47,9 @@ def test_kuzmin_formula_full_range():
     s = 0.5
     T = np.array([0.0, 150.0, 300.0, 450.0])
     result = kuzmin_formula(Ms0, Tc, s, T)
-    assert result == me.Ms([100.0, 90.23948387, 0.0, 0.0])
+    assert result == me.Entity(
+        "SpontaneousMagnetization", [100.0, 90.23948387, 0.0, 0.0]
+    )
 
 
 def test_kuzmin_formula_ints():
@@ -57,12 +59,19 @@ def test_kuzmin_formula_ints():
     s = 0.5
     T = np.array([0, 150, 300, 450])
     result = kuzmin_formula(Ms0, Tc, s, T)
-    assert result == me.Ms([100.0, 90.23948387, 0.0, 0.0])
+    assert result == me.Entity(
+        "SpontaneousMagnetization", [100.0, 90.23948387, 0.0, 0.0]
+    )
 
 
 def test_kuzmin_formula_preserves_Ms_0_unit():
     """Test Kuzmin formula preserves the unit of Ms_0."""
-    result = kuzmin_formula(Ms_0=me.Ms(100, unit="kA/m"), T_c=300, s=0.5, T=100)
+    result = kuzmin_formula(
+        Ms_0=me.Entity("SpontaneousMagnetization", 100, unit="kA/m"),
+        T_c=300,
+        s=0.5,
+        T=100,
+    )
     assert result.q.unit == u.kA / u.m
 
 
@@ -79,7 +88,9 @@ def test_kuzmin_formula_preserves_T_shape():
 def test_kuzmin_formula_argument_Ms_0():
     """Test Kuzmin formula validates the Ms_0 argument."""
     with pytest.raises(ValueError, match="Ms_0 must be a scalar"):
-        kuzmin_formula(Ms_0=me.Ms([100]), T_c=300, s=0.75, T=100)
+        kuzmin_formula(
+            Ms_0=me.Entity("SpontaneousMagnetization", [100]), T_c=300, s=0.75, T=100
+        )
 
     with pytest.raises(ValueError, match="Ms_0 must be non-negative"):
         kuzmin_formula(Ms_0=-100, T_c=300, s=0.75, T=100)
@@ -88,7 +99,9 @@ def test_kuzmin_formula_argument_Ms_0():
 def test_kuzmin_formula_argument_T_c():
     """Test Kuzmin formula validates the T_c argument."""
     with pytest.raises(ValueError, match="T_c must be a scalar"):
-        kuzmin_formula(Ms_0=100, T_c=me.Tc([500]), s=0.75, T=100)
+        kuzmin_formula(
+            Ms_0=100, T_c=me.Entity("CurieTemperature", [500]), s=0.75, T=100
+        )
 
     with pytest.raises(ValueError, match="T_c must be positive"):
         kuzmin_formula(Ms_0=100, T_c=0, s=0.75, T=100)
@@ -143,9 +156,9 @@ def test_Ms_function_of_temperature():
 def test_A_function_of_temperature():
     """Test the A function of temperature."""
     T = me.Entity("ThermodynamicTemperature", value=[0, 100, 200], unit="K")
-    A0 = me.A(2.0, unit=u.J / u.m)
-    Ms0 = me.Ms(100.0)
-    Tc = me.Tc(300.0)
+    A0 = me.Entity("ExchangeStiffnessConstant", 2.0, unit=u.J / u.m)
+    Ms0 = me.Entity("SpontaneousMagnetization", 100.0)
+    Tc = me.Entity("CurieTemperature", 300.0)
     s = u.Quantity(0.5)
     a_func = _A_function_of_temperature(A0, Ms0, Tc, s, T)
     # repr
@@ -153,7 +166,10 @@ def test_A_function_of_temperature():
     # numeric input
     a = a_func(100.0)
     assert isinstance(a, me.Entity)
-    expected_a = me.A(A0.q * (kuzmin_formula(Ms0, Tc, s, 100.0).q / Ms0.q) ** 2)
+    expected_a = me.Entity(
+        "ExchangeStiffnessConstant",
+        A0.q * (kuzmin_formula(Ms0, Tc, s, 100.0).q / Ms0.q) ** 2,
+    )
     assert a == expected_a
     # quantity input
     Tq = 100.0 * u.K
@@ -170,9 +186,9 @@ def test_A_function_of_temperature():
 def test_K1_function_of_temperature():
     """Test the K1 function of temperature."""
     T = me.Entity("ThermodynamicTemperature", value=[0, 100, 200], unit="K")
-    K1_0 = me.K1(1e5, unit=u.J / u.m**3)
-    Ms_0 = me.Ms(100.0)
-    T_c = me.Tc(300.0)
+    K1_0 = me.Entity("MagnetocrystallineAnisotropyConstantK1", 1e5, unit=u.J / u.m**3)
+    Ms_0 = me.Entity("SpontaneousMagnetization", 100.0)
+    T_c = me.Entity("CurieTemperature", 300.0)
     s = u.Quantity(0.5)
     k1_func = _K1_function_of_temperature(K1_0, Ms_0, T_c, s, T)
     # repr
@@ -180,7 +196,10 @@ def test_K1_function_of_temperature():
     # numeric input
     k1 = k1_func(100.0)
     assert isinstance(k1, me.Entity)
-    expected_k1 = me.K1(K1_0.q * (kuzmin_formula(Ms_0, T_c, s, 100.0).q / Ms_0.q) ** 3)
+    expected_k1 = me.Entity(
+        "MagnetocrystallineAnisotropyConstantK1",
+        K1_0.q * (kuzmin_formula(Ms_0, T_c, s, 100.0).q / Ms_0.q) ** 3,
+    )
     assert k1 == expected_k1
     # quantity input
     Tq = 100.0 * u.K
@@ -201,10 +220,10 @@ def test_kuzmin_properties_all_info():
     anticipate the results of the optimization.
     """
     s = 0.75
-    Tc = me.Tc(value=500, unit="K")
-    K1_0 = me.K1(1e5, unit=u.J / u.m**3)
+    Tc = me.Entity("CurieTemperature", value=500, unit="K")
+    K1_0 = me.Entity("MagnetocrystallineAnisotropyConstantK1", 1e5, unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
-    Ms_0 = me.Ms(100)
+    Ms_0 = me.Entity("SpontaneousMagnetization", 100)
     Ms_data = kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data)
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0, K1_0=K1_0)
     assert isinstance(result, KuzminResult)
@@ -218,23 +237,24 @@ def test_kuzmin_properties_all_info():
     assert math.isclose(result.s, 0.75, rel_tol=1e-02)
     assert result.Ms(T_data) == Ms_data
     assert result.Ms(0) == Ms_0
-    A_0 = me.A(
+    A_0 = me.Entity(
+        "ExchangeStiffnessConstant",
         Ms_0.q
         * 0.1509
         * ((6 * u.constants.muB) / (s * Ms_0.q)) ** (2.0 / 3)
         * u.constants.k_B
         * Tc.q
-        / (4 * u.constants.muB)
+        / (4 * u.constants.muB),
     )
     assert result.A(0) == A_0
 
 
 def test_kuzmin_properties_no_K1_0():
     """Test the kuzmin_properties function without K1_0."""
-    Tc = me.Tc(value=500, unit="K")
+    Tc = me.Entity("CurieTemperature", value=500, unit="K")
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100])
-    Ms_0 = me.Ms(100)
-    Ms_data = me.Ms([100, 90])
+    Ms_0 = me.Entity("SpontaneousMagnetization", 100)
+    Ms_data = me.Entity("SpontaneousMagnetization", [100, 90])
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, Ms_0=Ms_0)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
@@ -248,9 +268,9 @@ def test_kuzmin_properties_no_K1_0():
 def test_kuzmin_properties_accepts_K1_and_Ku():
     """Test kuzmin_properties accepts K1 and Ku as anisotropy input."""
     s = 0.75
-    Tc = me.Tc(value=500, unit="K")
+    Tc = me.Entity("CurieTemperature", value=500, unit="K")
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
-    Ms_0 = me.Ms(100)
+    Ms_0 = me.Entity("SpontaneousMagnetization", 100)
     Ms_data = kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data)
 
     result_K1 = kuzmin_properties(
@@ -258,20 +278,26 @@ def test_kuzmin_properties_accepts_K1_and_Ku():
         T=T_data,
         Tc=Tc,
         Ms_0=Ms_0,
-        K1_0=me.K1(1e5, unit=u.J / u.m**3),
+        K1_0=me.Entity(
+            "MagnetocrystallineAnisotropyConstantK1", 1e5, unit=u.J / u.m**3
+        ),
     )
     result_Ku = kuzmin_properties(
         Ms=Ms_data,
         T=T_data,
         Tc=Tc,
         Ms_0=Ms_0,
-        K1_0=me.Ku(1e5, unit=u.J / u.m**3),
+        K1_0=me.Entity("UniaxialAnisotropyConstant", 1e5, unit=u.J / u.m**3),
     )
 
     assert isinstance(result_K1.K1, _K1_function_of_temperature)
     assert isinstance(result_Ku.K1, _K1_function_of_temperature)
-    assert result_K1.K1(0) == me.K1(1e5, unit=u.J / u.m**3)
-    assert result_Ku.K1(0) == me.K1(1e5, unit=u.J / u.m**3)
+    assert result_K1.K1(0) == me.Entity(
+        "MagnetocrystallineAnisotropyConstantK1", 1e5, unit=u.J / u.m**3
+    )
+    assert result_Ku.K1(0) == me.Entity(
+        "MagnetocrystallineAnisotropyConstantK1", 1e5, unit=u.J / u.m**3
+    )
     assert result_K1.K1(T_data) == result_Ku.K1(T_data)
 
 
@@ -281,10 +307,10 @@ def test_kuzmin_properties_no_Tc():
     We create virtual data with some fixed value of s in order to
     anticipate the results of the optimization.
     """
-    Tc = me.Tc(value=500, unit="K")
-    K1_0 = me.K1(1e5, unit=u.J / u.m**3)
+    Tc = me.Entity("CurieTemperature", value=500, unit="K")
+    K1_0 = me.Entity("MagnetocrystallineAnisotropyConstantK1", 1e5, unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100, 200, 300, 400, 500])
-    Ms_0 = me.Ms(100)
+    Ms_0 = me.Entity("SpontaneousMagnetization", 100)
     Ms_data = kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=0.75, T=T_data)
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Ms_0=Ms_0, K1_0=K1_0)
     assert isinstance(result, KuzminResult)
@@ -307,10 +333,10 @@ def test_kuzmin_properties_no_Ms_0():
     In the second test, data at T=0K is given. Hence, Ms_0 is taken from Ms_data.
     """
     s = 0.75
-    Tc = me.Tc(value=500, unit="K")
-    K1_0 = me.K1([1e5], unit=u.J / u.m**3)
+    Tc = me.Entity("CurieTemperature", value=500, unit="K")
+    K1_0 = me.Entity("MagnetocrystallineAnisotropyConstantK1", [1e5], unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[100, 200, 300, 400, 500])
-    Ms_0 = me.Ms(100)
+    Ms_0 = me.Entity("SpontaneousMagnetization", 100)
     Ms_data = kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data)
     result = kuzmin_properties(Ms=Ms_data, T=T_data, Tc=Tc, K1_0=K1_0)
     assert isinstance(result, KuzminResult)
@@ -324,10 +350,10 @@ def test_kuzmin_properties_no_Ms_0():
     assert result.Ms(T_data) == Ms_data
     assert result.Ms(0) == Ms_0
 
-    Tc = me.Tc(value=500, unit="K")
-    Ms_data = me.Ms([200, 100.0], unit=u.A / u.m)
+    Tc = me.Entity("CurieTemperature", value=500, unit="K")
+    Ms_data = me.Entity("SpontaneousMagnetization", [200, 100.0], unit=u.A / u.m)
     T_data = me.Entity("ThermodynamicTemperature", value=[0, 100], unit="K")
-    K1_0 = me.K1(1e5, unit=u.J / u.m**3)
+    K1_0 = me.Entity("MagnetocrystallineAnisotropyConstantK1", 1e5, unit=u.J / u.m**3)
     result = kuzmin_properties(Ms=Ms_data, T=T_data, K1_0=K1_0, Tc=Tc)
     assert isinstance(result, KuzminResult)
     assert isinstance(result.Ms, _Ms_function_of_temperature)
@@ -338,16 +364,16 @@ def test_kuzmin_properties_no_Ms_0():
     assert result.Tc == Tc
     assert result.K1(0) == K1_0
     assert result.Ms(T_data) == Ms_data
-    assert result.Ms(0) == me.Ms(200)
+    assert result.Ms(0) == me.Entity("SpontaneousMagnetization", 200)
 
 
 def test_kuzmin_properties_no_Ms_0_no_Tc():
     """Test the kuzmin_properties function without Ms_0 and Tc."""
     s = 0.75
-    Tc = me.Tc(value=500, unit="K")
-    K1_0 = me.K1([1e5], unit=u.J / u.m**3)
+    Tc = me.Entity("CurieTemperature", value=500, unit="K")
+    K1_0 = me.Entity("MagnetocrystallineAnisotropyConstantK1", [1e5], unit=u.J / u.m**3)
     T_data = me.Entity("ThermodynamicTemperature", value=[100, 200, 300, 400, 500])
-    Ms_0 = me.Ms(100)
+    Ms_0 = me.Entity("SpontaneousMagnetization", 100)
     Ms_data = kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data)
     result = kuzmin_properties(Ms=Ms_data, T=T_data, K1_0=K1_0)
     assert isinstance(result, KuzminResult)
@@ -366,10 +392,13 @@ def test_kuzmin_low_Tc():
     """Test the kuzmin_properties function to retrieve a low Tc value."""
     T_data = me.Entity("ThermodynamicTemperature", np.linspace(0, 500, 50))
     Ms_data = kuzmin_formula(
-        Ms_0=me.Ms(100), T_c=me.Tc(value=100, unit="K"), s=0.75, T=T_data
+        Ms_0=me.Entity("SpontaneousMagnetization", 100),
+        T_c=me.Entity("CurieTemperature", value=100, unit="K"),
+        s=0.75,
+        T=T_data,
     )
     result = kuzmin_properties(Ms=Ms_data, T=T_data)
-    assert result.Tc == me.Tc(100)
+    assert result.Tc == me.Entity("CurieTemperature", 100)
     assert math.isclose(result.s, 0.75, rel_tol=1e-02)
 
 
@@ -378,16 +407,16 @@ def test_kuzmin_tesla():
     with pytest.raises(ValueError, match="not compatible"):
         kuzmin_properties(
             T=me.Entity("ThermodynamicTemperature", value=[100, 200]),
-            Ms=me.Js([1, 2]),
+            Ms=me.Entity("SpontaneousMagneticPolarisation", [1, 2]),
         )
 
 
 def test_kuzmin_kA_m():
     """Test the kuzmin_properties function with magnetization input in kA/m."""
     s = 0.75
-    Tc = me.Tc(value=500, unit="K")
+    Tc = me.Entity("CurieTemperature", value=500, unit="K")
     T_data = me.Entity("ThermodynamicTemperature", value=[100, 200, 300, 400, 500])
-    Ms_0 = me.Ms(100)
+    Ms_0 = me.Entity("SpontaneousMagnetization", 100)
     Ms_data = kuzmin_formula(Ms_0=Ms_0, T_c=Tc, s=s, T=T_data).q.to("kA/m")
     result = kuzmin_properties(Ms=Ms_data, T=T_data)
     assert isinstance(result, KuzminResult)

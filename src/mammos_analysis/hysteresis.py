@@ -190,7 +190,7 @@ def extract_coercive_field(
     _check_monotonicity(H.value)
 
     if np.isnan(M.q).any():
-        return me.Hc(np.nan)
+        return me.Entity("CoercivityHcExternal", np.nan)
 
     # Interpolation only works on increasing data
     idx = np.argsort(M.q)
@@ -211,7 +211,7 @@ def extract_coercive_field(
     if np.isnan(hc_val):
         raise ValueError("Failed to calculate coercive field.")
 
-    return me.Hc(hc_val)
+    return me.Entity("CoercivityHcExternal", hc_val)
 
 
 def extract_remanent_magnetization(
@@ -276,7 +276,7 @@ def extract_remanent_magnetization(
         raise ValueError("Failed to calculate remanent magnetization.")
 
     # Return in the same type as input
-    return me.Mr(mr_val)
+    return me.Entity("Remanence", mr_val)
 
 
 def extract_B_curve(
@@ -307,8 +307,8 @@ def extract_B_curve(
     Examples:
         >>> import mammos_analysis.hysteresis
         >>> import mammos_entity as me
-        >>> H = me.H([0, 1e4, 2e4], unit="A/m")
-        >>> M = me.M([1e5, 2e5, 3e5], unit="A/m")
+        >>> H = me.Entity("ExternalMagneticField", [0, 1e4, 2e4], unit="A/m")
+        >>> M = me.Entity("Magnetization", [1e5, 2e5, 3e5], unit="A/m")
         >>> mammos_analysis.hysteresis.extract_B_curve(H, M, 1/3)
         Entity(ontology_label='MagneticFluxDensity', ...)
 
@@ -440,7 +440,7 @@ def extract_BHmax(
     # Compute BHmax
     p = -B_internal[mask] * H_internal[mask]
     BHmax = p.max()
-    return me.BHmax(BHmax)
+    return me.Entity("MaximumEnergyProduct", BHmax)
 
 
 def extrinsic_properties(
@@ -467,14 +467,14 @@ def extrinsic_properties(
     Mr = extract_remanent_magnetization(H, M)
 
     BHmax = (
-        me.BHmax(np.nan)
+        me.Entity("MaximumEnergyProduct", np.nan)
         if demagnetization_coefficient is None
         else extract_BHmax(H, M, demagnetization_coefficient)
     )
 
     return ExtrinsicProperties(
-        Hc=me.Hc(Hc),
-        Mr=me.Mr(Mr),
+        Hc=me.Entity("CoercivityHcExternal", Hc),
+        Mr=me.Entity("Remanence", Mr),
         BHmax=BHmax,
     )
 
@@ -658,9 +658,9 @@ def find_linear_segment(
 
     # 9) Return a single LinearSegmentProperties
     return LinearSegmentProperties(
-        Mr=me.Mr(b_opt),
-        Hmax=me.H(Hmax_val),
+        Mr=me.Entity("Remanence", b_opt),
+        Hmax=me.Entity("ExternalMagneticField", Hmax_val),
         gradient=m_opt * u.dimensionless_unscaled,
-        _H=me.H(H.value, unit="A/m"),
-        _M=me.M(M.value, unit="A/m"),
+        _H=me.Entity("ExternalMagneticField", H.value, unit="A/m"),
+        _M=me.Entity("Magnetization", M.value, unit="A/m"),
     )

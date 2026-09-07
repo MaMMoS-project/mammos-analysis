@@ -207,7 +207,7 @@ def kuzmin_properties(
     else:
         if np.isclose(T.value[0], 0):
             optimize_Ms_0 = False
-            Ms_0 = me.Ms(Ms.value[0], unit=u.A / u.m)
+            Ms_0 = me.Entity("SpontaneousMagnetization", Ms.value[0], unit=u.A / u.m)
         else:
             optimize_Ms_0 = True
             # We set the first value of data vector Ms
@@ -254,9 +254,9 @@ def kuzmin_properties(
     p_opt = results[0]
     s = p_opt[0]
     if optimize_Ms_0:
-        Ms_0 = me.Ms(p_opt[1])
+        Ms_0 = me.Entity("SpontaneousMagnetization", p_opt[1])
     if optimize_Tc:
-        Tc = me.Tc(p_opt[-1])
+        Tc = me.Entity("CurieTemperature", p_opt[-1])
 
     D = (
         0.1509
@@ -264,7 +264,9 @@ def kuzmin_properties(
         * u.constants.k_B
         * Tc.q
     ).si
-    A_0 = me.A(Ms_0 * D / (4 * u.constants.muB), unit=u.J / u.m)
+    A_0 = me.Entity(
+        "ExchangeStiffnessConstant", Ms_0 * D / (4 * u.constants.muB), unit=u.J / u.m
+    )
 
     K1 = _K1_function_of_temperature(K1_0, Ms_0, Tc, s, T) if K1_0 is not None else None
 
@@ -357,7 +359,7 @@ def kuzmin_formula(
     out = np.zeros_like(base, dtype=np.float64)
     np.cbrt(base, out=out, where=T_c.q > T.q)  # compute cubic root of base
 
-    return me.Ms((Ms_0.q * out).reshape(T.q.shape))
+    return me.Entity("SpontaneousMagnetization", (Ms_0.q * out).reshape(T.q.shape))
 
 
 class _A_function_of_temperature:
@@ -393,9 +395,10 @@ class _A_function_of_temperature:
     def __call__(
         self, T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike
     ) -> mammos_entity.Entity:
-        return me.A(
+        return me.Entity(
+            "ExchangeStiffnessConstant",
             self.A_0.q
-            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0.q) ** 2
+            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0.q) ** 2,
         )
 
     def plot(
@@ -421,7 +424,7 @@ class _A_function_of_temperature:
         if T is None:
             T = np.linspace(min(self._T.value), max(self._T.value), 100)
         if not isinstance(T, me.Entity):
-            T = me.T(T)
+            T = me.Entity("ThermodynamicTemperature", T)
         A = self(T)
         if celsius:
             Tq = T.q.to("Celsius", equivalencies=u.temperature())
@@ -470,9 +473,10 @@ class _K1_function_of_temperature:
     def __call__(
         self, T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike
     ) -> mammos_entity.Entity:
-        return me.K1(
+        return me.Entity(
+            "MagnetocrystallineAnisotropyConstantK1",
             self.K1_0.q
-            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0.q) ** 3
+            * (kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q / self.Ms_0.q) ** 3,
         )
 
     def plot(
@@ -497,7 +501,7 @@ class _K1_function_of_temperature:
         if T is None:
             T = np.linspace(min(self._T.value), max(self._T.value), 100)
         if not isinstance(T, me.Entity):
-            T = me.T(T)
+            T = me.Entity("ThermodynamicTemperature", T)
         K1 = self(T)
         if celsius:
             Tq = T.q.to("Celsius", equivalencies=u.temperature())
@@ -542,7 +546,11 @@ class _Ms_function_of_temperature:
     def __call__(
         self, T: mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike
     ) -> mammos_entity.Entity:
-        return me.Ms(kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q, "kA/m")
+        return me.Entity(
+            "SpontaneousMagnetization",
+            kuzmin_formula(self.Ms_0, self.T_c, self.s, T).q,
+            "kA/m",
+        )
 
     def plot(
         self,
@@ -569,7 +577,7 @@ class _Ms_function_of_temperature:
         if T is None:
             T = np.linspace(min(self._T.value), max(self._T.value), 100)
         if not isinstance(T, me.Entity):
-            T = me.T(T)
+            T = me.Entity("ThermodynamicTemperature", T)
         Ms = self(T)
         if celsius:
             Tq = T.q.to("Celsius", equivalencies=u.temperature())
