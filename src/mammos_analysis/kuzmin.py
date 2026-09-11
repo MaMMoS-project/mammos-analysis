@@ -15,8 +15,6 @@ import matplotlib.pyplot as plt
 import numpy
 import numpy as np
 from matplotlib.figure import figaspect
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
 from scipy.optimize import curve_fit
 
 if TYPE_CHECKING:
@@ -26,36 +24,104 @@ if TYPE_CHECKING:
     import numpy
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
 class KuzminResult:
     """Result of Kuz'min magnetic properties estimation."""
 
-    Ms: Callable[
-        [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
-        me.Entity,
-    ]
-    """Callable returning temperature-dependent :entity:`SpontaneousMagnetization`."""
-
-    A: Callable[
-        [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
-        me.Entity,
-    ]
-    """Callable returning temperature-dependent :entity:`ExchangeStiffnessConstant`."""
-
-    Tc: me.Entity
-    """:entity:`CurieTemperature`."""
-
-    s: u.Quantity
-    """Kuzmin parameter."""
-
-    K1: (
-        Callable[
+    def __init__(
+        self,
+        Ms: Callable[
+            [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
+            me.Entity,
+        ],
+        A: Callable[
+            [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
+            me.Entity,
+        ],
+        Tc: me.Entity,
+        s: u.Quantity,
+        K1: Callable[
             [mammos_entity.Entity | mammos_units.Quantity | numpy.typing.ArrayLike],
             me.Entity,
         ]
-        | None
-    ) = None
-    """Callable returning temperature-dependent uniaxial anisotropy."""
+        | None = None,
+    ):
+        """Create a new KuzminResult object.
+
+        Args:
+            Ms: Callable returning temperature-dependent
+                :entity:`SpontaneousMagnetization`.
+            A: Callable returning temperature-dependent
+                :entity:`ExchangeStiffnessConstant`.
+            Tc: :entity:`CurieTemperature`.
+            s: Parameter in the Kuz'min model.
+            K1: Callable returning temperature-dependent
+                :entity:`MagnetocrystallineAnisotropyConstantK1`.
+        """
+        if not callable(Ms):
+            raise ValueError(
+                "`Ms` input of a `KuzminResult` object must be a callable "
+                f"function. Given object: {type(Ms)}"
+            )
+        Ms_0 = Ms(0)
+        if (
+            not isinstance(Ms_0, me.Entity)
+            or Ms_0.ontology_label != "SpontaneousMagnetization"
+        ):
+            raise ValueError(
+                "Callable `Ms` should return a `mammos_entity.Entity` with "
+                f"label 'SpontaneousMagnetization'. It returns: {Ms_0} "
+                f"of type: {type(Ms_0)}."
+            )
+        self.Ms = Ms
+
+        if not callable(A):
+            raise ValueError(
+                "`A` input of a `KuzminResult` object must be a callable "
+                f"function. Given object: {type(A)}"
+            )
+        A_0 = A(0)
+        if (
+            not isinstance(A_0, me.Entity)
+            or A_0.ontology_label != "ExchangeStiffnessConstant"
+        ):
+            raise ValueError(
+                "Callable `A` should return a `mammos_entity.Entity` with "
+                f"label 'ExchangeStiffnessConstant'. It returns: {A_0} "
+                f"of type: {type(A_0)}."
+            )
+        self.A = A
+
+        if K1 is not None:
+            if not callable(K1):
+                raise ValueError(
+                    "`K1` input of a `KuzminResult` object must be a callable "
+                    f"function. Given object: {type(K1)}"
+                )
+            K1_0 = K1(0)
+            if (
+                not isinstance(K1_0, me.Entity)
+                or K1_0.ontology_label != "MagnetocrystallineAnisotropyConstantK1"
+            ):
+                raise ValueError(
+                    "Callable `K1` should return a `mammos_entity.Entity` with "
+                    "label 'MagnetocrystallineAnisotropyConstantK1'. It returns: "
+                    f"{K1_0} of type: {type(K1_0)}."
+                )
+        self.K1 = K1
+
+        if not isinstance(Tc, me.Entity) or Tc.ontology_label != "CurieTemperature":
+            raise ValueError(
+                "Input `Tc` should be a `mammos_entity.Entity` with label "
+                f"'CurieTemperature'. Given input: {Tc} of type: {type(Tc)}."
+            )
+        self.Tc = Tc
+
+        if not isinstance(s, u.Quantity):
+            raise ValueError(
+                "Input `s` should be a `mammos_units.Quantity`. "
+                f"Given input: {s} of type: {type(s)}."
+            )
+        self.s = s
 
     def plot(
         self,

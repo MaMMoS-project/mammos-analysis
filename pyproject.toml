@@ -29,7 +29,6 @@ dependencies = [
   "mammos_entity >=0.14.0",
   "mammos_units",
   "numpy",
-  "pydantic",
   "scipy",
   "matplotlib",
 ]
