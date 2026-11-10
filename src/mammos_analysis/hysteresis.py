@@ -189,7 +189,7 @@ def extract_coercive_field(
     # Check monotonicity on the values
     _check_monotonicity(H.value)
 
-    if np.isnan(M.q).any():
+    if np.isnan(M.q).any() or np.all(M.q == 0):
         return me.Entity("CoercivityHcExternal", np.nan)
 
     # Interpolation only works on increasing data
@@ -391,6 +391,9 @@ def extract_BHmax(
         enforce_unit=True,
     ).q
 
+    if np.all(M == 0):
+        return me.Entity("MaximumEnergyProduct", np.nan)
+
     # processing will not work for full hysteresis loop
     _check_monotonicity(H.value)
 
@@ -468,7 +471,7 @@ def extrinsic_properties(
 
     BHmax = (
         me.Entity("MaximumEnergyProduct", np.nan)
-        if demagnetization_coefficient is None
+        if demagnetization_coefficient is None or np.isnan(Hc.value)
         else extract_BHmax(H, M, demagnetization_coefficient)
     )
 
