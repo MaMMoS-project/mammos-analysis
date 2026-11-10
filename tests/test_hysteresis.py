@@ -194,6 +194,38 @@ def test_check_monotonicity():
         _check_monotonicity(arr)
 
 
+def test_extract_coercive_field_zero_magnetization():
+    """Test that the coercive field is nan if the magnetization is flat zero.
+
+    This probably means that we are above Tc and not in magnetic regime.
+    """
+    H = np.linspace(-5, 5, 30)
+    M = np.zeros(30)
+    assert extract_coercive_field(H=H, M=M) == me.Entity("CoercivityHcExternal", np.nan)
+
+
+def test_extract_remanent_magnetization_zero_magnetization():
+    """Test that the remanent magnetization is 0 if the magnetization is flat zero.
+
+    This probably means that we are above Tc and not in magnetic regime.
+    """
+    H = np.linspace(-5, 5, 30)
+    M = np.zeros(30)
+    assert extract_remanent_magnetization(H=H, M=M) == me.Entity("Remanence", 0)
+
+
+def test_extract_BHmax_zero_magnetization():
+    """Test that BHmax is nan if the magnetization is flat zero.
+
+    This probably means that we are above Tc and not in magnetic regime.
+    """
+    H = np.linspace(-5, 5, 30)
+    M = np.zeros(30)
+    assert extract_BHmax(H=H, M=M, demagnetization_coefficient=1 / 3) == me.Entity(
+        "MaximumEnergyProduct", np.nan
+    )
+
+
 @pytest.mark.parametrize(
     "m, b",
     [
