@@ -36,13 +36,6 @@
   "upload_type": "software",
   "license": "mit",
   "language": "eng",
-  "keywords": [
-    "magnetic materials",
-    "data analysis",
-    "magnetism",
-    "multiscale modeling",
-    "MaMMoS"
-  ],
   "grants": [
     {
       "id": "10.13039/501100000780::101135546"
