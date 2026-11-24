@@ -53,6 +53,23 @@ doi: [10.1109/TMAG.2026.3689962](https://doi.org/10.1109/TMAG.2026.3689962).
 }
 ```
 
+The software is also archived on Zenodo. To cite it independently of a specific
+release, use the Concept DOI:
+
+M. Adams et al., *mammos-analysis* [Software], Zenodo, 2025,
+doi: [10.5281/zenodo.15755234](https://doi.org/10.5281/zenodo.15755234).
+
+```bibtex
+@software{mammos_analysis_zenodo,
+  author={Adams, Michael and Petrocchi, Andrea and Pathak, Swapneel Amit and Lang, Martin and Holt, Samuel and Fangohr, Hans},
+  title={mammos-analysis},
+  year={2025},
+  publisher={Zenodo},
+  doi={10.5281/zenodo.15755234},
+  url={https://doi.org/10.5281/zenodo.15755234}
+}
+```
+
 ## Acknowledgements
 
 This software has been supported by the European Union’s Horizon Europe research and innovation programme under grant agreement No 101135546 [MaMMoS](https://mammos-project.github.io/).
