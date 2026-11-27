@@ -49,7 +49,8 @@ doi: [10.1109/TMAG.2026.3689962](https://doi.org/10.1109/TMAG.2026.3689962).
   volume={62},
   number={10},
   pages={7001606-7001606},
-  doi={10.1109/TMAG.2026.3689962}
+  doi={10.1109/TMAG.2026.3689962},
+  url={https://mammos-project.github.io}
 }
 ```
 
@@ -66,7 +67,7 @@ doi: [10.5281/zenodo.15755234](https://doi.org/10.5281/zenodo.15755234).
   year={2025},
   publisher={Zenodo},
   doi={10.5281/zenodo.15755234},
-  url={https://doi.org/10.5281/zenodo.15755234}
+  url={https://github.com/MaMMoS-project/mammos-analysis}
 }
 ```
 
