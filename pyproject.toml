@@ -8,11 +8,11 @@ version = "0.6.0"
 description = "Analysis functionality package."
 readme = "README.md"
 authors = [
-  { name = "Michael Adams" },
+  { name = "Samuel Holt" },
   { name = "Andrea Petrocchi" },
   { name = "Swapneel Amit Pathak" },
+  { name = "Michael Adams" },
   { name = "Martin Lang" },
-  { name = "Samuel Holt" },
   { name = "Hans Fangohr" },
 ]
 license = "MIT"
