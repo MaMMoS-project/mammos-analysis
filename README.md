@@ -62,7 +62,7 @@ doi: [10.5281/zenodo.15755234](https://doi.org/10.5281/zenodo.15755234).
 
 ```bibtex
 @software{mammos_analysis_zenodo,
-  author={Holt, Samuel, and Petrocchi, Andrea and Pathak, Swapneel Amit and Winkler, Jonas and Winkler, Christina and Adams, Michael and Lang, Martin and Schrefl, Thomas and Fangohr, Hans},
+  author={Holt, Samuel and Petrocchi, Andrea and Pathak, Swapneel Amit and Winkler, Jonas and Winkler, Christina and Adams, Michael and Lang, Martin and Schrefl, Thomas and Fangohr, Hans},
   title={mammos-analysis},
   year={2025},
   publisher={Zenodo},
